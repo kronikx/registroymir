@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>YMIR Guild Panel</title>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<style>
+/* ===== GLOBAL ===== */
+body{
+  margin:0;
+  font-family:Segoe UI, sans-serif;
+  background:radial-gradient(circle at top,#240046,#090012);
+  color:#eee;
+}
+
+.container{
+  width:98vw;
+  max-width:1900px;
+  margin:auto;
+  padding:20px;
+}
+
+h1{
+  text-align:center;
+  color:#c77dff;
+  text-shadow:0 0 12px #7b2cbf;
+}
+
+/* ===== NAV ===== */
+.nav{
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  margin-bottom:15px;
+}
+
+.nav a,.nav button{
+  background:linear-gradient(135deg,#5a189a,#9d4edd);
+  border:none;
+  padding:10px 18px;
+  color:white;
+  font-weight:bold;
+  border-radius:8px;
+  cursor:pointer;
+  box-shadow:0 0 12px #7b2cbf;
+  text-decoration:none;
+}
+
+.nav a:hover,.nav button:hover{
+  background:#c77dff;
+}
+
+/* ===== TABLE ===== */
+.table-wrap{
+  max-height:75vh;
+  overflow-y:auto;
+  border-radius:12px;
+  box-shadow:0 0 20px #5a189a;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  table-layout:fixed;
+}
+
+thead th{
+  position:sticky;
+  top:0;
+  background:#240046;
+  color:#e0aaff;
+  cursor:pointer;
+  z-index:2;
+}
+
+th,td{
+  padding:8px;
+  border-bottom:1px solid #3c096c;
+  text-align:center;
+  white-space:nowrap;
+}
+
+tbody tr:hover{
+  background:rgba(157,78,221,.15);
+}
+
+/* ===== INPUTS ===== */
+input,select{
+  width:100%;
+  background:#10002b;
+  color:#fff;
+  border:1px solid #7b2cbf;
+  border-radius:6px;
+  padding:4px;
+}
+
+button.delete{
+  background:#c1121f;
+  border:none;
+  color:white;
+  padding:6px 10px;
+  border-radius:6px;
+  cursor:pointer;
+}
+
+button.delete:hover{
+  background:#ff4d6d;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<h1>Panel del Clan</h1>
+
+<div class="nav">
+  <a href="panel.html">Miembros</a>
+  <a href="subastas.html">Subastas</a>
+  <a href="registro.html">Registro</a>
+  <button id="exportExcel">Exportar Excel</button>
+  <button id="logout">Salir</button>
+</div>
+
+<div class="table-wrap">
+<table id="tabla">
+<thead>
+<tr>
+  <th onclick="ordenar('name')">Nombre</th>
+  <th onclick="ordenar('level')">LV</th>
+  <th onclick="ordenar('power')">Poder</th>
+  <th onclick="ordenar('role')">Rol</th>
+  <th>Boss 45</th>
+  <th>Boss 55</th>
+  <th>Semanal</th>
+  <th>Total</th>
+  <th>Eliminar</th>
+</tr>
+</thead>
+<tbody></tbody>
+</table>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore, collection, getDocs, doc,
+  updateDoc, deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* FIREBASE */
+initializeApp({
+  apiKey:"AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain:"registro-de-guild-en-ymir.firebaseapp.com",
+  projectId:"registro-de-guild-en-ymir"
+});
+
+const auth=getAuth();
+const db=getFirestore();
+let miembros=[],orden={campo:"",asc:true};
+let myUid="",myRole="Miembro";
+
+/* AUTH */
+onAuthStateChanged(auth,async user=>{
+  if(!user) location.href="index.html";
+  myUid=user.uid;
+  const me=(await getDocs(collection(db,"members"))).docs.find(d=>d.id===user.uid);
+  if(me) myRole=me.data().role;
+  cargar();
+});
+
+/* LOAD */
+async function cargar(){
+  const snap=await getDocs(collection(db,"members"));
+  miembros=snap.docs.map(d=>({id:d.id,...d.data()}));
+  render();
+}
+
+/* RENDER */
+function render(){
+  const tb=document.querySelector("#tabla tbody");
+  tb.innerHTML="";
+  const edit=myRole==="Líder"||myRole==="Oficial";
+
+  miembros.forEach(m=>{
+    tb.innerHTML+=`
+<tr>
+<td>${m.name}</td>
+<td>${edit?input(m.id,"level",m.level):m.level}</td>
+<td>${edit?input(m.id,"power",m.power):m.power}</td>
+<td>${edit?rol(m.id,m.role):m.role}</td>
+<td>${edit?bool(m.id,"boss45",m.boss45):(m.boss45?"Sí":"No")}</td>
+<td>${edit?bool(m.id,"boss55",m.boss55):(m.boss55?"Sí":"No")}</td>
+<td>${edit?input(m.id,"weeklyContribution",m.weeklyContribution):m.weeklyContribution}</td>
+<td>${edit?input(m.id,"totalContribution",m.totalContribution):m.totalContribution}</td>
+<td>${edit && m.id!==myUid ? `<button class="delete" onclick="borrar('${m.id}','${m.name}')">🗑</button>`:"—"}</td>
+</tr>`;
+  });
+}
+
+/* HELPERS */
+window.actualizar=async(id,c,v)=>{
+  await updateDoc(doc(db,"members",id),{[c]:isNaN(v)?v:Number(v)});
+};
+
+function input(id,c,v){
+  return `<input value="${v}" onchange="actualizar('${id}','${c}',this.value)">`;
+}
+
+function bool(id,c,v){
+  return `<select onchange="actualizar('${id}','${c}',this.value==='true')">
+    <option value="true" ${v?"selected":""}>Sí</option>
+    <option value="false" ${!v?"selected":""}>No</option>
+  </select>`;
+}
+
+function rol(id,v){
+  return `<select onchange="actualizar('${id}','role',this.value)">
+    <option ${v==="Líder"?"selected":""}>Líder</option>
+    <option ${v==="Oficial"?"selected":""}>Oficial</option>
+    <option ${v==="Miembro"?"selected":""}>Miembro</option>
+  </select>`;
+}
+
+/* SORT */
+window.ordenar=c=>{
+  orden.asc=orden.campo===c?!orden.asc:true;
+  orden.campo=c;
+  miembros.sort((a,b)=>a[c]>b[c]?(orden.asc?1:-1):a[c]<b[c]?(orden.asc?-1:1):0);
+  render();
+};
+
+/* DELETE */
+window.borrar=async(id,n)=>{
+  if(!confirm(`Eliminar a ${n}?`))return;
+  await deleteDoc(doc(db,"members",id));
+  cargar();
+};
+
+/* EXPORT */
+document.getElementById("exportExcel").onclick=()=>{
+  const ws=XLSX.utils.json_to_sheet(miembros);
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,"Miembros");
+  XLSX.writeFile(wb,"YMIR_GUILD.xlsx");
+};
+
+/* LOGOUT */
+document.getElementById("logout").onclick=async()=>{
+  await signOut(auth);
+  location.href="index.html";
+};
+</script>
+</body>
+</html>
