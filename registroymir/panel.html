@@ -67,8 +67,16 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { getFirestore, collection, doc, updateDoc, addDoc, getDoc, onSnapshot, getDocs } 
-  from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  updateDoc,
+  addDoc,
+  getDoc,
+  onSnapshot,
+  getDocs
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* === Firebase === */
 initializeApp({
@@ -96,7 +104,7 @@ onAuthStateChanged(auth, async user=>{
   }
 });
 
-/* === Pintar tabla en tiempo real (sin tocar tamaños ni estructura) === */
+/* === Pintar tabla en tiempo real (manteniendo formato) === */
 function cargarMiembros(){
   const tabla = document.getElementById("tablaMiembros");
 
@@ -105,6 +113,7 @@ function cargarMiembros(){
       <tr>
         <th>Nombre</th>
         <th>Rol</th>
+        <th>Clase</th>
         <th>Nivel</th>
         <th>Poder</th>
         <th>Contribución semanal</th>
@@ -126,6 +135,7 @@ function cargarMiembros(){
         <tr id="fila_${d.id}">
           <td>${m.name ?? "-"}</td>
           <td id="rol_${d.id}">${m.role ?? "-"}</td>
+          <td id="clase_${d.id}">${m.clase ?? "-"}</td>
           <td id="nivel_${d.id}">${m.nivel ?? 1}</td>
           <td id="poder_${d.id}">${m.poder ?? 0}</td>
           <td id="sem_${d.id}">${m.semanal ?? 0}</td>
@@ -139,9 +149,10 @@ function cargarMiembros(){
   });
 }
 
-/* === Editar fila === */
+/* === Editar fila (Clase solo Líder/Oficial) === */
 window.editar = (id,nombre)=>{
   const rolTxt = document.getElementById("rol_"+id).textContent.trim();
+  const claseTxt = document.getElementById("clase_"+id).textContent.trim();
   const poder = document.getElementById("poder_"+id).textContent.trim();
   const nivel = document.getElementById("nivel_"+id).textContent.trim();
   const boss45Txt = document.getElementById("boss45_"+id).textContent.trim();
@@ -157,6 +168,13 @@ window.editar = (id,nombre)=>{
         <option value="Miembro" ${rolTxt==="Miembro"?"selected":""}>Miembro</option>
         <option value="Oficial" ${rolTxt==="Oficial"?"selected":""}>Oficial</option>
         <option value="Líder" ${rolTxt==="Líder"?"selected":""}>Líder</option>
+      </select>`;
+    document.getElementById("clase_"+id).innerHTML = `
+      <select class="edit-select" id="editClase_${id}">
+        <option value="Arquero" ${claseTxt==="Arquero"?"selected":""}>Arquero</option>
+        <option value="Mago" ${claseTxt==="Mago"?"selected":""}>Mago</option>
+        <option value="Tanque" ${claseTxt==="Tanque"?"selected":""}>Tanque</option>
+        <option value="Healer" ${claseTxt==="Healer"?"selected":""}>Healer</option>
       </select>`;
     document.getElementById("sem_"+id).innerHTML = `<input type="number" class="edit-input" id="editSem_${id}" value="${semanalTxt}">`;
     document.getElementById("boss45_"+id).innerHTML = `
@@ -178,7 +196,7 @@ window.editar = (id,nombre)=>{
     `<button class="btn" onclick="guardar('${id}','${nombre}')">Guardar</button>`;
 };
 
-/* === Guardar cambios === */
+/* === Guardar cambios (incluye Clase para Líder/Oficial) === */
 window.guardar = async (id,nombre)=>{
   const poder = Number(document.getElementById("editPoder_"+id).value);
   const nivel = Number(document.getElementById("editNivel_"+id).value);
@@ -188,11 +206,13 @@ window.guardar = async (id,nombre)=>{
 
   if(MI_ROL==="Líder" || MI_ROL==="Oficial"){
     const rolSel = document.getElementById("editRol_"+id)?.value;
+    const claseSel = document.getElementById("editClase_"+id)?.value;
     const semanalEl = document.getElementById("editSem_"+id);
     const boss45Sel = document.getElementById("editBoss45_"+id)?.value;
     const boss55Sel = document.getElementById("editBoss55_"+id)?.value;
 
     if(rolSel){ updateData.role = rolSel; cambioTxt += `, Rol: ${rolSel}`; }
+    if(claseSel){ updateData.clase = claseSel; cambioTxt += `, Clase: ${claseSel}`; }
     if(semanalEl){
       const semanal = Number(semanalEl.value);
       if(!isNaN(semanal)){ updateData.semanal = semanal; cambioTxt += `, Semanal: ${semanal}`; }
@@ -219,7 +239,6 @@ window.guardar = async (id,nombre)=>{
     fecha: Date.now()
   });
 
-  /* Restaurar el botón Editar (el onSnapshot repintará la fila) */
   document.getElementById("fila_"+id).querySelector("td:last-child").innerHTML =
     `<button class="btn" onclick="editar('${id}','${nombre ?? ''}')">Editar</button>`;
 
@@ -261,7 +280,6 @@ window.reinicioSemanal = async ()=>{
   });
 
   alert("Reinicio semanal completado");
-  /* No llamamos a cargarMiembros(); onSnapshot actualizará la tabla automáticamente */
 };
 </script>
 
