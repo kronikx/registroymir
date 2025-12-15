@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>YMIR Guild - Subastas</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+  <h1>Subastas del Clan</h1>
+
+  <div class="nav">
+    <a href="panel.html">Miembros</a>
+    <a href="subastas.html">Subastas</a>
+    <a href="registro.html">Historial</a>
+    <a href="panel.html">Volver</a>
+  </div>
+
+  <!-- Crear subasta (solo Líder/Oficial) -->
+  <div class="card" id="crearSubasta" style="display:none">
+    <h3>Nueva Subasta</h3>
+    <input id="item" placeholder="Nombre del item">
+    <input id="imagen" placeholder="URL imagen (opcional)">
+    <input id="precio" type="number" placeholder="Precio base">
+    <input id="tiempo" type="number" placeholder="Minutos">
+    <button id="crear">Crear subasta</button>
+    <p id="crearMsg" style="text-align:center; color:#c77dff; margin-top:10px;"></p>
+  </div>
+
+  <!-- Tabla de subastas -->
+  <div class="card">
+    <table id="tabla"></table>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+/* === Estado de auth y visibilidad del creador === */
+onAuthStateChanged(auth, async user=>{
+  if(!user){
+    location.href = "index.html";
+    return;
+  }
+  const meSnap = await getDoc(doc(db,"members",user.uid));
+  const role = meSnap.data()?.role || "Miembro";
+  if(role==="Líder" || role==="Oficial"){
+    document.getElementById("crearSubasta").style.display = "block";
+  }
+  cargarSubastas();
+});
+
+/* === Crear subasta === */
+document.getElementById("crear").onclick = async ()=>{
+  const item = document.getElementById("item").value.trim();
+  const imagen = document.getElementById("imagen").value.trim();
+  const precio = Number(document.getElementById("precio").value);
+  const tiempo = Number(document.getElementById("tiempo").value);
+
+  if(!item || !precio || !tiempo){
+    document.getElementById("crearMsg").textContent = "Completa todos los campos obligatorios";
+    return;
+  }
+
+  try{
+    await addDoc(collection(db,"subastas"),{
+      item,
+      imagen: imagen || "",
+      precioBase: precio,
+      pujaActual: precio,
+      ganador: "",
+      fin: Date.now() + tiempo * 60000,
+      historial: []
+    });
+    document.getElementById("crearMsg").textContent = "Subasta creada correctamente";
+    cargarSubastas();
+  }catch(e){
+    document.getElementById("crearMsg").textContent = "Error al crear la subasta: " + e.message;
+  }
+};
+
+/* === Cargar subastas con input de puja === */
+async function cargarSubastas(){
+  const tabla = document.getElementById("tabla");
+  const snap = await getDocs(collection(db,"subastas"));
+
+  const user = auth.currentUser;
+  const me = await getDoc(doc(db,"members",user.uid));
+  const role = me.data()?.role || "Miembro";
+  const puedeBorrar = (role==="Líder" || role==="Oficial");
+
+  if(snap.empty){
+    tabla.innerHTML = `<tr><td colspan="${puedeBorrar ? 8 : 7}">No hay subastas activas</td></tr>`;
+    return;
+  }
+
+  tabla.innerHTML = `
+    <tr>
+      <th>Item</th>
+      <th>Precio base</th>
+      <th>Puja actual</th>
+      <th>Ganador</th>
+      <th>Tiempo</th>
+      <th>Historial</th>
+      <th>Pujar</th>
+      ${puedeBorrar ? "<th>Eliminar</th>" : ""}
+    </tr>
+  `;
+
+  snap.forEach(d=>{
+    const s = d.data();
+    const restante = Math.max(0, Math.floor((s.fin - Date.now()) / 1000));
+    const historial = s.historial && s.historial.length ? s.historial.join("<br>") : "-";
+
+    tabla.innerHTML += `
+      <tr>
+        <td>
+          ${s.item}
+          ${s.imagen ? `<img src="${s.imagen}" class="item">` : ""}
+        </td>
+        <td>${s.precioBase}</td>
+        <td>${s.pujaActual}</td>
+        <td>${s.ganador || "-"}</td>
+        <td data-fin="${s.fin}">${formato(restante)}</td>
+        <td>${historial}</td>
+        <td>
+          ${restante > 0
+            ? `<input type="number" id="puja_${d.id}" placeholder="Cantidad">
+               <button onclick="pujar('${d.id}')">Pujar</button>`
+            : "Finalizada"}
+        </td>
+        ${puedeBorrar ? `<td><button onclick="eliminarSubasta('${d.id}')">🗑</button></td>` : ""}
+      </tr>
+    `;
+  });
+
+  iniciarContadoresVivos();
+}
+
+/* === Pujar con cantidad personalizada === */
+window.pujar = async (id)=>{
+  const user = auth.currentUser;
+  const meRef = doc(db,"members",user.uid);
+  const me = (await getDoc(meRef)).data();
+  const subRef = doc(db,"subastas",id);
+  const sub = (await getDoc(subRef)).data();
+
+  const cantidad = Number(document.getElementById("puja_"+id).value);
+  if(!cantidad || cantidad <= 0){
+    alert("Introduce una cantidad válida");
+    return;
+  }
+
+  const nueva = sub.pujaActual + cantidad;
+
+  if(me.totalContribution < cantidad){
+    alert("No tienes puntos suficientes");
+    return;
+  }
+
+  await updateDoc(meRef,{ totalContribution: me.totalContribution - cantidad });
+  await updateDoc(subRef,{
+    pujaActual: nueva,
+    ganador: me.name,
+    historial: [...(sub.historial || []), `${me.name} → ${nueva}`]
+  });
+
+  cargarSubastas();
+};
+
+/* === Eliminar subasta === */
+window.eliminarSubasta = async (id)=>{
+  if(!confirm("¿Eliminar esta subasta?")) return;
+  await deleteDoc(doc(db,"subastas",id));
+  cargarSubastas();
+};
+
+/* === Contador en vivo === */
+let intervaloContadores;
+function iniciarContadoresVivos(){
+  if(intervaloContadores) clearInterval(intervaloContadores);
+  intervaloContadores = setInterval(()=>{
+    document.querySelectorAll("[data-fin]").forEach(td=>{
+      const fin = Number(td.getAttribute("data-fin"));
+      const restante = Math.max(0, Math.floor((fin - Date.now())/1000));
+      td.textContent = formato(restante);
+    });
+  }, 1000);
+}
+
+function formato(s){
+  const m = Math.floor(s/60);
+  const r = s % 60;
+  return `${m}:${r.toString().padStart(2,"0")}`;
+}
+</script>
+
+</body>
+</html>

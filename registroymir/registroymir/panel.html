@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>YMIR Guild - Panel</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .container { position: relative; }
+  .edit-input, .edit-select {
+    width: 90px;
+    text-align: center;
+    font-size: 13px;
+  }
+  #reinicioBtn {
+    padding: 4px 8px;
+    font-size: 12px;
+    background-color: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    position: absolute;
+    top: 66px;
+    right: 16px;
+    width: auto;
+    max-width: 120px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 10;
+  }
+  #reinicioBtn:hover { background-color: #a71d2a; }
+  /* Botón Editar con mismo tamaño de letra pero rectángulo reducido */
+  .btn {
+    font-size: 12px;       /* igual que antes */
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #0d6efd; /* azul/morado */
+    color: #fff;
+    padding: 2px 6px;      /* rectángulo más estrecho */
+    width: auto;           /* se ajusta al texto */
+    display: inline-block; /* no ocupa más espacio */
+  }
+  .btn:hover { background-color: #0b5ed7; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Panel de Miembros</h1>
+
+  <div class="nav">
+    <a href="panel.html">Miembros</a>
+    <a href="subastas.html">Subastas</a>
+    <a href="registro.html">Historial</a>
+  </div>
+
+  <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
+
+  <div class="card">
+    <table id="tablaMiembros"></table>
+  </div>
+</div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+/* === Estado global === */
+let MI_ROL = "Miembro";
+let MI_UID = null;
+
+/* === Auth y carga inicial === */
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href = "index.html"; return; }
+  MI_UID = user.uid;
+  const meSnap = await getDoc(doc(db,"members",user.uid));
+  MI_ROL = meSnap.data()?.role || "Miembro";
+  await cargarMiembros();
+  if(!(MI_ROL==="Líder" || MI_ROL==="Oficial")){
+    const btn = document.getElementById("reinicioBtn");
+    if(btn) btn.style.display = "none";
+  }
+});
+
+/* === Pintar tabla === */
+async function cargarMiembros(){
+  const tabla = document.getElementById("tablaMiembros");
+  const snap = await getDocs(collection(db,"members"));
+
+  tabla.innerHTML = `
+    <tr>
+      <th>Nombre</th>
+      <th>Rol</th>
+      <th>Nivel</th>
+      <th>Poder</th>
+      <th>Contribución semanal</th>
+      <th>Boss 45</th>
+      <th>Boss 55</th>
+      <th>Contribución total</th>
+      <th>Acciones</th>
+    </tr>
+  `;
+
+  snap.forEach(d=>{
+    const m = d.data();
+    const esPropio = (d.id === MI_UID);
+    const boss45 = m.boss45 ? "Sí" : "No";
+    const boss55 = m.boss55 ? "Sí" : "No";
+    const puedeEditar = (MI_ROL==="Líder" || MI_ROL==="Oficial" || esPropio);
+
+    tabla.innerHTML += `
+      <tr id="fila_${d.id}">
+        <td>${m.name ?? "-"}</td>
+        <td id="rol_${d.id}">${m.role ?? "-"}</td>
+        <td id="nivel_${d.id}">${m.nivel ?? 1}</td>
+        <td id="poder_${d.id}">${m.poder ?? 0}</td>
+        <td id="sem_${d.id}">${m.semanal ?? 0}</td>
+        <td id="boss45_${d.id}">${boss45}</td>
+        <td id="boss55_${d.id}">${boss55}</td>
+        <td id="total_${d.id}">${m.totalContribution ?? 0}</td>
+        <td>${puedeEditar ? `<button class="btn" onclick="editar('${d.id}','${m.name ?? ''}')">Editar</button>` : ""}</td>
+      </tr>
+    `;
+  });
+}
+
+/* === Editar fila === */
+window.editar = (id,nombre)=>{
+  const rolTxt = document.getElementById("rol_"+id).textContent.trim();
+  const poder = document.getElementById("poder_"+id).textContent.trim();
+  const nivel = document.getElementById("nivel_"+id).textContent.trim();
+  const boss45Txt = document.getElementById("boss45_"+id).textContent.trim();
+  const boss55Txt = document.getElementById("boss55_"+id).textContent.trim();
+  const semanalTxt = document.getElementById("sem_"+id).textContent.trim();
+
+  const esPropio = (id === MI_UID);
+  if(MI_ROL==="Miembro" && !esPropio){ alert("No tienes permisos para editar a otros miembros"); return; }
+
+  if(MI_ROL==="Líder" || MI_ROL==="Oficial"){
+    document.getElementById("rol_"+id).innerHTML = `
+      <select class="edit-select" id="editRol_${id}">
+        <option value="Miembro" ${rolTxt==="Miembro"?"selected":""}>Miembro</option>
+        <option value="Oficial" ${rolTxt==="Oficial"?"selected":""}>Oficial</option>
+        <option value="Líder" ${rolTxt==="Líder"?"selected":""}>Líder</option>
+      </select>`;
+    document.getElementById("sem_"+id).innerHTML = `<input type="number" class="edit-input" id="editSem_${id}" value="${semanalTxt}">`;
+    document.getElementById("boss45_"+id).innerHTML = `
+      <select class="edit-select" id="editBoss45_${id}">
+        <option value="Sí" ${boss45Txt==="Sí"?"selected":""}>Sí</option>
+        <option value="No" ${boss45Txt==="No"?"selected":""}>No</option>
+      </select>`;
+    document.getElementById("boss55_"+id).innerHTML = `
+      <select class="edit-select" id="editBoss55_${id}">
+        <option value="Sí" ${boss55Txt==="Sí"?"selected":""}>Sí</option>
+        <option value="No" ${boss55Txt==="No"?"selected":""}>No</option>
+      </select>`;
+  }
+
+  document.getElementById("poder_"+id).innerHTML = `<input type="number" class="edit-input" id="editPoder_${id}" value="${poder}">`;
+  document.getElementById("nivel_"+id).innerHTML = `<input type="number" class="edit-input" id="editNivel_${id}" value="${nivel}">`;
+
+  document.getElementById("fila_"+id).querySelector("td:last-child").innerHTML =
+    `<button class="btn" onclick="guardar('${id}','${nombre}')">Guardar</button>`;
+};
+
+/* === Guardar cambios === */
+window.guardar = async (id,nombre)=>{
+  const poder = Number(document.getElementById("editPoder_"+id).value);
+  const nivel = Number(document.getElementById("editNivel_"+id).value);
+
+  let updateData = { poder, nivel };
+  let cambioTxt = `Poder: ${poder}, Nivel: ${nivel}`;
+
+  if(MI_ROL==="Líder" || MI_ROL==="Oficial"){
+    const rolSel = document.getElementById("editRol_"+id)?.value;
+    const semanalEl = document.getElementById("editSem_"+id);
+    const boss45Sel = document.getElementById("editBoss45_"+id)?.value;
+    const boss55Sel = document.getElementById("editBoss55_"+id)?.value;
+
+    if(rolSel){ updateData.role = rolSel; cambioTxt += `, Rol: ${rolSel}`; }
+    if(semanalEl){
+      const semanal = Number(semanalEl.value);
+      if(!isNaN(semanal)){ updateData.semanal = semanal; cambioTxt += `, Semanal: ${semanal}`; }
+    }
+    if(boss45Sel!==undefined){
+      const b45 = (boss45Sel==="Sí");
+      updateData.boss45 = b45;
+      cambioTxt += `, Boss45: ${b45 ? "Sí" : "No"}`;
+    }
+    if(boss55Sel!==undefined){
+      const b55 = (boss55Sel==="Sí");
+      updateData.boss55 = b55;
+      cambioTxt += `, Boss55: ${b55 ? "Sí" : "No"}`;
+    }
+  }
+
+  await updateDoc(doc(db,"members",id), updateData);
+
+  await addDoc(collection(db,"historial"),{
+    usuario: nombre || "Usuario",
+    rol: MI_ROL,
+    accion: "Actualización de datos",
+    cambio: cambioTxt,
+    fecha: Date.now()
+  });
+
+  /* Refrescar la fila sin recargar página */
+  document.getElementById("poder_"+id).textContent = poder;
+  document.getElementById("nivel_"+id).textContent = nivel;
+
+  if(updateData.role !== undefined){
+    document.getElementById("rol_"+id).textContent = updateData.role;
+  }else{
+    const rolEl = document.getElementById("rol_"+id);
+    const sel = rolEl.querySelector("select");
+    if(sel) rolEl.textContent = sel.value;
+  }
+
+  if(updateData.semanal !== undefined){
+    document.getElementById("sem_"+id).textContent = updateData.semanal;
+  }else{
+    const semEl = document.getElementById("sem_"+id);
+    if(semEl.querySelector("input")) semEl.textContent = Number(semEl.querySelector("input").value) || 0;
+  }
+
+  if(updateData.boss45 !== undefined){
+    document.getElementById("boss45_"+id).textContent = updateData.boss45 ? "Sí" : "No";
+  }else{
+    const b45El = document.getElementById("boss45_"+id);
+    const sel = b45El.querySelector("select");
+    if(sel) b45El.textContent = sel.value;
+  }
+
+  if(updateData.boss55 !== undefined){
+    document.getElementById("boss55_"+id).textContent = updateData.boss55 ? "Sí" : "No";
+  }else{
+    const b55El = document.getElementById("boss55_"+id);
+    const sel = b55El.querySelector("select");
+    if(sel) b55El.textContent = sel.value;
+  }
+
+  /* Restaurar el botón Editar */
+  document.getElementById("fila_"+id).querySelector("td:last-child").innerHTML =
+    `<button class="btn" onclick="editar('${id}','${nombre ?? ''}')">Editar</button>`;
+
+  alert("Datos actualizados y registrados en historial");
+};
+
+/* === Reinicio semanal === */
+window.reinicioSemanal = async ()=>{
+  if(!(MI_ROL==="Líder" || MI_ROL==="Oficial")){
+    alert("No tienes permisos para realizar el reinicio semanal.");
+    return;
+  }
+  if(!confirm("¿Seguro que quieres reiniciar la semana? Sumará la semanal al total y reseteará Boss 45/55.")) return;
+
+  const snap = await getDocs(collection(db,"members"));
+  let count = 0;
+
+  for(const d of snap.docs){
+    const m = d.data();
+    const semanalActual = Number(m.semanal ?? 0);
+    const totalActual = Number(m.totalContribution ?? 0);
+    const nuevoTotal = totalActual + semanalActual;
+
+    await updateDoc(doc(db,"members",d.id),{
+      totalContribution: nuevoTotal,
+      semanal: 0,
+      boss45: false,
+      boss55: false
+    });
+    count++;
+  }
+
+  await addDoc(collection(db,"historial"),{
+    usuario: "Sistema",
+    rol: MI_ROL,
+    accion: "Reinicio semanal",
+    cambio: `Se reinició contribución semanal y bosses de ${count} miembros`,
+    fecha: Date.now()
+  });
+
+  alert("Reinicio semanal completado");
+  cargarMiembros();
+};
+</script>
+
+</body>
+</html>
