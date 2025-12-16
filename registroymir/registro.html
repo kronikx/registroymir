@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <title>YMIR Guild - Historial</title>
 <link rel="stylesheet" href="style.css">
+<!-- Librería para exportar a Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   .badge {
     padding: 4px 8px;
@@ -12,11 +14,11 @@
     font-size: 12px;
     font-weight: bold;
   }
-  .badge-poder { background-color: #6a4c93; }      /* morado */
-  .badge-semanal { background-color: #198754; }    /* verde */
-  .badge-puja { background-color: #ff6b6b; }       /* rojo */
-  .badge-boss { background-color: #0d6efd; }       /* azul */
-  .badge-reinicio { background-color: #ffc107; color:#000; } /* amarillo */
+  .badge-poder { background-color: #6a4c93; }
+  .badge-semanal { background-color: #198754; }
+  .badge-puja { background-color: #ff6b6b; }
+  .badge-boss { background-color: #0d6efd; }
+  .badge-reinicio { background-color: #ffc107; color:#000; }
 
   .filters {
     margin-bottom: 15px;
@@ -30,6 +32,26 @@
     cursor: pointer;
     font-weight: bold;
   }
+
+  #exportarHistorialBtn {
+    padding: 6px 12px;
+    font-size: 13px;
+    background-color: #0d6efd;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    position: absolute;
+    top: 66px;
+    right: 16px;
+    max-width: 220px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 10;
+  }
+  #exportarHistorialBtn:hover { background-color: #0b5ed7; }
 </style>
 </head>
 <body>
@@ -43,6 +65,9 @@
     <a href="registro.html">Historial</a>
     <a href="control.html">Control Semanal</a>
   </div>
+
+  <!-- Botón de exportar y limpiar historial -->
+  <button id="exportarHistorialBtn" onclick="exportarHistorial()">📤 Exportar y Limpiar Historial</button>
 
   <div class="card">
     <div class="filters">
@@ -59,7 +84,8 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, orderBy, query, deleteDoc, doc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* === Firebase === */
 initializeApp({
@@ -67,21 +93,72 @@ initializeApp({
   authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
   projectId: "registro-de-guild-en-ymir"
 });
+const auth = getAuth();
 const db = getFirestore();
 
 let registros = [];
+let MI_ROL = "Miembro";
 
-/* === Cargar historial === */
-async function cargarHistorial(){
+/* === Mostrar botón solo a Líder/Oficial === */
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href = "index.html"; return; }
+  const meSnap = await getDocs(collection(db,"members"));
+  const me = meSnap.docs.find(d=>d.id===user.uid)?.data() || {};
+  MI_ROL = me.role || "Miembro";
+  if(!(MI_ROL==="Líder" || MI_ROL==="Oficial")){
+    document.getElementById("exportarHistorialBtn").style.display = "none";
+  }
+});
+
+/* === Exportar y limpiar historial === */
+window.exportarHistorial = async ()=>{
+  if(!(MI_ROL==="Líder" || MI_ROL==="Oficial")){
+    alert("No tienes permisos para limpiar el historial.");
+    return;
+  }
+  if(!confirm("¿Seguro que quieres exportar y limpiar el historial completo?")) return;
+
+  const snap = await getDocs(collection(db,"historial"));
+  if(snap.empty){
+    alert("El historial está vacío.");
+    return;
+  }
+
+  // Preparar datos para Excel
+  const datosExport = [];
+  for(const d of snap.docs){
+    const h = d.data() || {};
+    datosExport.push({
+      Usuario: h.usuario || "",
+      Rol: h.rol || "",
+      Acción: h.accion || "",
+      Cambio: h.cambio || "",
+      Fecha: new Date(h.fecha).toLocaleString("es-ES")
+    });
+  }
+
+  // Exportar a Excel
+  const ws = XLSX.utils.json_to_sheet(datosExport);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Historial");
+  XLSX.writeFile(wb, "Historial.xlsx");
+
+  // Borrar historial
+  for(const d of snap.docs){
+    await deleteDoc(doc(db,"historial",d.id));
+  }
+
+  alert("Historial exportado y limpiado correctamente.");
+};
+
+/* === Cargar historial en vivo === */
+function cargarHistorial(){
   const q = query(collection(db,"historial"), orderBy("fecha","desc"));
-  const snap = await getDocs(q);
-
-  registros = [];
-  snap.forEach(d=>{
-    registros.push(d.data());
+  onSnapshot(q, (snap)=>{
+    registros = [];
+    snap.forEach(d=>{ registros.push(d.data()); });
+    pintarTabla(registros);
   });
-
-  pintarTabla(registros);
 }
 
 function pintarTabla(lista){
