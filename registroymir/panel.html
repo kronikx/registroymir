@@ -44,8 +44,10 @@
     display: inline-block;
   }
   .btn:hover { background-color: #0b5ed7; }
+  .btn.secondary { background-color: #dc3545; color: #fff; }
+  .btn.secondary:hover { background-color: #bb2d3b; }
 
-  /* Reloj centrado con recuadro morado neón (aislado, no afecta a la tabla) */
+  /* Reloj dual */
   .clock-wrapper {
     display: flex;
     justify-content: center;
@@ -56,8 +58,8 @@
     gap: 40px;
     padding: 16px 32px;
     border-radius: 12px;
-    background: #4b0082; /* morado */
-    box-shadow: 0 0 12px #a020f0, 0 0 24px #a020f0; /* efecto neón */
+    background: #4b0082;
+    box-shadow: 0 0 12px #a020f0, 0 0 24px #a020f0;
     color: #fff;
   }
   .clock-box { text-align: center; }
@@ -78,7 +80,7 @@
 <body>
 
 <div class="container">
-  <!-- Reloj dual arriba del todo -->
+  <!-- Reloj dual -->
   <div class="clock-wrapper">
     <div class="clock-card">
       <div class="clock-box">
@@ -100,6 +102,7 @@
     <a href="panel.html">Miembros</a>
     <a href="subastas.html">Subastas</a>
     <a href="registro.html">Historial</a>
+    <a href="control.html">Control Semanal</a>
   </div>
 
   <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
@@ -120,7 +123,8 @@ import {
   addDoc,
   getDoc,
   onSnapshot,
-  getDocs
+  getDocs,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* === Firebase === */
@@ -141,44 +145,32 @@ function pad2(n){ return String(n).padStart(2, "0"); }
 function updateClocks(){
   const now = new Date();
 
-  // España (Europe/Madrid)
+  // España
   const esFormatter = new Intl.DateTimeFormat("es-ES", {
-    timeZone: "Europe/Madrid",
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit"
+    timeZone:"Europe/Madrid", hour12:false, hour:"2-digit", minute:"2-digit", second:"2-digit"
   });
   const esDateFormatter = new Intl.DateTimeFormat("es-ES", {
-    timeZone: "Europe/Madrid",
-    weekday: "long",
-    year: "numeric",
-    month: "long",
-    day: "2-digit"
+    timeZone:"Europe/Madrid", weekday:"long", year:"numeric", month:"long", day:"2-digit"
   });
-  const elTimeES = document.getElementById("timeES");
-  const elDateES = document.getElementById("dateES");
-  if(elTimeES) elTimeES.textContent = esFormatter.format(now);
-  if(elDateES) elDateES.textContent = esDateFormatter.format(now);
+  const timeES = document.getElementById("timeES");
+  const dateES = document.getElementById("dateES");
+  if(timeES) timeES.textContent = esFormatter.format(now);
+  if(dateES) dateES.textContent = esDateFormatter.format(now);
 
-  // Servidor UTC-4 +1h (equivale a UTC-3 fijo)
+  // Servidor UTC-4 +1h (UTC-3)
   const nowUTCms = now.getTime() + (now.getTimezoneOffset() * 60000);
   const utcMinus3 = new Date(nowUTCms - 3 * 3600 * 1000);
-  const y = utcMinus3.getUTCFullYear();
-  const m = utcMinus3.getUTCMonth() + 1;
-  const d = utcMinus3.getUTCDate();
   const hh = utcMinus3.getUTCHours();
   const mm = utcMinus3.getUTCMinutes();
   const ss = utcMinus3.getUTCSeconds();
-
-  const elTimeU = document.getElementById("timeUTC4");
-  const elDateU = document.getElementById("dateUTC4");
-  if(elTimeU) elTimeU.textContent = `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+  const timeU = document.getElementById("timeUTC4");
+  const dateU = document.getElementById("dateUTC4");
+  if(timeU) timeU.textContent = `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
   const dayNames = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
   const monthNames = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const weekday = dayNames[utcMinus3.getUTCDay()];
-  const monthName = monthNames[m - 1];
-  if(elDateU) elDateU.textContent = `${weekday}, ${pad2(d)} de ${monthName} de ${y}`;
+  const monthName = monthNames[utcMinus3.getUTCMonth()];
+  if(dateU) dateU.textContent = `${weekday}, ${pad2(utcMinus3.getUTCDate())} de ${monthName} de ${utcMinus3.getUTCFullYear()}`;
 }
 setInterval(updateClocks, 1000);
 updateClocks();
@@ -196,7 +188,7 @@ onAuthStateChanged(auth, async user=>{
   }
 });
 
-/* === Pintar tabla en tiempo real (manteniendo formato) === */
+/* === Pintar tabla en tiempo real === */
 function cargarMiembros(){
   const tabla = document.getElementById("tablaMiembros");
   onSnapshot(collection(db,"members"), (snap) => {
@@ -223,7 +215,7 @@ function cargarMiembros(){
 
       tabla.innerHTML += `
         <tr id="fila_${d.id}">
-          <td>${m.name ?? "-"}</td>
+          <td id="nombre_${d.id}">${m.name ?? "-"}</td>
           <td id="rol_${d.id}">${m.role ?? "-"}</td>
           <td id="clase_${d.id}">${m.clase ?? "-"}</td>
           <td id="nivel_${d.id}">${m.nivel ?? 1}</td>
@@ -232,19 +224,22 @@ function cargarMiembros(){
           <td id="boss45_${d.id}">${boss45}</td>
           <td id="boss55_${d.id}">${boss55}</td>
           <td id="total_${d.id}">${m.totalContribution ?? 0}</td>
-          <td>${puedeEditar ? `<button class="btn" onclick="editar('${d.id}','${m.name ?? ''}')">Editar</button>` : ""}</td>
+          <td>
+            ${puedeEditar ? `<button class="btn" onclick="editar('${d.id}','${m.name ?? ''}')">Editar</button>` : ""}
+            ${(MI_UID === "IPsOS0geYjbsH0ZQZ5RAoNZ00XL2") ? 
+              `<button class="btn secondary" onclick="eliminarMiembro('${d.id}')">Eliminar</button>` 
+              : ""}
+          </td>
         </tr>
       `;
     });
   });
 }
 
-/* === Editar fila (Clase solo Líder/Oficial) === */
+/* === Editar fila (Nombre solo Líder/Oficial; Clase solo Líder/Oficial; Nivel/Poder solo lectura) === */
 window.editar = (id,nombre)=>{
   const rolTxt = document.getElementById("rol_"+id).textContent.trim();
   const claseTxt = document.getElementById("clase_"+id).textContent.trim();
-  const poder = document.getElementById("poder_"+id).textContent.trim();
-  const nivel = document.getElementById("nivel_"+id).textContent.trim();
   const boss45Txt = document.getElementById("boss45_"+id).textContent.trim();
   const boss55Txt = document.getElementById("boss55_"+id).textContent.trim();
   const semanalTxt = document.getElementById("sem_"+id).textContent.trim();
@@ -252,6 +247,16 @@ window.editar = (id,nombre)=>{
   const esPropio = (id === MI_UID);
   if(MI_ROL==="Miembro" && !esPropio){ alert("No tienes permisos para editar a otros miembros"); return; }
 
+  // Nombre editable solo para Líder/Oficial
+  if(MI_ROL==="Líder" || MI_ROL==="Oficial"){
+    document.getElementById("nombre_"+id).innerHTML =
+      `<input type="text" class="edit-input" id="editNombre_${id}" value="${nombre}">`;
+  } else {
+    document.getElementById("nombre_"+id).innerHTML =
+      `<input type="text" class="edit-input" id="editNombre_${id}" value="${nombre}" readonly>`;
+  }
+
+  // Rol, Clase, Semanal y Bosses solo para Líder/Oficial
   if(MI_ROL==="Líder" || MI_ROL==="Oficial"){
     document.getElementById("rol_"+id).innerHTML = `
       <select class="edit-select" id="editRol_${id}">
@@ -279,20 +284,24 @@ window.editar = (id,nombre)=>{
       </select>`;
   }
 
-  document.getElementById("poder_"+id).innerHTML = `<input type="number" class="edit-input" id="editPoder_${id}" value="${poder}">`;
-  document.getElementById("nivel_"+id).innerHTML = `<input type="number" class="edit-input" id="editNivel_${id}" value="${nivel}">`;
-
+  // Nivel y Poder NO se editan aquí (solo lectura desde Control Semanal)
   document.getElementById("fila_"+id).querySelector("td:last-child").innerHTML =
     `<button class="btn" onclick="guardar('${id}','${nombre}')">Guardar</button>`;
 };
 
-/* === Guardar cambios === */
+/* === Guardar cambios (sin nivel/poder) === */
 window.guardar = async (id,nombre)=>{
-  const poder = Number(document.getElementById("editPoder_"+id).value);
-  const nivel = Number(document.getElementById("editNivel_"+id).value);
+  let updateData = {};
+  let cambioTxt = "";
 
-  let updateData = { poder, nivel };
-  let cambioTxt = `Poder: ${poder}, Nivel: ${nivel}`;
+  // Guardar nombre solo si Líder/Oficial
+  if(MI_ROL==="Líder" || MI_ROL==="Oficial"){
+    const nuevoNombre = document.getElementById("editNombre_"+id)?.value;
+    if(nuevoNombre && nuevoNombre!==nombre){
+      updateData.name = nuevoNombre;
+      cambioTxt += (cambioTxt ? ", " : "") + `Nombre: ${nuevoNombre}`;
+    }
+  }
 
   if(MI_ROL==="Líder" || MI_ROL==="Oficial"){
     const rolSel = document.getElementById("editRol_"+id)?.value;
@@ -301,21 +310,21 @@ window.guardar = async (id,nombre)=>{
     const boss45Sel = document.getElementById("editBoss45_"+id)?.value;
     const boss55Sel = document.getElementById("editBoss55_"+id)?.value;
 
-    if(rolSel){ updateData.role = rolSel; cambioTxt += `, Rol: ${rolSel}`; }
-    if(claseSel){ updateData.clase = claseSel; cambioTxt += `, Clase: ${claseSel}`; }
+    if(rolSel){ updateData.role = rolSel; cambioTxt += (cambioTxt ? ", " : "") + `Rol: ${rolSel}`; }
+    if(claseSel){ updateData.clase = claseSel; cambioTxt += (cambioTxt ? ", " : "") + `Clase: ${claseSel}`; }
     if(semanalEl){
       const semanal = Number(semanalEl.value);
-      if(!isNaN(semanal)){ updateData.semanal = semanal; cambioTxt += `, Semanal: ${semanal}`; }
+      if(!isNaN(semanal)){ updateData.semanal = semanal; cambioTxt += (cambioTxt ? ", " : "") + `Semanal: ${semanal}`; }
     }
     if(boss45Sel!==undefined){
       const b45 = (boss45Sel==="Sí");
       updateData.boss45 = b45;
-      cambioTxt += `, Boss45: ${b45 ? "Sí" : "No"}`;
+      cambioTxt += (cambioTxt ? ", " : "") + `Boss45: ${b45 ? "Sí" : "No"}`;
     }
     if(boss55Sel!==undefined){
       const b55 = (boss55Sel==="Sí");
       updateData.boss55 = b55;
-      cambioTxt += `, Boss55: ${b55 ? "Sí" : "No"}`;
+      cambioTxt += (cambioTxt ? ", " : "") + `Boss55: ${b55 ? "Sí" : "No"}`;
     }
   }
 
@@ -325,14 +334,35 @@ window.guardar = async (id,nombre)=>{
     usuario: nombre || "Usuario",
     rol: MI_ROL,
     accion: "Actualización de datos",
-    cambio: cambioTxt,
+    cambio: cambioTxt || "Sin cambios",
     fecha: Date.now()
   });
 
   document.getElementById("fila_"+id).querySelector("td:last-child").innerHTML =
-    `<button class="btn" onclick="editar('${id}','${nombre ?? ''}')">Editar</button>`;
+    `<button class="btn" onclick="editar('${id}','${document.getElementById('editNombre_'+id)?.value ?? nombre}')">Editar</button>`;
 
   alert("Datos actualizados y registrados en historial");
+};
+
+/* === Eliminar miembro SOLO de Firestore (mantiene Auth) === */
+window.eliminarMiembro = async (uid)=>{
+  if(MI_UID !== "IPsOS0geYjbsH0ZQZ5RAoNZ00XL2"){
+    alert("No tienes permisos para eliminar miembros.");
+    return;
+  }
+  if(!confirm("¿Seguro que quieres eliminar este miembro de Firestore?")) return;
+
+  try{
+    await deleteDoc(doc(db,"members",uid));
+
+    // Quitar la fila del HTML inmediatamente (aunque onSnapshot la retirará)
+    const fila = document.getElementById("fila_"+uid);
+    if(fila) fila.remove();
+
+    alert("Miembro eliminado de Firestore. La cuenta en Auth sigue activa.");
+  }catch(e){
+    alert("Error al eliminar: "+(e.message || e));
+  }
 };
 
 /* === Reinicio semanal === */

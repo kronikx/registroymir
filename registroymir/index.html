@@ -5,7 +5,6 @@
 <title>YMIR Guild - Login</title>
 <link rel="stylesheet" href="style.css">
 <style>
-  /* Ajuste SOLO para index */
   body {
     display: flex;
     align-items: center;
@@ -13,9 +12,27 @@
     min-height: 100vh;
   }
   .card {
-    max-width: 280px; /* más estrecho */
+    max-width: 280px;
     width: 100%;
     margin: 20px auto;
+  }
+  /* Estilo morado para el desplegable */
+  select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 6px;
+    border-radius: 4px;
+    border: 1px solid #a020f0;
+    background: #4b0082;       /* fondo morado */
+    color: #fff;               /* texto blanco */
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+  }
+  select option {
+    background: #4b0082;
+    color: #fff;
   }
 </style>
 </head>
@@ -39,7 +56,16 @@
     <h3>Registro</h3>
     <input id="regEmail" type="email" placeholder="Correo electrónico">
     <input id="regPassword" type="password" placeholder="Contraseña">
-    <input id="regName" placeholder="Nombre en el clan">
+    <input id="regName" placeholder="Nombre de personaje">
+    <!-- Nuevo campo: Rol -->
+    <select id="regRole">
+      <option value="">Selecciona tu rol</option>
+      <option value="Tanque">Tanque</option>
+      <option value="Arquera">Arquera</option>
+      <option value="Maga">Maga</option>
+      <option value="Healer">Healer</option>
+      <option value="Lancero">Lancero</option>
+    </select>
     <button id="register">Crear cuenta</button>
     <p id="regMsg" style="text-align:center; color:#c77dff; margin-top:10px;"></p>
   </div>
@@ -78,11 +104,15 @@ document.getElementById("register").onclick = async ()=>{
   const email = document.getElementById("regEmail").value;
   const pass = document.getElementById("regPassword").value;
   const name = document.getElementById("regName").value;
+  const role = document.getElementById("regRole").value;
   try{
     const cred = await createUserWithEmailAndPassword(auth,email,pass);
     await setDoc(doc(db,"members",cred.user.uid),{
       name,
-      role:"Miembro",
+      role:"Miembro",        // rol dentro de la guild
+      clase: role,           // clase/rol elegido en el registro
+      nivel: 1,
+      poder: 0,
       totalContribution:0
     });
     document.getElementById("regMsg").textContent = "Cuenta creada, ahora puedes iniciar sesión";

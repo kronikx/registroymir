@@ -20,7 +20,7 @@
     <a href="panel.html">Miembros</a>
     <a href="subastas.html">Subastas</a>
     <a href="registro.html">Historial</a>
-    <a href="panel.html">Volver</a>
+    <a href="control.html">Control Semanal</a>
   </div>
 
   <!-- Crear subasta (solo Líder/Oficial) -->
@@ -119,13 +119,36 @@ document.getElementById("crear").onclick = async ()=>{
       ganadorUid: "",
       fin: Date.now() + tiempo * 60000,
       finalizada: false,
-      historial: [] // [{ uid, jugador, cantidad, deTotal, deSemanal }]
+      historial: []
     });
     document.getElementById("crearMsg").textContent = "Subasta creada correctamente";
   }catch(e){
     document.getElementById("crearMsg").textContent = "Error al crear la subasta: " + e.message;
   }
 };
+
+/* === Validar que la línea en Control esté completa (sin vacíos ni 0/0%) === */
+async function controlCompleto(uid){
+  const memberSnap = await getDoc(doc(db,"members",uid));
+  if(!memberSnap.exists()) return false;
+  const datos = memberSnap.data();
+  const campos = [
+    "nivel","poder",
+    "physAtk","physDmg",
+    "magAtk","magDmg",
+    "physDef","physDmgDef",
+    "magDef","magDmgDef",
+    "acc","eva",
+    "monsterDmg","monsterDmgDef",
+    "bossDmg","bossDmgDef"
+  ];
+  return !campos.some(c=>{
+    const v = datos[c];
+    if(v===undefined || v===null) return true;
+    const s = String(v).trim();
+    return (s==="" || s==="0" || s==="0%");
+  });
+}
 
 /* === Cargar subastas en tiempo real === */
 let intervaloContadores;
@@ -144,6 +167,7 @@ function cargarSubastas(){
     const boss55 = !!meData.boss55;
     const bossesOk = (boss45 && boss55);
     const puedeBorrar = (role==="Líder" || role==="Oficial");
+    const completo = await controlCompleto(user.uid);
 
     tabla.innerHTML = `
       <tr>
@@ -192,11 +216,13 @@ function cargarSubastas(){
 
       let celdaPuja;
       if(restante > 0 && !finalizada){
-        if(claseOk && tierOk && bossesOk){
+        if(claseOk && tierOk && bossesOk && completo){
           celdaPuja = `<input type="number" id="puja_${d.id}" placeholder="Cantidad">
                        <button onclick="pujar('${d.id}')">Pujar</button>`;
         }else{
-          const motivo = !bossesOk ? "Boss45/Boss55" : (!tierOk ? "Tier" : "Clase");
+          const motivo = !completo ? "Control incompleto" :
+                         (!bossesOk ? "Boss45/Boss55" :
+                         (!tierOk ? "Tier" : "Clase"));
           celdaPuja = `No disponible (${motivo})`;
         }
       }else{
@@ -227,10 +253,17 @@ function cargarSubastas(){
   });
 }
 
-/* === Pujar: primero del total, luego del semanal; tier solo en la primera puja; bosses boolean === */
+/* === Pujar: con validación de Control === */
 window.pujar = async (id)=>{
   const user = auth.currentUser;
   if(!user){ alert("No autenticado"); return; }
+
+  // Validación adicional por si alguien fuerza el botón desde el DOM
+  const completo = await controlCompleto(user.uid);
+  if(!completo){
+    alert("Debes completar tu Control (sin vacíos ni 0/0%) antes de pujar.");
+    return;
+  }
 
   const meRef = doc(db,"members",user.uid);
   const meSnap = await getDoc(meRef);
