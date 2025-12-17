@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>REGISTRO DEPREDADORES - Login</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: #1a1a2e;
+    color: #fff;
+    font-family: Arial, sans-serif;
+  }
+  .card {
+    max-width: 320px;
+    width: 100%;
+    margin: 20px auto;
+    text-align: center;
+    padding: 20px;
+    border-radius: 12px;
+    background: #4b0082;
+    box-shadow: 0 0 12px #a020f0, 0 0 24px #a020f0;
+  }
+  input {
+    width: 90%;
+    padding: 8px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: none;
+  }
+  .btn {
+    background-color: #5865F2;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  .btn:hover {
+    background-color: #4752C4;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h2>REGISTRO DEPREDADORES</h2>
+    <input type="text" id="username" placeholder="Usuario">
+    <input type="password" id="password" placeholder="Contraseña">
+    <button class="btn" onclick="login()">Entrar</button>
+    <button class="btn" style="background-color:#28a745;" onclick="register()">Registrarse</button>
+    <div id="estado" style="margin-top:15px; font-weight:bold;"></div>
+  </div>
+
+  <script>
+    async function login(){
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const res = await fetch("/api/login", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if(data.ok){
+        window.location.href="/panel.html";
+      } else {
+        document.getElementById("estado").textContent = data.error || "Login incorrecto";
+      }
+    }
+
+    async function register(){
+      const username = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const res = await fetch("/api/register", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if(data.ok){
+        document.getElementById("estado").textContent = "Usuario registrado, ahora puedes entrar";
+      } else {
+        document.getElementById("estado").textContent = data.error || "Error al registrar";
+      }
+    }
+  </script>
+</body>
+</html>
