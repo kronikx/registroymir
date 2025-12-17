@@ -111,7 +111,7 @@ function pintarTabla(lista){
   const tabla = document.getElementById("tablaSolicitudes");
 
   if(lista.length===0){
-    tabla.innerHTML = `<tr><td colspan="5">No hay solicitudes</td></tr>`;
+    tabla.innerHTML = `<tr><td colspan="7">No hay solicitudes</td></tr>`;
     return;
   }
 
@@ -119,6 +119,8 @@ function pintarTabla(lista){
     <tr>
       <th>Email</th>
       <th>Usuario ID</th>
+      <th>Nombre</th>
+      <th>Clase</th>
       <th>Estado</th>
       <th>Fecha</th>
       <th>Acciones</th>
@@ -130,10 +132,12 @@ function pintarTabla(lista){
       <tr>
         <td>${s.email || "-"}</td>
         <td>${s.usuarioId || "-"}</td>
+        <td>${s.name || "-"}</td>
+        <td>${s.clase || "-"}</td>
         <td><span class="badge badge-pendiente">${s.estado || "pendiente"}</span></td>
         <td>${s.fecha ? new Date(s.fecha.toDate()).toLocaleString() : "-"}</td>
         <td>
-          <button onclick="aprobar('${s.id}','${s.usuarioId}','${s.email}')">Aprobar</button>
+          <button onclick="aprobar('${s.id}','${s.usuarioId}','${s.email}','${s.name}','${s.clase}')">Aprobar</button>
           <button onclick="rechazar('${s.id}')">Rechazar</button>
         </td>
       </tr>
@@ -142,15 +146,16 @@ function pintarTabla(lista){
 }
 
 /* === Acciones === */
-window.aprobar = async (solicitudId, usuarioId, email)=>{
-  // Crear en members con rol miembro
+window.aprobar = async (solicitudId, usuarioId, email, name, clase)=>{
+  // Crear en members con rol miembro y datos completos
   await setDoc(doc(db,"members",usuarioId), {
     email: email,
     rol: "Miembro",
-    name: "",
-    clase: "",
-    nivel: 0,
-    poder: 0
+    name: name,
+    clase: clase,
+    nivel: 1,
+    poder: 0,
+    totalContribution: 0
   });
   // Eliminar de solicitudes
   await deleteDoc(doc(db,"solicitudes",solicitudId));
