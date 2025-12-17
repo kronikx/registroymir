@@ -39,17 +39,9 @@ export default async function handler(req, res) {
     const isMember = guilds.some(g => g.id === GUILD_ID);
     if (!isMember) return res.redirect("/index.html?auth=ok");
 
-    // ✅ Cookies compatibles
-    const flags = "Path=/; HttpOnly; SameSite=Lax; Max-Age=604800";
+    // ✅ Cookie visible para el frontend
+    const flags = "Path=/; SameSite=Lax; Max-Age=604800";
     res.setHeader("Set-Cookie", `discordUser=${userData.id}; ${flags}`);
-    res.setHeader("Set-Cookie", `discordRefresh=${tokenData.refresh_token}; ${flags}`);
-
-    // 🔐 Guardar en Firebase como "miembro"
-    // const userRef = doc(db, "users", userData.id);
-    // const snap = await getDoc(userRef);
-    // if (!snap.exists()) {
-    //   await setDoc(userRef, { username: userData.username, rol: "miembro" });
-    // }
 
     return res.redirect("/panel.html");
   } catch (err) {
