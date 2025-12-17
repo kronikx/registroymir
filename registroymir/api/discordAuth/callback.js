@@ -7,12 +7,10 @@ export default async function handler(req, res) {
   const urlParams = new URLSearchParams(req.url.split("?")[1]);
   const code = urlParams.get("code");
 
-  if (!code) {
-    return res.redirect("/index.html");
-  }
+  if (!code) return res.redirect("/index.html");
 
   try {
-    const tokenResponse = await fetch("https://discord.com/api/oauth2/token", {
+    const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       body: new URLSearchParams({
@@ -25,45 +23,35 @@ export default async function handler(req, res) {
       }),
     });
 
-    const tokenData = await tokenResponse.json();
-    if (!tokenData.access_token) {
-      return res.redirect("/index.html");
-    }
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) return res.redirect("/index.html");
 
-    const userResponse = await fetch("https://discord.com/api/users/@me", {
+    const userRes = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
-    const userData = await userResponse.json();
+    const userData = await userRes.json();
 
-    const guildResponse = await fetch("https://discord.com/api/users/@me/guilds", {
+    const guildRes = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
-    const guilds = await guildResponse.json();
+    const guilds = await guildRes.json();
 
-    const isMember = guilds.some((g) => g.id === GUILD_ID);
+    const isMember = guilds.some(g => g.id === GUILD_ID);
+    if (!isMember) return res.redirect("/index.html?auth=ok");
 
-    if (isMember) {
-      // 🔑 Flags para cookies
-      const laxFlags = "Path=/; HttpOnly; SameSite=Lax; Max-Age=604800";
-      const secureFlags = "Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800";
+    // ✅ Cookies simplificadas para compatibilidad
+    const flags = "Path=/; HttpOnly; SameSite=Lax; Max-Age=604800";
+    res.setHeader("Set-Cookie", `discordUser=${userData.id}; ${flags}`);
+    res.setHeader("Set-Cookie", `discordRefresh=${tokenData.refresh_token}; ${flags}`);
 
-      // Guardar cookies
-      res.setHeader("Set-Cookie", `discordUser=${userData.id}; ${laxFlags}`);
-      res.appendHeader("Set-Cookie", `discordRefresh=${tokenData.refresh_token}; ${secureFlags}`);
+    // 🔐 Guardar en Firebase como "miembro"
+    // const userRef = doc(db, "users", userData.id);
+    // const snap = await getDoc(userRef);
+    // if (!snap.exists()) {
+    //   await setDoc(userRef, { username: userData.username, rol: "miembro" });
+    // }
 
-      // Guardar en tu BD con rol fijo "miembro"
-      // Ejemplo con Firebase:
-      // const userRef = doc(db, "users", userData.id);
-      // const snap = await getDoc(userRef);
-      // if (!snap.exists()) {
-      //   await setDoc(userRef, { username: userData.username, rol: "miembro" });
-      // }
-
-      return res.redirect("/panel.html");
-    } else {
-      // No es miembro del servidor → vuelve al index con opción de registro
-      return res.redirect("/index.html?auth=ok");
-    }
+    return res.redirect("/panel.html");
   } catch (err) {
     console.error("Error en callback:", err);
     return res.redirect("/index.html");
