@@ -58,10 +58,9 @@
     const discordUser = getCookie("discordUser");
 
     if(discordUser){
-      // Ya logueado → ocultar botón y mostrar mensaje
+      // Ya logueado → ocultar botón y redirigir al panel
       document.getElementById("discordLink").style.display = "none";
-      document.getElementById("welcome").textContent = "Ya has iniciado sesión en Discord.";
-      // Opcional: redirigir directamente al panel
+      document.getElementById("welcome").textContent = "Acceso concedido. Entrando...";
       window.location.href = "/panel.html";
     }
   </script>
