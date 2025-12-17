@@ -39,8 +39,8 @@ export default async function handler(req, res) {
     const isMember = guilds.some(g => g.id === GUILD_ID);
     if (!isMember) return res.redirect("/index.html?auth=ok");
 
-    // ✅ Cookie visible para el frontend
-    const flags = "Path=/; SameSite=Lax; Max-Age=604800";
+    // ✅ Cookie visible para frontend
+    const flags = "Path=/; SameSite=Lax; Secure; Max-Age=604800";
     res.setHeader("Set-Cookie", `discordUser=${userData.id}; ${flags}`);
 
     return res.redirect("/panel.html");

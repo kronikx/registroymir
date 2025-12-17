@@ -48,7 +48,7 @@
     cursor: pointer;
     margin-top: 15px;
     font-weight: bold;
-    display: none; /* oculto por defecto */
+    display: none;
   }
   .register-btn:hover {
     background-color: #218838;
@@ -63,31 +63,31 @@
     <div id="welcome" style="margin-top:15px; font-weight:bold;"></div>
   </div>
 
- <script>
-  // Si ya hay cookie de sesión, ir directo al panel
-  const cookies = document.cookie.split("; ").reduce((acc, c) => {
-    const [k, v] = c.split("=");
-    acc[k] = v;
-    return acc;
-  }, {});
-  if (cookies.discordUser) {
-    window.location.href = "/panel.html";
-  }
+  <script>
+    // Detectar cookie de sesión
+    const cookies = document.cookie.split("; ").reduce((acc, c) => {
+      const [k, v] = c.split("=");
+      acc[k] = v;
+      return acc;
+    }, {});
 
-  function loginDiscord() {
-    const clientId = "1450641085385674853";
-    const redirectUri = encodeURIComponent("https://registroymir.vercel.app/api/discordAuth/callback");
-    const scope = "identify guilds";
-    const discordURL = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(scope)}`;
-    window.location.href = discordURL;
-  }
+    if (cookies.discordUser && window.location.pathname === "/index.html") {
+      window.location.href = "/panel.html";
+    }
 
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("auth") === "ok") {
-    document.getElementById("registerBtn").style.display = "inline-block";
-    document.getElementById("welcome").textContent = "No eres miembro del servidor. Regístrate.";
-  }
-</script>
+    function loginDiscord() {
+      const clientId = "1450641085385674853";
+      const redirectUri = encodeURIComponent("https://registroymir.vercel.app/api/discordAuth/callback");
+      const scope = "identify guilds";
+      const discordURL = `https://discord.com/api/oauth2/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=code&scope=${encodeURIComponent(scope)}`;
+      window.location.href = discordURL;
+    }
 
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("auth") === "ok") {
+      document.getElementById("registerBtn").style.display = "inline-block";
+      document.getElementById("welcome").textContent = "No eres miembro del servidor. Regístrate.";
+    }
+  </script>
 </body>
 </html>
