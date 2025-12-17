@@ -106,17 +106,17 @@ document.getElementById("register").onclick = async ()=>{
   const name = document.getElementById("regName").value;
   const role = document.getElementById("regRole").value;
   try{
-    const cred = await createUserWithEmailAndPassword(auth,email,pass);
-    await setDoc(doc(db,"members",cred.user.uid),{
-      name,
-      role:"Miembro",        // rol dentro de la guild
-      clase: role,           // clase/rol elegido en el registro
-      nivel: 1,
-      poder: 0,
-      totalContribution:0
-    });
-    document.getElementById("regMsg").textContent = "Cuenta creada, ahora puedes iniciar sesión";
-    location.href = "panel.html";
+const cred = await createUserWithEmailAndPassword(auth,email,pass);
+await setDoc(doc(db,"solicitudes",cred.user.uid),{
+  email,
+  usuarioId: cred.user.uid,
+  name,
+  clase: role,
+  estado: "pendiente",
+  fecha: new Date()
+});
+document.getElementById("regMsg").textContent = "Solicitud enviada. Espera aprobación de un Líder u Oficial.";
+// No redirigimos al panel, se queda en index
   }catch(e){
     document.getElementById("regMsg").textContent = "Error: "+e.message;
   }
