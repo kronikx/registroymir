@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>YMIR Guild - Subastas</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .item { max-height: 28px; vertical-align: middle; margin-left: 6px; border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; }
+  .card { margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Subastas del Clan</h1>
+
+  <div class="nav">
+    <a href="panel.html">Miembros</a>
+    <a href="subastas.html">Subastas</a>
+    <a href="registro.html">Historial</a>
+    <a href="control.html">Control Semanal</a>
+  </div>
+
+  <!-- Crear subasta (solo Líder/Oficial) -->
+  <div class="card" id="crearSubasta" style="display:none">
+    <h3>Nueva Subasta</h3>
+    <input id="item" placeholder="Nombre del item">
+    <input id="imagen" placeholder="URL imagen (opcional)">
+    <input id="precio" type="number" placeholder="Precio base">
+    <input id="tiempo" type="number" placeholder="Minutos">
+    <select id="claseItem">
+      <option value="Neutral">Neutral</option>
+      <option value="Arquero">Arquero</option>
+      <option value="Mago">Mago</option>
+      <option value="Tanque">Tanque</option>
+      <option value="Healer">Healer</option>
+    </select>
+    <select id="tierItem">
+      <option value="Libre">Libre</option>
+      <option value="T2">T2</option>
+      <option value="T3">T3</option>
+    </select>
+    <button id="crear">Crear subasta</button>
+    <p id="crearMsg" style="text-align:center; color:#c77dff; margin-top:10px;"></p>
+  </div>
+
+  <!-- Tabla + saldo -->
+  <div class="card" style="display:flex; align-items:flex-start; gap:20px;">
+    <table id="tabla" style="flex:1"></table>
+    <div style="border:1px solid #ccc; padding:10px; border-radius:6px; min-width:180px; text-align:center;">
+      <button id="saldoBtn" disabled style="font-weight:bold; width:100%;">Mis puntos: 0</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+/* === Auth y visibilidad del creador === */
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href = "index.html"; return; }
+  const meSnap = await getDoc(doc(db,"members",user.uid));
+  const role = meSnap.data()?.role || "Miembro";
+  if(role==="Líder" || role==="Oficial"){
+    document.getElementById("crearSubasta").style.display = "block";
+  }
+  escucharSaldo();
+  cargarSubastas();
+});
+
+/* === Saldo en tiempo real === */
+function escucharSaldo(){
+  const user = auth.currentUser;
+  if(!user) return;
+  onSnapshot(doc(db,"members",user.uid), (snap)=>{
+    const data = snap.data() || {};
+    const total = data.totalContribution ?? 0;
+    const semanal = data.semanal ?? 0;
+    document.getElementById("saldoBtn").textContent = `Mis puntos: ${total + semanal}`;
+  });
+}
+
+/* === Crear subasta === */
+document.getElementById("crear").onclick = async ()=>{
+  const item = document.getElementById("item").value.trim();
+  const imagen = document.getElementById("imagen").value.trim();
+  const precio = Number(document.getElementById("precio").value);
+  const tiempo = Number(document.getElementById("tiempo").value);
+  const claseItem = document.getElementById("claseItem").value;
+  const tierItem = document.getElementById("tierItem").value;
+
+  if(!item || !precio || !tiempo){
+    document.getElementById("crearMsg").textContent = "Completa todos los campos obligatorios";
+    return;
+  }
+
+  try{
+    await addDoc(collection(db,"subastas"),{
+      item,
+      imagen: imagen || "",
+      claseItem,
+      tierItem,
+      precioBase: precio,
+      pujaActual: precio,
+      ganador: "",
+      ganadorUid: "",
+      fin: Date.now() + tiempo * 60000,
+      finalizada: false,
+      historial: []
+    });
+    document.getElementById("crearMsg").textContent = "Subasta creada correctamente";
+  }catch(e){
+    document.getElementById("crearMsg").textContent = "Error al crear la subasta: " + e.message;
+  }
+};
+
+/* === Validar que la línea en Control esté completa (sin vacíos ni 0/0%) === */
+async function controlCompleto(uid){
+  const memberSnap = await getDoc(doc(db,"members",uid));
+  if(!memberSnap.exists()) return false;
+  const datos = memberSnap.data();
+  const campos = [
+    "nivel","poder",
+    "physAtk","physDmg",
+    "magAtk","magDmg",
+    "physDef","physDmgDef",
+    "magDef","magDmgDef",
+    "acc","eva",
+    "monsterDmg","monsterDmgDef",
+    "bossDmg","bossDmgDef"
+  ];
+  return !campos.some(c=>{
+    const v = datos[c];
+    if(v===undefined || v===null) return true;
+    const s = String(v).trim();
+    return (s==="" || s==="0" || s==="0%");
+  });
+}
+
+/* === Cargar subastas en tiempo real === */
+let intervaloContadores;
+function cargarSubastas(){
+  const tabla = document.getElementById("tabla");
+  const user = auth.currentUser;
+  if(!user) return;
+
+  onSnapshot(collection(db,"subastas"), async (snap) => {
+    const me = await getDoc(doc(db,"members",user.uid));
+    const meData = me.data() || {};
+    const role = meData.role || "Miembro";
+    const miClase = meData.clase || "Neutral";
+    const miSemanal = meData.semanal ?? 0;
+    const boss45 = !!meData.boss45;
+    const boss55 = !!meData.boss55;
+    const bossesOk = (boss45 && boss55);
+    const puedeBorrar = (role==="Líder" || role==="Oficial");
+    const completo = await controlCompleto(user.uid);
+
+    tabla.innerHTML = `
+      <tr>
+        <th>Item</th>
+        <th>Clase</th>
+        <th>Tier</th>
+        <th>Precio base</th>
+        <th>Puja actual</th>
+        <th>Ganador</th>
+        <th>Tiempo</th>
+        <th>Historial</th>
+        <th>Pujar</th>
+        ${puedeBorrar ? "<th>Eliminar</th>" : ""}
+      </tr>
+    `;
+
+    if(snap.empty){
+      tabla.innerHTML += `<tr><td colspan="${puedeBorrar ? 10 : 9}" style="text-align:center; color:#999;">No hay subastas activas</td></tr>`;
+      if(intervaloContadores) clearInterval(intervaloContadores);
+      return;
+    }
+
+    snap.forEach(d=>{
+      const s = d.data() || {};
+      const item = s.item ?? "(sin nombre)";
+      const claseItem = s.claseItem ?? "Neutral";
+      const tierItem = s.tierItem ?? "Libre";
+      const precioBase = s.precioBase ?? 0;
+      const pujaActual = s.pujaActual ?? precioBase;
+      const ganador = s.ganador || "-";
+      const fin = s.fin ?? (Date.now() + 600000);
+      const finalizada = !!s.finalizada;
+      const restante = Math.max(0, Math.floor((fin - Date.now()) / 1000));
+
+      const historialTxt = s.historial && s.historial.length 
+        ? s.historial.map(h=>`${h.jugador} → ${h.cantidad} (T:${h.deTotal||0}/S:${h.deSemanal||0})`).join("<br>")
+        : "-";
+
+      const yaPuje = (s.historial || []).some(h => h.uid === user.uid);
+      const claseOk = (claseItem==="Neutral" || claseItem===miClase);
+      let tierOk = true;
+      if(!yaPuje){
+        if(tierItem==="T2"){ tierOk = (miSemanal >= 8000 && miSemanal <= 8399); }
+        else if(tierItem==="T3"){ tierOk = (miSemanal >= 8400); }
+      }
+
+      let celdaPuja;
+      if(restante > 0 && !finalizada){
+        if(claseOk && tierOk && bossesOk && completo){
+          celdaPuja = `<input type="number" id="puja_${d.id}" placeholder="Cantidad">
+                       <button onclick="pujar('${d.id}')">Pujar</button>`;
+        }else{
+          const motivo = !completo ? "Control incompleto" :
+                         (!bossesOk ? "Boss45/Boss55" :
+                         (!tierOk ? "Tier" : "Clase"));
+          celdaPuja = `No disponible (${motivo})`;
+        }
+      }else{
+        celdaPuja = "Finalizada";
+      }
+
+      tabla.innerHTML += `
+        <tr>
+          <td>${item} ${s.imagen ? `<img src="${s.imagen}" class="item" alt="">` : ""}</td>
+          <td>${claseItem}</td>
+          <td>${tierItem}</td>
+          <td>${precioBase}</td>
+          <td>${pujaActual}</td>
+          <td>${ganador}</td>
+          <td data-fin="${fin}" data-id="${d.id}">${formato(restante)}</td>
+          <td>${historialTxt}</td>
+          <td>${celdaPuja}</td>
+          ${puedeBorrar ? `<td><button onclick="eliminarSubasta('${d.id}')">🗑</button></td>` : ""}
+        </tr>
+      `;
+
+      if(restante <= 0 && !finalizada){
+        finalizarSubastaSiAplica(s, d.id);
+      }
+    });
+
+    iniciarContadoresVivos();
+  });
+}
+
+/* === Pujar: con validación de Control === */
+window.pujar = async (id)=>{
+  const user = auth.currentUser;
+  if(!user){ alert("No autenticado"); return; }
+
+  // Validación adicional por si alguien fuerza el botón desde el DOM
+  const completo = await controlCompleto(user.uid);
+  if(!completo){
+    alert("Debes completar tu Control (sin vacíos ni 0/0%) antes de pujar.");
+    return;
+  }
+
+  const meRef = doc(db,"members",user.uid);
+  const meSnap = await getDoc(meRef);
+  const me = meSnap.data() || {};
+
+  const subRef = doc(db,"subastas",id);
+  const subSnap = await getDoc(subRef);
+  const sub = subSnap.data() || {};
+
+  const inputEl = document.getElementById("puja_"+id);
+  if(!inputEl){ alert("Entrada de puja no encontrada"); return; }
+  const cantidad = Number(inputEl.value);
+  if(!cantidad || cantidad <= 0){
+    alert("Introduce una cantidad válida");
+    return;
+  }
+
+  const restanteSeg = Math.max(0, Math.floor(((sub.fin ?? Date.now()) - Date.now()) / 1000));
+  if(restanteSeg <= 0 || sub.finalizada){
+    alert("La subasta ya ha finalizado");
+    return;
+  }
+
+  const miClase = me.clase || "Neutral";
+  const miSemanal = me.semanal ?? 0;
+  const claseItem = sub.claseItem || "Neutral";
+  const tierItem = sub.tierItem || "Libre";
+  const boss45 = !!me.boss45;
+  const boss55 = !!me.boss55;
+  const yaPuje = (sub.historial || []).some(h => h.uid === user.uid);
+
+  if(!(claseItem==="Neutral" || claseItem===miClase)){
+    alert(`Este item es solo para ${claseItem}`);
+    return;
+  }
+  if(!(boss45 && boss55)){
+    alert("Solo jugadores con boss45 y boss55 en 'Sí' pueden pujar");
+    return;
+  }
+  if(!yaPuje){
+    if(tierItem==="T2" && !(miSemanal >= 8000 && miSemanal <= 8399)){
+      alert("Solo jugadores con semanal entre 8000 y 8399 pueden pujar por T2");
+      return;
+    }
+    if(tierItem==="T3" && miSemanal < 8400){
+      alert("Solo jugadores con semanal ≥ 8400 pueden pujar por T3");
+      return;
+    }
+  }
+
+  const totalActual = me.totalContribution ?? 0;
+  const semanalActual = me.semanal ?? 0;
+  const disponible = totalActual + semanalActual;
+  if(disponible < cantidad){
+    alert("No tienes puntos suficientes");
+    return;
+  }
+
+  let deTotal = 0;
+  let deSemanal = 0;
+  let nuevoTotal = totalActual;
+  let nuevoSemanal = semanalActual;
+
+  if(nuevoTotal >= cantidad){
+    nuevoTotal -= cantidad;
+    deTotal = cantidad;
+  }else{
+    deTotal = nuevoTotal;
+    const resto = cantidad - nuevoTotal;
+    nuevoTotal = 0;
+    nuevoSemanal -= resto;
+    deSemanal = resto;
+  }
+
+  await updateDoc(meRef, { totalContribution: nuevoTotal, semanal: nuevoSemanal });
+
+  const base = sub.pujaActual ?? sub.precioBase ?? 0;
+  const nueva = base + cantidad;
+  const nuevoHistorial = [...(sub.historial || []), {
+    uid: user.uid,
+    jugador: me.name,
+    cantidad,
+    deTotal,
+    deSemanal
+  }];
+
+  await updateDoc(subRef, {
+    pujaActual: nueva,
+    ganador: me.name,
+    ganadorUid: user.uid,
+    historial: nuevoHistorial
+  });
+
+  inputEl.value = "";
+};
+
+/* === Eliminar subasta: reembolso si no está finalizada === */
+window.eliminarSubasta = async (id)=>{
+  const user = auth.currentUser;
+  if(!user){ alert("No autenticado"); return; }
+  if(!confirm("¿Eliminar esta subasta?")) return;
+
+  const subRef = doc(db,"subastas",id);
+  const subSnap = await getDoc(subRef);
+  const sub = subSnap.data();
+  if(!sub){ alert("Subasta no encontrada"); return; }
+
+  if(!sub.finalizada){
+    for(const h of sub.historial || []){
+      const jugadorRef = doc(db,"members",h.uid);
+      const jugadorSnap = await getDoc(jugadorRef);
+      const jugadorData = jugadorSnap.data() || {};
+      const nuevoTotal = (jugadorData.totalContribution ?? 0) + (h.deTotal ?? 0);
+      const nuevoSemanal = (jugadorData.semanal ?? 0) + (h.deSemanal ?? 0);
+      await updateDoc(jugadorRef, { totalContribution: nuevoTotal, semanal: nuevoSemanal });
+    }
+  }
+  await deleteDoc(subRef);
+  alert("Subasta eliminada");
+};
+
+/* === Finalizar subasta: reembolsos a no-ganadores; sin ganador reembolso a todos === */
+async function finalizarSubastaSiAplica(sub, id){
+  if(sub.finalizada) return;
+  const subRef = doc(db,"subastas",id);
+
+  if(!sub.ganadorUid){
+    for(const h of sub.historial || []){
+      const jugadorRef = doc(db,"members",h.uid);
+      const jugadorSnap = await getDoc(jugadorRef);
+      const jugadorData = jugadorSnap.data() || {};
+      const nuevoTotal = (jugadorData.totalContribution ?? 0) + (h.deTotal ?? 0);
+      const nuevoSemanal = (jugadorData.semanal ?? 0) + (h.deSemanal ?? 0);
+      await updateDoc(jugadorRef, { totalContribution: nuevoTotal, semanal: nuevoSemanal });
+    }
+    await updateDoc(subRef,{ finalizada: true });
+    return;
+  }
+
+  for(const h of sub.historial || []){
+    if(h.uid !== sub.ganadorUid){
+      const jugadorRef = doc(db,"members",h.uid);
+      const jugadorSnap = await getDoc(jugadorRef);
+      const jugadorData = jugadorSnap.data() || {};
+      const nuevoTotal = (jugadorData.totalContribution ?? 0) + (h.deTotal ?? 0);
+      const nuevoSemanal = (jugadorData.semanal ?? 0) + (h.deSemanal ?? 0);
+      await updateDoc(jugadorRef, { totalContribution: nuevoTotal, semanal: nuevoSemanal });
+    }
+  }
+
+  await updateDoc(subRef,{ finalizada: true });
+}
+
+/* === Contador en vivo === */
+function iniciarContadoresVivos(){
+  if(intervaloContadores) clearInterval(intervaloContadores);
+  intervaloContadores = setInterval(async ()=>{
+    const tds = document.querySelectorAll("[data-fin]");
+    for(const td of tds){
+      const fin = Number(td.getAttribute("data-fin"));
+      const restante = Math.max(0, Math.floor((fin - Date.now())/1000));
+      td.textContent = formato(restante);
+
+      if(restante <= 0){
+        const id = td.getAttribute("data-id");
+        if(id){
+          const subSnap = await getDoc(doc(db,"subastas",id));
+          const sub = subSnap.data();
+          if(sub) await finalizarSubastaSiAplica(sub, id);
+        }
+      }
+    }
+  }, 1000);
+}
+
+function formato(s){
+  const m = Math.floor(s/60);
+  const r = s % 60;
+  return `${m}:${r.toString().padStart(2,"0")}`;
+}
+</script>
+
+</body>
+</html>

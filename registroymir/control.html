@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>YMIR Guild - Control Semanal</title>
+<link rel="stylesheet" href="style.css">
+<!-- Librería para exportar a Excel -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  .container { width: 100%; max-width: none; padding: 16px; position: relative; }
+
+  .btn {
+    font-size: 13px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #0d6efd;
+    color: #fff;
+    padding: 6px 12px;
+    display: inline-block;
+  }
+  .btn:hover { background-color: #0b5ed7; }
+  .btn.secondary { background-color: #6c757d; }
+  .btn.secondary:hover { background-color: #5c636a; }
+
+  .edit-input {
+    width: 100%;
+    font-size: 13px;
+    padding: 6px 8px;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .edit-input-inline {
+    width: 100%;
+    max-width: 140px;
+    font-size: 13px;
+    padding: 6px 8px;
+    box-sizing: border-box;
+    text-align: center;
+  }
+  .inline-field {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+  }
+
+  #reinicioBtn {
+    padding: 6px 12px;
+    font-size: 13px;
+    background-color: #0d6efd;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    position: absolute;
+    top: 66px;
+    right: 16px;
+    max-width: 220px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 10;
+  }
+  #reinicioBtn:hover { background-color: #0b5ed7; }
+
+  /* Reloj dual */
+  .clock-wrapper { display: flex; justify-content: center; margin: 12px 0; }
+  .clock-card { display: flex; gap: 40px; padding: 16px 32px; border-radius: 12px; background: #4b0082; box-shadow: 0 0 12px #a020f0, 0 0 24px #a020f0; color: #fff; }
+  .clock-box { text-align: center; }
+  .clock-title { font-size: 14px; font-weight: bold; margin-bottom: 6px; }
+  .clock-time { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 24px; font-weight: 700; }
+  .clock-date { font-size: 12px; opacity: 0.9; }
+
+  /* Tabla fija y amplia */
+  .card { background: rgba(0,0,0,0.25); border-radius: 8px; padding: 8px; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td { padding: 10px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.12); }
+  th { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+
+  /* Anchos amplios para evitar scroll y cortes */
+  th, td { min-width: 180px; }
+  th:nth-child(1), td:nth-child(1) { min-width: 240px; } /* Nombre */
+  th:nth-child(2), td:nth-child(2) { min-width: 220px; } /* Clase */
+  th:nth-child(3), td:nth-child(3) { min-width: 160px; } /* Nivel */
+  th:nth-child(4), td:nth-child(4) { min-width: 220px; } /* Poder */
+  th:last-child, td:last-child { min-width: 260px; }     /* Acciones */
+
+  .muted { font-size:12px; color:#c7c7c7; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Reloj dual -->
+  <div class="clock-wrapper">
+    <div class="clock-card">
+      <div class="clock-box">
+        <div class="clock-title">España (Europe/Madrid)</div>
+        <div id="timeES" class="clock-time">--:--:--</div>
+        <div id="dateES" class="clock-date">Cargando…</div>
+      </div>
+      <div class="clock-box">
+        <div class="clock-title">Servidor (UTC-4 +1h)</div>
+        <div id="timeUTC4" class="clock-time">--:--:--</div>
+        <div id="dateUTC4" class="clock-date">Cargando…</div>
+      </div>
+    </div>
+  </div>
+
+  <h1>Control Semanal</h1>
+
+  <div class="nav">
+    <a href="panel.html">Miembros</a>
+    <a href="subastas.html">Subastas</a>
+    <a href="registro.html">Historial</a>
+    <a href="control.html">Control Semanal</a>
+  </div>
+
+  <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
+
+  <div class="card">
+    <table id="tablaControl"></table>
+    <p class="muted">Tip: pulsa “Editar” para desbloquear la fila y “Guardar” para aplicar cambios en vivo.</p>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  updateDoc,
+  addDoc,
+  getDoc,
+  onSnapshot,
+  getDocs,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+/* === Estado global === */
+let MI_ROL = "Miembro";
+let MI_UID = null;
+
+/* === Reloj dual === */
+function pad2(n){ return String(n).padStart(2,"0"); }
+function updateClocks(){
+  const now = new Date();
+
+  // España
+  const esFormatter = new Intl.DateTimeFormat("es-ES",{timeZone:"Europe/Madrid",hour:"2-digit",minute:"2-digit",second:"2-digit"});
+  const esDateFormatter = new Intl.DateTimeFormat("es-ES",{timeZone:"Europe/Madrid",weekday:"long",year:"numeric",month:"long",day:"2-digit"});
+  const tES = document.getElementById("timeES");
+  const dES = document.getElementById("dateES");
+  if(tES) tES.textContent = esFormatter.format(now);
+  if(dES) dES.textContent = esDateFormatter.format(now);
+
+  // Servidor UTC-4 (+1h) = UTC-3
+  const nowUTCms = now.getTime() + (now.getTimezoneOffset()*60000);
+  const utcMinus3 = new Date(nowUTCms - 3*3600*1000);
+  const hh = pad2(utcMinus3.getUTCHours());
+  const mm = pad2(utcMinus3.getUTCMinutes());
+  const ss = pad2(utcMinus3.getUTCSeconds());
+  const tSrv = document.getElementById("timeUTC4");
+  const dSrv = document.getElementById("dateUTC4");
+  if(tSrv) tSrv.textContent = `${hh}:${mm}:${ss}`;
+
+  const dayNames = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  const monthNames = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  if(dSrv) dSrv.textContent =
+    `${dayNames[utcMinus3.getUTCDay()]}, ${pad2(utcMinus3.getUTCDate())} de ${monthNames[utcMinus3.getUTCMonth()]} de ${utcMinus3.getUTCFullYear()}`;
+}
+setInterval(updateClocks,1000);
+updateClocks();
+
+/* === Auth y carga inicial === */
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href = "index.html"; return; }
+  MI_UID = user.uid;
+  const meRef = doc(db,"members",user.uid);
+  const meSnap = await getDoc(meRef);
+  if(!meSnap.exists()){
+    await setDoc(meRef,{
+      name: user.displayName || "SinNombre",
+      role: "Miembro",
+      clase: "SinClase",
+      nivel: 1,
+      poder: 0
+    });
+    MI_ROL = "Miembro";
+  } else {
+    MI_ROL = meSnap.data()?.role || "Miembro";
+  }
+  cargarControl();
+  if(!(MI_ROL==="Líder" || MI_ROL==="Oficial")){
+    const btn = document.getElementById("reinicioBtn");
+    if(btn) btn.style.display = "none";
+  }
+});
+
+/* === Utilidad para mostrar "-" si vacío o 0 === */
+function mostrarValorNum(v){
+  if(v === undefined || v === null) return "-";
+  if(typeof v === "string"){
+    const t = v.trim();
+    if(t === "" || t === "0") return "-";
+    const num = Number(t);
+    if(!isNaN(num) && num === 0) return "-";
+    return v;
+  }
+  if(typeof v === "number" && v === 0) return "-";
+  return v;
+}
+function mostrarValorPct(v){
+  if(v === undefined || v === null) return "-";
+  const s = String(v).trim();
+  if(s === "" || s === "0" || s === "0%") return "-";
+  return v;
+}
+
+/* === Pintar tabla en tiempo real === */
+function cargarControl(){
+  const tabla = document.getElementById("tablaControl");
+  onSnapshot(collection(db,"members"), (snap) => {
+    tabla.innerHTML = `
+      <tr>
+        <th>Nombre</th>
+        <th>Clase</th>
+        <th>Nivel</th>
+        <th>Poder</th>
+        <th>PHYS ATK</th>
+        <th>PHYS DMG</th>
+        <th>MAG ATK</th>
+        <th>MAG DMG</th>
+        <th>PHYS DEF</th>
+        <th>PHYS DMG DEF</th>
+        <th>MAG DEF</th>
+        <th>MAG DMG DEF</th>
+        <th>ACC</th>
+        <th>EVA</th>
+        <th>Monster DMG</th>
+        <th>Monster DMG DEF</th>
+        <th>Boss DMG</th>
+        <th>Boss DMG DEF</th>
+        <th>Acciones</th>
+      </tr>
+    `;
+    snap.forEach(d=>{
+      const m = d.data() || {};
+      const esPropio = (d.id === MI_UID);
+      const puedeEditar = (MI_ROL==="Líder" || MI_ROL==="Oficial" || esPropio);
+
+      tabla.innerHTML += `
+        <tr id="fila_${d.id}">
+          <td id="nombre_${d.id}">${m.name ?? "-"}</td>
+          <td id="clase_${d.id}">${m.clase ?? "-"}</td>
+          <td id="nivel_${d.id}">${mostrarValorNum(m.nivel)}</td>
+          <td id="poder_${d.id}">${mostrarValorNum(m.poder)}</td>
+          <td id="physAtk_${d.id}">${mostrarValorNum(m.physAtk)}</td>
+          <td id="physDmg_${d.id}">${mostrarValorPct(m.physDmg)}</td>
+          <td id="magAtk_${d.id}">${mostrarValorNum(m.magAtk)}</td>
+          <td id="magDmg_${d.id}">${mostrarValorPct(m.magDmg)}</td>
+          <td id="physDef_${d.id}">${mostrarValorNum(m.physDef)}</td>
+          <td id="physDmgDef_${d.id}">${mostrarValorPct(m.physDmgDef)}</td>
+          <td id="magDef_${d.id}">${mostrarValorNum(m.magDef)}</td>
+          <td id="magDmgDef_${d.id}">${mostrarValorPct(m.magDmgDef)}</td>
+          <td id="acc_${d.id}">${mostrarValorNum(m.acc)}</td>
+          <td id="eva_${d.id}">${mostrarValorNum(m.eva)}</td>
+          <td id="monsterDmg_${d.id}">${mostrarValorPct(m.monsterDmg)}</td>
+          <td id="monsterDmgDef_${d.id}">${mostrarValorPct(m.monsterDmgDef)}</td>
+          <td id="bossDmg_${d.id}">${mostrarValorPct(m.bossDmg)}</td>
+          <td id="bossDmgDef_${d.id}">${mostrarValorPct(m.bossDmgDef)}</td>
+          <td>
+            ${puedeEditar ? `<button class="btn" onclick="editar('${d.id}')">Editar</button>` : ""}
+          </td>
+        </tr>
+      `;
+    });
+  });
+}
+
+/* === Editar: Nombre y Clase no se tocan aquí === */
+window.editar = (id)=>{
+  const esPropio = (id === MI_UID);
+  if(MI_ROL==="Miembro" && !esPropio){ alert("No tienes permisos para editar a otros miembros"); return; }
+
+  // Campos editables en Control
+  const numeric = ["nivel","poder","physAtk","magAtk","physDef","magDef","acc","eva"];
+  const percent = ["physDmg","magDmg","physDmgDef","magDmgDef","monsterDmg","monsterDmgDef","bossDmg","bossDmgDef"];
+
+  for(const c of numeric){
+    const td = document.getElementById(`${c}_${id}`);
+    const val = td.textContent.trim().replace(/[^\d.-]/g,"");
+    td.innerHTML = `<input type="number" step="1" class="edit-input" id="edit_${c}_${id}" value="${val}">`;
+  }
+  for(const c of percent){
+    const td = document.getElementById(`${c}_${id}`);
+    const val = td.textContent.trim().replace("%","").trim();
+    td.innerHTML = `
+      <div class="inline-field">
+        <input type="number" step="0.01" class="edit-input-inline" id="edit_${c}_${id}" value="${val}">
+        <span>%</span>
+      </div>
+    `;
+  }
+
+  const lastTd = document.getElementById("fila_"+id).querySelector("td:last-child");
+  lastTd.innerHTML = `
+    <button class="btn" onclick="guardar('${id}')">Guardar</button>
+    <button class="btn secondary" onclick="cancelar()">Cancelar</button>
+  `;
+};
+
+/* === Cancelar: re-render por snapshot === */
+window.cancelar = ()=>{ cargarControl(); };
+
+/* === Guardar cambios (no convertir vacío en 0) === */
+window.guardar = async (id)=>{
+  const admin = (MI_ROL==="Líder" || MI_ROL==="Oficial");
+  const esPropio = (id === MI_UID);
+  if(!(admin || esPropio)){ alert("No tienes permisos para guardar."); return; }
+
+  const getVal = cid => document.getElementById(cid)?.value;
+
+  const updateData = {};
+  let cambioTxt = "";
+
+  // Numéricos: solo actualizar si el input no está vacío
+  const numeric = ["nivel","poder","physAtk","magAtk","physDef","magDef","acc","eva"];
+  for(const k of numeric){
+    const v = getVal(`edit_${k}_${id}`);
+    if(v !== undefined && v !== null && String(v).trim() !== ""){
+      const num = Number(v);
+      if(!isNaN(num)){
+        updateData[k] = num;
+        cambioTxt += (cambioTxt ? ", " : "") + `${k}: ${num}`;
+      }
+    }
+  }
+
+  // Porcentajes: solo actualizar si el input no está vacío; guardamos como cadena con %
+  const percent = ["physDmg","magDmg","physDmgDef","magDmgDef","monsterDmg","monsterDmgDef","bossDmg","bossDmgDef"];
+  for(const k of percent){
+    const v = getVal(`edit_${k}_${id}`);
+    if(v !== undefined && v !== null && String(v).trim() !== ""){
+      const num = Number(v);
+      if(!isNaN(num)){
+        const fmt = `${num}%`;
+        updateData[k] = fmt;
+        cambioTxt += (cambioTxt ? ", " : "") + `${k}: ${fmt}`;
+      }
+    }
+  }
+
+  // Si no hay cambios, no enviar updateDoc
+  if(Object.keys(updateData).length === 0){
+    alert("No hay cambios para guardar.");
+  }else{
+    await updateDoc(doc(db,"members",id), updateData);
+
+    await addDoc(collection(db,"historial"),{
+      usuario: id,
+      rol: MI_ROL,
+      accion: "Actualización de control semanal",
+      cambio: cambioTxt || "Sin cambios",
+      fecha: Date.now()
+    });
+
+    alert("Cambios guardados y registrados en historial.");
+  }
+
+  const lastTd = document.getElementById("fila_"+id).querySelector("td:last-child");
+  lastTd.innerHTML = `<button class="btn" onclick="editar('${id}')">Editar</button>`;
+  cargarControl();
+};
+
+/* === Reinicio semanal: exportar todo y limpiar TODO salvo nivel y poder === */
+window.reinicioSemanal = async ()=>{
+  if(!(MI_ROL==="Líder" || MI_ROL==="Oficial")){
+    alert("No tienes permisos para realizar el reinicio semanal.");
+    return;
+  }
+  if(!confirm("¿Seguro que quieres reiniciar el control? Se exportará a Excel y se resetearán los campos de control (salvo nivel y poder).")) return;
+
+  const snap = await getDocs(collection(db,"members"));
+  const datosExport = [];
+
+  for(const d of snap.docs){
+    const m = d.data() || {};
+    // Exportar todo: nombre, clase, nivel, poder y stats
+    datosExport.push({
+      Nombre: m.name || "",
+      Clase: m.clase || "",
+      Nivel: m.nivel ?? "",
+      Poder: m.poder ?? "",
+      "PHYS ATK": m.physAtk ?? "",
+      "PHYS DMG": m.physDmg ?? "",
+      "MAG ATK": m.magAtk ?? "",
+      "MAG DMG": m.magDmg ?? "",
+      "PHYS DEF": m.physDef ?? "",
+      "PHYS DMG DEF": m.physDmgDef ?? "",
+      "MAG DEF": m.magDef ?? "",
+      "MAG DMG DEF": m.magDmgDef ?? "",
+      ACC: m.acc ?? "",
+      EVA: m.eva ?? "",
+      "Monster DMG": m.monsterDmg ?? "",
+      "Monster DMG DEF": m.monsterDmgDef ?? "",
+      "Boss DMG": m.bossDmg ?? "",
+      "Boss DMG DEF": m.bossDmgDef ?? ""
+    });
+
+    // Reinicio de control: limpiar SOLO los campos de stats y porcentajes. Mantener nivel y poder.
+    await updateDoc(doc(db,"members",d.id),{
+      physAtk: null,
+      physDmg: null,
+      magAtk: null,
+      magDmg: null,
+      physDef: null,
+      physDmgDef: null,
+      magDef: null,
+      magDmgDef: null,
+      acc: null,
+      eva: null,
+      monsterDmg: null,
+      monsterDmgDef: null,
+      bossDmg: null,
+      bossDmgDef: null
+    });
+  }
+
+  // Exportar a Excel (usa la librería global XLSX)
+  const ws = XLSX.utils.json_to_sheet(datosExport);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "ControlSemanal");
+  XLSX.writeFile(wb, "ControlSemanal.xlsx");
+
+  await addDoc(collection(db,"historial"),{
+    usuario: "Sistema",
+    rol: MI_ROL,
+    accion: "Reinicio semanal de control",
+    cambio: `Se exportó a Excel y se reinició control de ${snap.size} miembros (nivel y poder se mantienen)`,
+    fecha: Date.now()
+  });
+
+  alert("Reinicio de control completado y exportado a Excel (nivel y poder se mantienen).");
+};
+</script>
+
+</body>
+</html>
