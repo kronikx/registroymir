@@ -1,5 +1,3 @@
-// /api/discordAuth/callback.js
-
 const CLIENT_ID = "1450641085385674853";
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const REDIRECT_URI = "https://registroymir.vercel.app/api/discordAuth/callback";
@@ -45,7 +43,6 @@ export default async function handler(req, res) {
     const isMember = guilds.some((g) => g.id === GUILD_ID);
 
     if (isMember) {
-      // ✅ Cookies persistentes (7 días)
       res.setHeader("Set-Cookie", [
         `discordUser=${userData.id}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800`,
         `discordRefresh=${tokenData.refresh_token}; Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800`

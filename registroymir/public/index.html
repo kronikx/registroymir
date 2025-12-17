@@ -54,11 +54,15 @@
       try {
         const res = await fetch("/api/discordAuth/check");
         const data = await res.json();
+        console.log("Respuesta check:", data);
+
         if(data.ok){
-          // ✅ Sesión válida → ocultar botón y redirigir al panel
+          // ✅ Sesión válida → ocultar botón y redirigir al panel con un pequeño delay
           document.getElementById("discordLink").style.display = "none";
           document.getElementById("welcome").textContent = "Acceso concedido. Entrando...";
-          window.location.href = "/panel.html";
+          setTimeout(() => {
+            window.location.href = "/panel.html";
+          }, 1200); // espera 1,2 segundos antes de redirigir
         } else {
           // ❌ No hay sesión → mostrar botón
           document.getElementById("discordLink").style.display = "block";
