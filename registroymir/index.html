@@ -24,8 +24,9 @@
     background: #4b0082;
     box-shadow: 0 0 12px #a020f0, 0 0 24px #a020f0;
   }
+  /* Estilo para el botón de Discord */
   .login-discord {
-    background-color: #5865F2;
+    background-color: #5865F2; /* color oficial Discord */
     color: white;
     padding: 10px 20px;
     border: none;
@@ -43,32 +44,21 @@
 <body>
   <div class="card">
     <h2>REGISTRO DEPREDADORES</h2>
-    <a id="discordLink" href="/api/discordAuth">
-      <button id="discordBtn" class="login-discord">Entrar con Discord</button>
+    <a href="https://registroymir.vercel.app/api/discordAuth">
+      <button class="login-discord">Entrar con Discord</button>
     </a>
     <div id="welcome" style="margin-top:15px; font-weight:bold;"></div>
   </div>
 
   <script>
-    async function checkLogin(){
-      try {
-        const res = await fetch("/api/discordAuth/check");
-        const data = await res.json();
+    // Comprobar si ya está logueado en Discord
+    fetch("/api/discordAuth/check")
+      .then(res => res.json())
+      .then(data => {
         if(data.ok){
-          // ✅ Sesión válida → ocultar botón y redirigir al panel
-          document.getElementById("discordLink").style.display = "none";
-          document.getElementById("welcome").textContent = "Acceso concedido. Entrando...";
-          window.location.href = "/panel.html";
-        } else {
-          // ❌ No hay sesión → mostrar botón
-          document.getElementById("discordLink").style.display = "block";
+          document.getElementById("welcome").textContent = "Ya has iniciado sesión en Discord.";
         }
-      } catch(e){
-        console.error("Error al comprobar sesión:", e);
-        document.getElementById("discordLink").style.display = "block";
-      }
-    }
-    checkLogin();
+      });
   </script>
 </body>
 </html>

@@ -78,60 +78,37 @@
 </style>
 </head>
 <body>
-<!-- 🔑 Bloque de validación de sesión -->
-<script>
-  async function checkSession(){
-    try {
-      const res = await fetch("/api/discordAuth/refresh");
-      const data = await res.json();
-      if(data.access_token){
-        // ✅ Sesión válida → mostrar el panel
-        document.getElementById("panel").style.display = "block";
-      } else {
-        // ❌ No hay sesión → volver al login
-        window.location.href = "/index.html";
-      }
-    } catch(e){
-      console.error("Error al validar sesión:", e);
-      window.location.href = "/index.html";
-    }
-  }
-  checkSession();
-</script>
 
-<!-- 🔽 Aquí empieza tu contenido actual, envuelto en #panel -->
-<div id="panel" style="display:none;">
-  <div class="container">
-    <!-- Reloj dual -->
-    <div class="clock-wrapper">
-      <div class="clock-card">
-        <div class="clock-box">
-          <div class="clock-title">España (Europe/Madrid)</div>
-          <div id="timeES" class="clock-time">--:--:--</div>
-          <div id="dateES" class="clock-date">Cargando…</div>
-        </div>
-        <div class="clock-box">
-          <div class="clock-title">Servidor (UTC-4 +1h)</div>
-          <div id="timeUTC4" class="clock-time">--:--:--</div>
-          <div id="dateUTC4" class="clock-date">Cargando…</div>
-        </div>
+<div class="container">
+  <!-- Reloj dual -->
+  <div class="clock-wrapper">
+    <div class="clock-card">
+      <div class="clock-box">
+        <div class="clock-title">España (Europe/Madrid)</div>
+        <div id="timeES" class="clock-time">--:--:--</div>
+        <div id="dateES" class="clock-date">Cargando…</div>
+      </div>
+      <div class="clock-box">
+        <div class="clock-title">Servidor (UTC-4 +1h)</div>
+        <div id="timeUTC4" class="clock-time">--:--:--</div>
+        <div id="dateUTC4" class="clock-date">Cargando…</div>
       </div>
     </div>
+  </div>
 
-    <h1>Panel de Miembros</h1>
+  <h1>Panel de Miembros</h1>
 
-    <div class="nav">
-      <a href="panel.html">Miembros</a>
-      <a href="subastas.html">Subastas</a>
-      <a href="registro.html">Historial</a>
-      <a href="control.html">Control Semanal</a>
-    </div>
+  <div class="nav">
+    <a href="panel.html">Miembros</a>
+    <a href="subastas.html">Subastas</a>
+    <a href="registro.html">Historial</a>
+    <a href="control.html">Control Semanal</a>
+  </div>
 
-    <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
+  <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
 
-    <div class="card">
-      <table id="tablaMiembros"></table>
-    </div>
+  <div class="card">
+    <table id="tablaMiembros"></table>
   </div>
 </div>
 

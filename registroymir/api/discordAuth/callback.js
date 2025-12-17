@@ -8,10 +8,11 @@ export default async function handler(req, res) {
   const code = urlParams.get("code");
 
   if (!code) {
-    return res.redirect("/index.html");
+    return res.status(400).json({ error: "Falta el parámetro 'code'" });
   }
 
   try {
+    // Intercambiar el code por un token
     const tokenResponse = await fetch("https://discord.com/api/oauth2/token", {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -27,14 +28,16 @@ export default async function handler(req, res) {
 
     const tokenData = await tokenResponse.json();
     if (!tokenData.access_token) {
-      return res.redirect("/index.html");
+      return res.status(400).json({ error: "No se pudo obtener el token", detalle: tokenData });
     }
 
+    // Obtener datos del usuario
     const userResponse = await fetch("https://discord.com/api/users/@me", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const userData = await userResponse.json();
 
+    // Verificar si está en tu servidor
     const guildResponse = await fetch("https://discord.com/api/users/@me/guilds", {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
@@ -43,19 +46,12 @@ export default async function handler(req, res) {
     const isMember = guilds.some((g) => g.id === GUILD_ID);
 
     if (isMember) {
-      // 🔑 En producción (Vercel con HTTPS) usamos Secure + SameSite=None
-      const cookieFlags = "Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800";
-
-      // Cada cookie en su propia cabecera
-      res.setHeader("Set-Cookie", `discordUser=${userData.id}; ${cookieFlags}`);
-      res.appendHeader("Set-Cookie", `discordRefresh=${tokenData.refresh_token}; ${cookieFlags}`);
-
+      res.setHeader("Set-Cookie", `discordUser=${userData.id}; Path=/; HttpOnly`);
       return res.redirect("/panel.html");
     } else {
       return res.status(403).send("Acceso denegado: no eres miembro del servidor.");
     }
   } catch (err) {
-    console.error("Error en callback:", err);
-    return res.redirect("/index.html");
+    return res.status(500).json({ error: "Error en el login", detalle: err.message });
   }
 }
