@@ -47,13 +47,22 @@ export default async function handler(req, res) {
       const laxFlags = "Path=/; HttpOnly; SameSite=Lax; Max-Age=604800";
       const secureFlags = "Path=/; HttpOnly; Secure; SameSite=None; Max-Age=604800";
 
-      // Cada cookie en su propia cabecera
+      // Guardar cookies
       res.setHeader("Set-Cookie", `discordUser=${userData.id}; ${laxFlags}`);
       res.appendHeader("Set-Cookie", `discordRefresh=${tokenData.refresh_token}; ${secureFlags}`);
 
+      // Guardar en tu BD con rol fijo "miembro"
+      // Ejemplo con Firebase:
+      // const userRef = doc(db, "users", userData.id);
+      // const snap = await getDoc(userRef);
+      // if (!snap.exists()) {
+      //   await setDoc(userRef, { username: userData.username, rol: "miembro" });
+      // }
+
       return res.redirect("/panel.html");
     } else {
-      return res.status(403).send("Acceso denegado: no eres miembro del servidor.");
+      // No es miembro del servidor → vuelve al index con opción de registro
+      return res.redirect("/index.html?auth=ok");
     }
   } catch (err) {
     console.error("Error en callback:", err);

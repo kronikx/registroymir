@@ -114,7 +114,6 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   getFirestore,
   collection,
@@ -133,11 +132,10 @@ initializeApp({
   authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
   projectId: "registro-de-guild-en-ymir"
 });
-const auth = getAuth();
 const db = getFirestore();
 
 /* === Estado global === */
-let MI_ROL = "Miembro";
+let MI_ROL = "Miembro"; // siempre miembro por defecto
 let MI_UID = null;
 
 /* === Reloj dual === */
@@ -152,42 +150,48 @@ function updateClocks(){
   const esDateFormatter = new Intl.DateTimeFormat("es-ES", {
     timeZone:"Europe/Madrid", weekday:"long", year:"numeric", month:"long", day:"2-digit"
   });
-  const timeES = document.getElementById("timeES");
-  const dateES = document.getElementById("dateES");
-  if(timeES) timeES.textContent = esFormatter.format(now);
-  if(dateES) dateES.textContent = esDateFormatter.format(now);
+  document.getElementById("timeES").textContent = esFormatter.format(now);
+  document.getElementById("dateES").textContent = esDateFormatter.format(now);
 
-  // Servidor UTC-4 +1h (UTC-3)
+  // Servidor UTC-3
   const nowUTCms = now.getTime() + (now.getTimezoneOffset() * 60000);
   const utcMinus3 = new Date(nowUTCms - 3 * 3600 * 1000);
   const hh = utcMinus3.getUTCHours();
   const mm = utcMinus3.getUTCMinutes();
   const ss = utcMinus3.getUTCSeconds();
-  const timeU = document.getElementById("timeUTC4");
-  const dateU = document.getElementById("dateUTC4");
-  if(timeU) timeU.textContent = `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
+  document.getElementById("timeUTC4").textContent = `${pad2(hh)}:${pad2(mm)}:${pad2(ss)}`;
   const dayNames = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
   const monthNames = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const weekday = dayNames[utcMinus3.getUTCDay()];
   const monthName = monthNames[utcMinus3.getUTCMonth()];
-  if(dateU) dateU.textContent = `${weekday}, ${pad2(utcMinus3.getUTCDate())} de ${monthName} de ${utcMinus3.getUTCFullYear()}`;
+  document.getElementById("dateUTC4").textContent = `${weekday}, ${pad2(utcMinus3.getUTCDate())} de ${monthName} de ${utcMinus3.getUTCFullYear()}`;
 }
 setInterval(updateClocks, 1000);
 updateClocks();
 
-/* === Auth y carga inicial === */
-onAuthStateChanged(auth, async user=>{
-  if(!user){ location.href = "index.html"; return; }
-  MI_UID = user.uid;
-  const meSnap = await getDoc(doc(db,"members",user.uid));
-  MI_ROL = meSnap.data()?.role || "Miembro";
-  cargarMiembros();
-  if(!(MI_ROL==="Líder" || MI_ROL==="Oficial")){
-    const btn = document.getElementById("reinicioBtn");
-    if(btn) btn.style.display = "none";
-  }
-});
+/* === Carga inicial con rol interno === */
+(async ()=>{
+  try {
+    const res = await fetch("/api/getRole");
+    const data = await res.json();
+    if(data.error){
+      location.href = "index.html"; // sin sesión → volver al login
+      return;
+    }
+    MI_ROL = data.rol || "Miembro";
+    MI_UID = data.userId || null; // si tu endpoint devuelve también el userId
+    cargarMiembros();
 
+    // Ocultar botón de reinicio si no es admin (pero en tu sistema todos son "Miembro")
+    if(MI_ROL !== "Líder" && MI_ROL !== "Oficial"){
+      const btn = document.getElementById("reinicioBtn");
+      if(btn) btn.style.display = "none";
+    }
+  } catch(e){
+    console.error("Error al cargar rol:", e);
+    location.href = "index.html";
+  }
+})();
 /* === Pintar tabla en tiempo real === */
 function cargarMiembros(){
   const tabla = document.getElementById("tablaMiembros");
@@ -288,7 +292,6 @@ window.editar = (id,nombre)=>{
   document.getElementById("fila_"+id).querySelector("td:last-child").innerHTML =
     `<button class="btn" onclick="guardar('${id}','${nombre}')">Guardar</button>`;
 };
-
 /* === Guardar cambios (sin nivel/poder) === */
 window.guardar = async (id,nombre)=>{
   let updateData = {};
