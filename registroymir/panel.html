@@ -181,13 +181,18 @@ onAuthStateChanged(auth, async user=>{
   if(!user){ location.href = "index.html"; return; }
   MI_UID = user.uid;
   const meSnap = await getDoc(doc(db,"members",user.uid));
-  MI_ROL = meSnap.data()?.role || "Miembro";
+
+  // Aquí añadimos la opción extra
+  const data = meSnap.data() || {};
+  MI_ROL = data.role || data.rol || data.proofImages?.role || "Miembro";
+
   cargarMiembros();
   if(!(MI_ROL==="Líder" || MI_ROL==="Oficial")){
     const btn = document.getElementById("reinicioBtn");
     if(btn) btn.style.display = "none";
   }
 });
+
 
 /* === Pintar tabla en tiempo real === */
 function cargarMiembros(){
