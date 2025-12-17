@@ -25,6 +25,7 @@ export default async function handler(req, res) {
     res.setHeader("Set-Cookie", `userId=${encodeURIComponent(username)}; Path=/; SameSite=Lax; Secure; Max-Age=604800`);
     return res.status(200).json({ ok: true });
   } catch (err) {
+    console.error("[LOGIN] Error:", err);
     return res.status(500).json({ ok: false, error: "Error interno del servidor" });
   }
 }
