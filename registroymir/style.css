@@ -113,3 +113,53 @@ img.item {
   border-radius: 50%;
 }
 
+/* ===== HEADER FIJO DE TABLA (ROBUSTO) ===== */
+
+/* Contenedor con scroll */
+.card {
+  max-height: 70vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* Tabla base */
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+/* HEADER */
+table tr:first-child th,
+table tr.filtros th {
+  position: sticky;
+  z-index: 100;
+  background-color: #12001f; /* sólido */
+}
+
+/* Primera fila (títulos) */
+table tr:first-child th {
+  top: 0;
+}
+
+/* Segunda fila (filtros) */
+table tr.filtros th {
+  top: 44px; /* altura exacta del header */
+}
+
+/* Cuerpo */
+table tbody tr td,
+table tr td {
+  background-color: transparent;
+}
+
+/* Fuerza a que NADA pase por encima */
+table tr td {
+  z-index: 1;
+  position: relative;
+}
+
+/* Quita blur real (causa del bug) */
+th {
+  backdrop-filter: none !important;
+}
