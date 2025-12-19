@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>YMIR Guild - Panel</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  .edit-input, .edit-select {
+    width: 90px;
+    text-align: center;
+    font-size: 13px;
+  }
+  #reinicioBtn {
+    padding: 8px 16px;
+    font-size: 14px;
+    background-color: #5a189a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  #reinicioBtn:hover { background-color: #9d4edd; }
+  
+  .btn {
+    font-size: 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #5a189a;
+    color: #fff;
+    padding: 4px 8px;
+    display: inline-block;
+    margin: 2px;
+  }
+  .btn:hover { background-color: #9d4edd; }
+  .btn.secondary { background-color: #dc3545; color: #fff; }
+  .btn.secondary:hover { background-color: #bb2d3b; }
+  .btn.cancel { background-color: #6c757d; }
+  .btn.cancel:hover { background-color: #5c636a; }
+  
+  /* Estilos para roles en tabla */
+  .role-cell {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  /* Campo de contribución total (solo lectura) */
+  .total-contribution {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: bold;
+    color: #9d4edd;
+  }
+  
+  /* Input de semanal con indicador */
+  .semanal-input {
+    width: 70px;
+    text-align: center;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #5a189a;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+  
+  /* Indicador de edición */
+  .editing-mode {
+    border-left: 3px solid #ffc107;
+    background: rgba(255, 193, 7, 0.05) !important;
+  }
+</style>
+</head>
+<body>
+
+<!-- Sección superior: Hora y URL -->
+<div class="header-info">
+  <div class="time-section">
+    <div>
+      <span class="time-label">Hora Local:</span>
+      <span class="time-display" id="localTime">--:--:--</span>
+    </div>
+    <div>
+      <span class="time-label">Hora Servidor:</span>
+      <span class="time-display" id="serverTime">--:--:--</span>
+    </div>
+  </div>
+
+<!-- Menú de navegación -->
+<nav class="menu">
+  <ul class="menu-nav">
+    <li class="menu-item">
+      <a href="panel.html" class="menu-link active">
+        <span>👥</span>
+        Miembros
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="subastas.html" class="menu-link">
+        <span>💰</span>
+        Subastas
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="registro.html" class="menu-link">
+        <span>📋</span>
+        Historial
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="control.html" class="menu-link">
+        <span>🎮</span>
+        Control
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="solicitudes.html" class="menu-link" style="position:relative;">
+        <span>📨</span>
+        Solicitudes
+        <span class="solicitudes-badge" id="solicitudesBadge"></span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1>Panel de Miembros <span id="userRoleBadge" class="role-badge" style="font-size: 14px; margin-left: 10px;"></span></h1>
+  
+  <!-- Permiso de edición solo para Líder/Oficial -->
+  <div id="edicionPermisos" class="permission-warning" style="display: none;">
+    <strong>⚠️ Permisos de Edición:</strong> Como <span id="currentRole"></span>, puedes editar <strong>Nombre, Rol, Clase, Contribución Semanal y Bosses</strong>. La <strong>Contribución Total</strong> se calcula automáticamente.
+  </div>
+  
+  <!-- Recordatorio para Miembros -->
+  <div id="miembroInfo" class="permission-warning" style="display: none; background: rgba(0, 123, 255, 0.1); border-left-color: #0d6efd; color: #0dcaf0;">
+    <strong>ℹ️ Información:</strong> Como <strong>Miembro</strong>, no puedes editar información en esta sección. Usa <strong>Control Semanal</strong> para actualizar tus stats.
+  </div>
+
+  <div style="text-align: right; margin-bottom: 15px;">
+    <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
+  </div>
+
+  <div class="card">
+    <div class="table-scroll">
+      <table id="tablaMiembros"></table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  updateDoc,
+  addDoc,
+  getDoc,
+  onSnapshot,
+  getDocs,
+  deleteDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+/* === Estado global === */
+let MI_ROL = "Miembro";
+let MI_UID = null;
+let esLiderOficial = false;
+let modoEdicion = {}; // Para rastrear qué filas están en modo edición
+
+/* === Actualizar relojes superiores === */
+function updateTopClocks() {
+  const now = new Date();
+  
+  const localTime = now.toLocaleTimeString('es-ES', { hour12: false });
+  document.getElementById('localTime').textContent = localTime;
+  
+  const serverTime = new Date(now.getTime() - (3 * 3600 * 1000));
+  const serverTimeStr = serverTime.toISOString().substr(11, 8);
+  document.getElementById('serverTime').textContent = serverTimeStr;
+}
+
+setInterval(updateTopClocks, 1000);
+updateTopClocks();
+
+/* === Auth y carga inicial === */
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href = "index.html"; return; }
+  MI_UID = user.uid;
+  const meSnap = await getDoc(doc(db,"members",user.uid));
+
+  const data = meSnap.data() || {};
+  MI_ROL = data.role || data.rol || data.proofImages?.role || "Miembro";
+  
+  // Verificar si es Líder u Oficial
+  const rolLower = MI_ROL.trim().toLowerCase();
+  esLiderOficial = (rolLower === "líder" || rolLower === "lider" || rolLower === "oficial");
+  
+  // Actualizar badge de rol
+  const roleBadge = document.getElementById("userRoleBadge");
+  if (roleBadge) {
+    roleBadge.textContent = MI_ROL;
+    roleBadge.className = "role-badge";
+    if (rolLower === "líder" || rolLower === "lider") {
+      roleBadge.classList.add("role-lider");
+    } else if (rolLower === "oficial") {
+      roleBadge.classList.add("role-oficial");
+    } else {
+      roleBadge.classList.add("role-miembro");
+    }
+  }
+  
+  // Mostrar/ocultar mensajes según rol
+  const permisosDiv = document.getElementById("edicionPermisos");
+  const miembroDiv = document.getElementById("miembroInfo");
+  const currentRoleSpan = document.getElementById("currentRole");
+  
+  if (esLiderOficial) {
+    if (permisosDiv) permisosDiv.style.display = "block";
+    if (miembroDiv) miembroDiv.style.display = "none";
+    if (currentRoleSpan) currentRoleSpan.textContent = MI_ROL;
+  } else {
+    if (permisosDiv) permisosDiv.style.display = "none";
+    if (miembroDiv) miembroDiv.style.display = "block";
+  }
+
+  cargarMiembros();
+  escucharSolicitudesBadge();
+  
+  if(!esLiderOficial){
+    const btn = document.getElementById("reinicioBtn");
+    if(btn) btn.style.display = "none";
+  }
+});
+
+/* === Pintar tabla en tiempo real === */
+function cargarMiembros(){
+  const tabla = document.getElementById("tablaMiembros");
+  onSnapshot(collection(db,"members"), (snap) => {
+    tabla.innerHTML = `
+<tr>
+  <th onclick="ordenarTabla(0)">Nombre ⬍</th>
+  <th onclick="ordenarTabla(1)">Rol ⬍</th>
+  <th onclick="ordenarTabla(2)">Clase ⬍</th>
+  <th onclick="ordenarTabla(3)">Nivel ⬍</th>
+  <th onclick="ordenarTabla(4)">Poder ⬍</th>
+  <th onclick="ordenarTabla(5)">Contribución semanal ⬍</th>
+  <th onclick="ordenarTabla(6)">Boss 45 ⬍</th>
+  <th onclick="ordenarTabla(7)">Boss 55 ⬍</th>
+  <th onclick="ordenarTabla(8)">Contribución total ⬍</th>
+  <th>Acciones</th>
+</tr>
+
+<tr class="filtros">
+  <th><input></th>
+  <th>
+    <select>
+      <option value="">Todos</option>
+      <option>Miembro</option>
+      <option>Oficial</option>
+      <option>Líder</option>
+    </select>
+  </th>
+  <th>
+    <select>
+      <option value="">Todas</option>
+      <option>Arquero</option>
+      <option>Mago</option>
+      <option>Tanque</option>
+      <option>Healer</option>
+    </select>
+  </th>
+  <th><input type="number"></th>
+  <th><input type="number"></th>
+  <th><input type="number"></th>
+  <th>
+    <select>
+      <option value="">Todos</option>
+      <option>Sí</option>
+      <option>No</option>
+    </select>
+  </th>
+  <th>
+    <select>
+      <option value="">Todos</option>
+      <option>Sí</option>
+      <option>No</option>
+    </select>
+  </th>
+  <th><input type="number"></th>
+  <th></th>
+</tr>
+`;
+    snap.forEach(d=>{
+      const m = d.data() || {};
+      const esPropio = (d.id === MI_UID);
+      const boss45 = m.boss45 ? "Sí" : "No";
+      const boss55 = m.boss55 ? "Sí" : "No";
+      
+      // En Panel: SOLO Líder/Oficial pueden editar. Miembros NO pueden editar NADA
+      const puedeEditar = esLiderOficial;
+      const estaEditando = modoEdicion[d.id] || false;
+      
+      // Determinar estilo del rol
+      let roleClass = "role-miembro";
+      const userRole = m.role || m.rol || "Miembro";
+      const userRoleLower = userRole.toLowerCase();
+      
+      if (userRoleLower === "líder" || userRoleLower === "lider") {
+        roleClass = "role-lider";
+      } else if (userRoleLower === "oficial") {
+        roleClass = "role-oficial";
+      }
+
+      // Si está en modo edición, mostrar inputs
+      if (estaEditando) {
+        tabla.innerHTML += `
+          <tr id="fila_${d.id}" class="editing-mode">
+            <td id="nombre_${d.id}">
+              <input type="text" class="edit-input" id="editNombre_${d.id}" value="${m.name || ''}" style="width: 120px;">
+            </td>
+            <td id="rol_${d.id}">
+              <select class="edit-select" id="editRol_${d.id}">
+                <option value="Miembro" ${userRole.includes("Miembro")?"selected":""}>Miembro</option>
+                <option value="Oficial" ${userRole.includes("Oficial")?"selected":""}>Oficial</option>
+                <option value="Líder" ${userRole.includes("Líder")?"selected":""}>Líder</option>
+              </select>
+            </td>
+            <td id="clase_${d.id}">
+              <select class="edit-select" id="editClase_${d.id}">
+                <option value="Arquero" ${m.clase==="Arquero"?"selected":""}>Arquero</option>
+                <option value="Mago" ${m.clase==="Mago"?"selected":""}>Mago</option>
+                <option value="Tanque" ${m.clase==="Tanque"?"selected":""}>Tanque</option>
+                <option value="Healer" ${m.clase==="Healer"?"selected":""}>Healer</option>
+              </select>
+            </td>
+            <td id="nivel_${d.id}">${m.nivel ?? 1}</td>
+            <td id="poder_${d.id}">${m.poder ?? 0}</td>
+            <td id="sem_${d.id}">
+              <input type="number" class="semanal-input" id="editSem_${d.id}" value="${m.semanal ?? 0}">
+            </td>
+            <td id="boss45_${d.id}">
+              <select class="edit-select" id="editBoss45_${d.id}">
+                <option value="Sí" ${boss45==="Sí"?"selected":""}>Sí</option>
+                <option value="No" ${boss45==="No"?"selected":""}>No</option>
+              </select>
+            </td>
+            <td id="boss55_${d.id}">
+              <select class="edit-select" id="editBoss55_${d.id}">
+                <option value="Sí" ${boss55==="Sí"?"selected":""}>Sí</option>
+                <option value="No" ${boss55==="No"?"selected":""}>No</option>
+              </select>
+            </td>
+            <td id="total_${d.id}" class="total-contribution">${m.totalContribution ?? 0}</td>
+            <td>
+              <button class="btn" onclick="guardar('${d.id}','${m.name || ''}')">Guardar</button>
+              <button class="btn cancel" onclick="cancelarEdicion('${d.id}')">Cancelar</button>
+            </td>
+          </tr>
+        `;
+      } else {
+        // Modo normal (solo lectura)
+        tabla.innerHTML += `
+          <tr id="fila_${d.id}">
+            <td id="nombre_${d.id}">${m.name ?? "-"} ${esPropio ? "<span style='color:#9d4edd; font-size:11px;'>(TÚ)</span>" : ""}</td>
+            <td id="rol_${d.id}"><span class="role-badge ${roleClass}">${userRole}</span></td>
+            <td id="clase_${d.id}">${m.clase ?? "-"}</td>
+            <td id="nivel_${d.id}">${m.nivel ?? 1}</td>
+            <td id="poder_${d.id}">${m.poder ?? 0}</td>
+            <td id="sem_${d.id}">${m.semanal ?? 0}</td>
+            <td id="boss45_${d.id}">${boss45}</td>
+            <td id="boss55_${d.id}">${boss55}</td>
+            <td id="total_${d.id}" class="total-contribution">${m.totalContribution ?? 0}</td>
+            <td>
+              ${puedeEditar ? `<button class="btn" onclick="editar('${d.id}','${m.name || ''}')">Editar</button>` : 
+                `<span style="color: #666; font-size: 11px; font-style: italic;">solo lectura</span>`}
+              ${(MI_UID === "IPsOS0geYjbsH0ZQZ5RAoNZ00XL2") ? 
+                `<button class="btn secondary" onclick="eliminarMiembro('${d.id}')">Eliminar</button>` 
+                : ""}
+            </td>
+          </tr>
+        `;
+      }
+    });
+
+    setTimeout(() => {
+      document.querySelectorAll(".filtros input, .filtros select").forEach(el => {
+        el.addEventListener("input", filtrarTabla);
+      });
+    }, 0);
+  });
+}
+
+/* === Editar fila (solo Líder/Oficial) === */
+window.editar = (id, nombre)=>{
+  // Verificar permisos - SOLO Líder/Oficial
+  if(!esLiderOficial){ 
+    alert("❌ Solo Líderes y Oficiales pueden editar en el Panel."); 
+    return; 
+  }
+  
+  // Activar modo edición para esta fila
+  modoEdicion[id] = true;
+  
+  // Recargar solo esta fila en modo edición
+  cargarMiembros();
+};
+
+/* === Cancelar edición === */
+window.cancelarEdicion = (id)=>{
+  // Desactivar modo edición
+  modoEdicion[id] = false;
+  
+  // Recargar tabla
+  cargarMiembros();
+};
+
+/* === Guardar cambios (solo para Líder/Oficial) === */
+window.guardar = async (id, nombreAnterior)=>{
+  // Verificar permisos - SOLO Líder/Oficial
+  if(!esLiderOficial){ 
+    alert("❌ Solo Líderes y Oficiales pueden guardar cambios."); 
+    return; 
+  }
+
+  // Obtener valores de los inputs
+  const nuevoNombre = document.getElementById("editNombre_"+id)?.value;
+  const rolSel = document.getElementById("editRol_"+id)?.value;
+  const claseSel = document.getElementById("editClase_"+id)?.value;
+  const semanalEl = document.getElementById("editSem_"+id);
+  const boss45Sel = document.getElementById("editBoss45_"+id)?.value;
+  const boss55Sel = document.getElementById("editBoss55_"+id)?.value;
+
+  let updateData = {};
+  let cambioTxt = "";
+
+  // Nombre
+  if(nuevoNombre && nuevoNombre !== nombreAnterior){
+    updateData.name = nuevoNombre;
+    cambioTxt += `Nombre: ${nuevoNombre}`;
+  }
+
+  // Rol
+  if(rolSel){
+    updateData.role = rolSel;
+    cambioTxt += (cambioTxt ? ", " : "") + `Rol: ${rolSel}`;
+  }
+
+  // Clase
+  if(claseSel){
+    updateData.clase = claseSel;
+    cambioTxt += (cambioTxt ? ", " : "") + `Clase: ${claseSel}`;
+  }
+
+  // Contribución Semanal (NO se modifica Contribución Total aquí)
+  if(semanalEl){
+    const semanal = Number(semanalEl.value);
+    if(!isNaN(semanal)){
+      updateData.semanal = semanal;
+      cambioTxt += (cambioTxt ? ", " : "") + `Semanal: ${semanal}`;
+      
+      // IMPORTANTE: La Contribución Total NO se modifica aquí
+      // Solo se modifica en el Reinicio Semanal o cuando se puja en subastas
+    }
+  }
+
+  // Bosses
+  if(boss45Sel !== undefined){
+    const b45 = (boss45Sel === "Sí");
+    updateData.boss45 = b45;
+    cambioTxt += (cambioTxt ? ", " : "") + `Boss45: ${b45 ? "Sí" : "No"}`;
+  }
+  
+  if(boss55Sel !== undefined){
+    const b55 = (boss55Sel === "Sí");
+    updateData.boss55 = b55;
+    cambioTxt += (cambioTxt ? ", " : "") + `Boss55: ${b55 ? "Sí" : "No"}`;
+  }
+
+  // Si no hay cambios, mostrar mensaje y salir
+  if(Object.keys(updateData).length === 0){
+    alert("No hay cambios para guardar.");
+    modoEdicion[id] = false;
+    cargarMiembros();
+    return;
+  }
+
+  try {
+    // Actualizar en Firebase
+    await updateDoc(doc(db,"members",id), updateData);
+
+    // Registrar en historial
+    await addDoc(collection(db,"historial"),{
+      usuario: nombreAnterior || "Usuario",
+      rol: MI_ROL,
+      accion: "Actualización de datos en Panel",
+      cambio: cambioTxt || "Sin cambios",
+      fecha: Date.now()
+    });
+
+    // Desactivar modo edición
+    modoEdicion[id] = false;
+    
+    alert("✅ Datos actualizados y registrados en historial");
+    
+    // Recargar tabla
+    cargarMiembros();
+    
+  } catch(e) {
+    alert("❌ Error al guardar: " + e.message);
+  }
+};
+
+/* === Eliminar miembro SOLO de Firestore (mantiene Auth) === */
+window.eliminarMiembro = async (uid)=>{
+  // Solo el usuario específico (IPsOS0geYjbsH0ZQZ5RAoNZ00XL2) puede eliminar
+  if(MI_UID !== "IPsOS0geYjbsH0ZQZ5RAoNZ00XL2"){
+    alert("❌ No tienes permisos para eliminar miembros.");
+    return;
+  }
+  
+  if(!confirm("¿Seguro que quieres eliminar este miembro de Firestore?")) return;
+
+  try{
+    await deleteDoc(doc(db,"members",uid));
+
+    // Quitar la fila del HTML inmediatamente
+    const fila = document.getElementById("fila_"+uid);
+    if(fila) fila.remove();
+
+    alert("✅ Miembro eliminado de Firestore. La cuenta en Auth sigue activa.");
+  }catch(e){
+    alert("❌ Error al eliminar: "+(e.message || e));
+  }
+};
+
+/* === Reinicio semanal === */
+window.reinicioSemanal = async ()=>{
+  if(!esLiderOficial){
+    alert("❌ Solo Líderes y Oficiales pueden realizar el reinicio semanal.");
+    return;
+  }
+  
+  if(!confirm("¿Seguro que quieres reiniciar la semana?\n\n• La Contribución Semanal se sumará a la Total\n• La Contribución Semanal se reseteará a 0\n• Boss 45/55 se resetearán a 'No'")) return;
+
+  const snap = await getDocs(collection(db,"members"));
+  let count = 0;
+
+  for(const d of snap.docs){
+    const m = d.data() || {};
+    const semanalActual = Number(m.semanal ?? 0);
+    const totalActual = Number(m.totalContribution ?? 0);
+    const nuevoTotal = totalActual + semanalActual;
+
+    await updateDoc(doc(db,"members",d.id),{
+      totalContribution: nuevoTotal,
+      semanal: 0,
+      boss45: false,
+      boss55: false
+    });
+    count++;
+  }
+
+  await addDoc(collection(db,"historial"),{
+    usuario: "Sistema",
+    rol: MI_ROL,
+    accion: "Reinicio semanal",
+    cambio: `Se reinició contribución semanal y bosses de ${count} miembros (Semanal → Total)`,
+    fecha: Date.now()
+  });
+
+  alert(`✅ Reinicio semanal completado para ${count} miembros.\n\nLa Contribución Semanal se ha sumado a la Total y se ha reseteado a 0.`);
+};
+
+/* ===== FILTRADO ===== */
+function filtrarTabla(){
+  const tabla = document.getElementById("tablaMiembros");
+  const filtros = tabla.querySelectorAll(".filtros th");
+  const filas = tabla.querySelectorAll("tr[id^='fila_']");
+
+  filas.forEach(fila => {
+    let visible = true;
+    const celdas = fila.children;
+
+    filtros.forEach((filtro, i) => {
+      const input = filtro.querySelector("input, select");
+      if (!input || !input.value) return;
+
+      let celda = celdas[i].textContent.trim();
+
+      if (!isNaN(input.value) && input.value !== "") {
+        if (Number(celda) < Number(input.value)) visible = false;
+      } else {
+        if (!celda.toLowerCase().startsWith(input.value.toLowerCase())) {
+          visible = false;
+        }
+      }
+    });
+
+    fila.style.display = visible ? "" : "none";
+  });
+}
+
+/* ===== ORDEN ===== */
+let ordenCol = null;
+let ordenAsc = true;
+
+window.ordenarTabla = (col) => {
+  const tabla = document.getElementById("tablaMiembros");
+  const filas = Array.from(tabla.querySelectorAll("tr[id^='fila_']"));
+
+  ordenAsc = ordenCol === col ? !ordenAsc : true;
+  ordenCol = col;
+
+  filas.sort((a, b) => {
+    let A = a.children[col].textContent.trim();
+    let B = b.children[col].textContent.trim();
+
+    if (A === "Sí" || A === "No") {
+      A = A === "Sí" ? 1 : 0;
+      B = B === "Sí" ? 1 : 0;
+    }
+
+    if (!isNaN(A) && !isNaN(B)) {
+      return ordenAsc ? A - B : B - A;
+    }
+
+    return ordenAsc
+      ? A.localeCompare(B, "es", { sensitivity: "base" })
+      : B.localeCompare(A, "es", { sensitivity: "base" });
+  });
+
+  filas.forEach(f => tabla.appendChild(f));
+  filtrarTabla();
+};
+
+/* === Punto rojo en nav === */
+function escucharSolicitudesBadge(){
+  const q = collection(db,"solicitudes");
+  onSnapshot(q, snap=>{
+    const badge = document.getElementById("solicitudesBadge");
+    if(!badge) return;
+    badge.style.display = snap.size > 0 ? "block" : "none";
+  });
+}
+</script>
+
+</body>
+</html>

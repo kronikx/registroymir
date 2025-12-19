@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>YMIR Guild - Control Semanal</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* TABLA MÁS ANCHA - SIN SCROLL HORIZONTAL */
+  body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+  
+  .container {
+    max-width: 95vw;
+    margin: auto;
+    padding: 20px;
+    overflow: visible;
+  }
+  
+  #tablaControl {
+    width: 100%;
+    min-width: 1800px;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+    font-size: 14px;
+  }
+  
+  /* ANCHOS AMPLIADOS - ESPECIALMENTE PARA NOMBRE Y PODER */
+  #tablaControl th:nth-child(1),  /* Nombre */
+  #tablaControl td:nth-child(1) {
+    width: 180px;
+    min-width: 180px;
+    max-width: 200px;
+  }
+  
+  #tablaControl th:nth-child(2),  /* Clase */
+  #tablaControl td:nth-child(2) {
+    width: 120px;
+    min-width: 120px;
+  }
+  
+  #tablaControl th:nth-child(3),  /* Nivel */
+  #tablaControl td:nth-child(3) {
+    width: 80px;
+    min-width: 80px;
+  }
+  
+  #tablaControl th:nth-child(4),  /* Poder - MUY AMPLIADO */
+  #tablaControl td:nth-child(4) {
+    width: 150px;
+    min-width: 150px;
+  }
+  
+  /* STATS numéricos (ATK, DEF, etc.) */
+  #tablaControl th:nth-child(5),
+  #tablaControl th:nth-child(7),
+  #tablaControl th:nth-child(9),
+  #tablaControl th:nth-child(11),
+  #tablaControl td:nth-child(5),
+  #tablaControl td:nth-child(7),
+  #tablaControl td:nth-child(9),
+  #tablaControl td:nth-child(11) {
+    width: 100px;
+    min-width: 100px;
+  }
+  
+  /* Porcentajes (DMG, DMG DEF, etc.) */
+  #tablaControl th:nth-child(6),
+  #tablaControl th:nth-child(8),
+  #tablaControl th:nth-child(10),
+  #tablaControl th:nth-child(12),
+  #tablaControl th:nth-child(14),
+  #tablaControl th:nth-child(15),
+  #tablaControl th:nth-child(16),
+  #tablaControl th:nth-child(17),
+  #tablaControl td:nth-child(6),
+  #tablaControl td:nth-child(8),
+  #tablaControl td:nth-child(10),
+  #tablaControl td:nth-child(12),
+  #tablaControl td:nth-child(14),
+  #tablaControl td:nth-child(15),
+  #tablaControl td:nth-child(16),
+  #tablaControl td:nth-child(17) {
+    width: 110px;
+    min-width: 110px;
+  }
+  
+  /* ACC y EVA */
+  #tablaControl th:nth-child(13),
+  #tablaControl th:nth-child(18),
+  #tablaControl td:nth-child(13),
+  #tablaControl td:nth-child(18) {
+    width: 90px;
+    min-width: 90px;
+  }
+  
+  /* Acciones */
+  #tablaControl th:nth-child(19),
+  #tablaControl td:nth-child(19) {
+    width: 140px;
+    min-width: 140px;
+  }
+  
+  /* Asegurar que el contenido se ajuste - MANTENER ESTILO MORADO */
+  #tablaControl td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    padding: 8px 10px;
+    vertical-align: middle;
+    text-align: center;
+    background-color: transparent;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: #eee;
+  }
+  
+  /* HEADER CON ESTILO MORADO ORIGINAL */
+  #tablaControl th {
+    padding: 10px;
+    text-align: center;
+    background-color: #12001f !important;
+    color: #fff !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: none !important;
+  }
+  
+  /* Sticky para filtros */
+  #tablaControl tr.filtros th {
+    position: sticky;
+    top: 44px;
+    z-index: 9;
+    background-color: rgba(36, 0, 70, 0.9) !important;
+  }
+  
+  /* Inputs con estilo morado */
+  .edit-input { 
+    width: 100%; 
+    font-size: 13px; 
+    padding: 6px 8px; 
+    box-sizing: border-box; 
+    text-align: center; 
+    border: 1px solid #5a189a;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #eee;
+  }
+  
+  .edit-input-inline { 
+    width: 70px; 
+    font-size: 13px; 
+    padding: 6px 8px; 
+    box-sizing: border-box; 
+    text-align: center; 
+    border: 1px solid #5a189a;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #eee;
+  }
+  
+  .inline-field { 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  
+  /* BOTÓN REINICIO - ESTILO MORADO ORIGINAL */
+  #reinicioBtn {
+    padding: 8px 16px;
+    font-size: 14px;
+    background-color: #5a189a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  #reinicioBtn:hover { 
+    background-color: #9d4edd; 
+  }
+  
+  /* BOTONES - ESTILO MORADO ORIGINAL */
+  .btn {
+    font-size: 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #5a189a;
+    color: #fff;
+    padding: 4px 8px;
+    display: inline-block;
+    margin: 2px;
+  }
+  
+  .btn:hover { 
+    background-color: #9d4edd; 
+  }
+  
+  .btn.cancel { 
+    background-color: #9d4edd; 
+  }
+  
+  .btn.cancel:hover { 
+    background-color: #7b2cbf; 
+  }
+  
+  .muted { 
+    font-size: 12px; 
+    color: #c7c7c7; 
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+  
+  /* Indicador de edición propia - ESTILO MORADO */
+  .self-row {
+    background: rgba(93, 24, 154, 0.1) !important;
+  }
+  
+  .self-row:hover {
+    background: rgba(93, 24, 154, 0.2) !important;
+  }
+  
+  /* Modo edición - ESTILO MORADO */
+  .editing-mode {
+    border-left: 3px solid #ffc107;
+    background: rgba(255, 193, 7, 0.05) !important;
+  }
+  
+  /* Inputs para nombre y clase - ESTILO MORADO */
+  .name-input, .class-input {
+    width: 100%;
+    max-width: 140px;
+    text-align: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #5a189a;
+    background: rgba(0, 0, 0, 0.3);
+    color: #eee;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  /* Estilo específico para el desplegable de clase - ESTILO MORADO */
+  .class-input {
+    background: rgba(0, 0, 0, 0.3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239d4edd' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.762L10.825 4z'/%3E%3C/svg%3E") no-repeat right 8px center;
+    background-size: 12px;
+    padding-right: 24px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+  }
+
+  .class-input option {
+    background: #12001f;
+    color: #eee;
+    padding: 8px;
+  }
+
+  /* Hover de filas - ESTILO MORADO */
+  #tablaControl tr:hover td {
+    background: rgba(255,255,255,0.04);
+  }
+  
+  /* Filtros - ESTILO MORADO */
+  .filtros input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #eee;
+  }
+  
+  .filtros input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  /* Card - ESTILO MORADO ORIGINAL */
+  .card {
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    overflow: visible;
+    width: 100%;
+    max-width: none;
+  }
+  
+  /* Mensaje de permisos - ESTILO MORADO */
+  #edicionPermisos {
+    padding: 10px;
+    background: rgba(255, 193, 7, 0.15);
+    border-left: 4px solid #ffc107;
+    border-radius: 6px;
+    margin: 10px 0;
+    color: #ffc107;
+    font-weight: 500;
+  }
+  
+  /* Responsive */
+  @media (max-width: 1920px) {
+    .container {
+      max-width: 98vw;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Sección superior: Hora y URL -->
+<div class="header-info">
+  <div class="time-section">
+    <div>
+      <span class="time-label">Hora Local:</span>
+      <span class="time-display" id="localTime">--:--:--</span>
+    </div>
+    <div>
+      <span class="time-label">Hora Servidor:</span>
+      <span class="time-display" id="serverTime">--:--:--</span>
+    </div>
+  </div>
+  
+  <div class="url-section">
+    <span class="url-text">www.19-de-consiste.de</span>
+    <span class="url-year">2023</span>
+    <span class="url-text"> • www.19-de-consiste.de</span>
+    <span class="url-year">2023</span>
+  </div>
+</div>
+
+<!-- Menú de navegación -->
+<nav class="menu">
+  <ul class="menu-nav">
+    <li class="menu-item">
+      <a href="panel.html" class="menu-link">
+        <span>👥</span>
+        Miembros
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="subastas.html" class="menu-link">
+        <span>💰</span>
+        Subastas
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="registro.html" class="menu-link">
+        <span>📋</span>
+        Historial
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="control.html" class="menu-link active">
+        <span>🎮</span>
+        Control
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="solicitudes.html" class="menu-link" style="position:relative;">
+        <span>📨</span>
+        Solicitudes
+        <span class="solicitudes-badge" id="solicitudesBadge"></span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1>Control Semanal <span id="userRoleBadge" class="role-badge" style="font-size: 14px; margin-left: 10px;"></span></h1>
+
+  <!-- Permiso de edición -->
+  <div id="edicionPermisos" class="permission-warning" style="display: none;">
+    <strong>⚠️ Permisos de Edición:</strong> Como <span id="currentRole"></span>, puedes editar <strong>TODOS los campos de todos los miembros</strong>. Los miembros normales solo pueden editar <strong>su propia información de stats</strong> (nivel, poder, stats).
+  </div>
+
+  <div style="text-align: right; margin-bottom: 15px;">
+    <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
+  </div>
+
+  <div class="card">
+    <div style="overflow: visible;">
+      <table id="tablaControl"></table>
+    </div>
+    
+    <p class="muted">
+      💡 <strong>Miembros:</strong> Puedes editar tu propia fila (nivel, poder, stats).<br>
+      💡 <strong>Líderes/Oficiales:</strong> Pueden editar todas las filas y TODOS los campos (nombre, clase, stats).
+    </p>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  updateDoc,
+  addDoc,
+  getDoc,
+  onSnapshot,
+  getDocs,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+/* === Estado global === */
+let MI_ROL = "Miembro";
+let MI_UID = null;
+let esLiderOficial = false;
+let modoEdicionControl = {}; // Para rastrear qué filas están en modo edición
+
+/* === Actualizar relojes superiores === */
+function updateTopClocks() {
+  const now = new Date();
+  
+  const localTime = now.toLocaleTimeString('es-ES', { hour12: false });
+  document.getElementById('localTime').textContent = localTime;
+  
+  const serverTime = new Date(now.getTime() - (3 * 3600 * 1000));
+  const serverTimeStr = serverTime.toISOString().substr(11, 8);
+  document.getElementById('serverTime').textContent = serverTimeStr;
+}
+
+setInterval(updateTopClocks, 1000);
+updateTopClocks();
+
+/* === Auth y carga inicial === */
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href = "index.html"; return; }
+  MI_UID = user.uid;
+  const meRef = doc(db,"members",user.uid);
+  const meSnap = await getDoc(meRef);
+  
+  if(!meSnap.exists()){
+    await setDoc(meRef,{
+      name: user.displayName || "SinNombre",
+      role: "Miembro",
+      clase: "SinClase",
+      nivel: 1,
+      poder: 0
+    });
+    MI_ROL = "Miembro";
+  } else {
+    MI_ROL = meSnap.data()?.role || "Miembro";
+  }
+  
+  // Verificar si es Líder u Oficial
+  const rolLower = MI_ROL.trim().toLowerCase();
+  esLiderOficial = (rolLower === "líder" || rolLower === "lider" || rolLower === "oficial");
+  
+  // Actualizar badge de rol
+  const roleBadge = document.getElementById("userRoleBadge");
+  if (roleBadge) {
+    roleBadge.textContent = MI_ROL;
+    roleBadge.className = "role-badge";
+    if (rolLower === "líder" || rolLower === "lider") {
+      roleBadge.classList.add("role-lider");
+    } else if (rolLower === "oficial") {
+      roleBadge.classList.add("role-oficial");
+    } else {
+      roleBadge.classList.add("role-miembro");
+    }
+  }
+  
+  // Mostrar/ocultar advertencia de permisos
+  const permisosDiv = document.getElementById("edicionPermisos");
+  const currentRoleSpan = document.getElementById("currentRole");
+  if (permisosDiv && currentRoleSpan) {
+    if (esLiderOficial) {
+      permisosDiv.style.display = "block";
+      currentRoleSpan.textContent = MI_ROL;
+      permisosDiv.innerHTML = `<strong>⚠️ Permisos de Edición:</strong> Como <strong>${MI_ROL}</strong>, puedes editar <strong>TODOS los campos de todos los miembros</strong> (nombre, clase, stats).`;
+    } else {
+      permisosDiv.style.display = "block";
+      currentRoleSpan.textContent = MI_ROL;
+      permisosDiv.innerHTML = `<strong>⚠️ Permisos de Edición:</strong> Como <strong>${MI_ROL}</strong>, puedes editar <strong>solo tu propia información de stats</strong> (nivel, poder, stats).`;
+    }
+  }
+  
+  cargarControl();
+  escucharSolicitudesBadge();
+  
+  if(!esLiderOficial){
+    const btn = document.getElementById("reinicioBtn");
+    if(btn) btn.style.display = "none";
+  }
+});
+
+/* === Utilidad para mostrar "-" si vacío o 0 === */
+function mostrarValorNum(v){
+  if(v === undefined || v === null) return "-";
+  if(typeof v === "string"){
+    const t = v.trim();
+    if(t === "" || t === "0") return "-";
+    const num = Number(t);
+    if(!isNaN(num) && num === 0) return "-";
+    return v;
+  }
+  if(typeof v === "number" && v === 0) return "-";
+  return v;
+}
+
+function mostrarValorPct(v){
+  if(v === undefined || v === null) return "-";
+  const s = String(v).trim();
+  if(s === "" || s === "0" || s === "0%") return "-";
+  return v;
+}
+
+/* === Pintar tabla en tiempo real === */
+function cargarControl(){
+  const tabla = document.getElementById("tablaControl");
+  onSnapshot(collection(db,"members"), (snap) => {
+    tabla.innerHTML = `
+<tr>
+  <th onclick="ordenarTabla(0)">Nombre ⬍</th>
+  <th onclick="ordenarTabla(1)">Clase ⬍</th>
+  <th onclick="ordenarTabla(2)">Nivel ⬍</th>
+  <th onclick="ordenarTabla(3)">Poder ⬍</th>
+  <th onclick="ordenarTabla(4)">PHYS ATK ⬍</th>
+  <th onclick="ordenarTabla(5)">PHYS DMG ⬍</th>
+  <th onclick="ordenarTabla(6)">MAG ATK ⬍</th>
+  <th onclick="ordenarTabla(7)">MAG DMG ⬍</th>
+  <th onclick="ordenarTabla(8)">PHYS DEF ⬍</th>
+  <th onclick="ordenarTabla(9)">PHYS DMG DEF ⬍</th>
+  <th onclick="ordenarTabla(10)">MAG DEF ⬍</th>
+  <th onclick="ordenarTabla(11)">MAG DMG DEF ⬍</th>
+  <th onclick="ordenarTabla(12)">ACC ⬍</th>
+  <th onclick="ordenarTabla(13)">EVA ⬍</th>
+  <th onclick="ordenarTabla(14)">Monster DMG ⬍</th>
+  <th onclick="ordenarTabla(15)">Monster DMG DEF ⬍</th>
+  <th onclick="ordenarTabla(16)">Boss DMG ⬍</th>
+  <th onclick="ordenarTabla(17)">Boss DMG DEF ⬍</th>
+  <th>Acciones</th>
+</tr>
+
+<tr class="filtros">
+  <th><input placeholder="Filtrar..."></th>
+  <th><input placeholder="Filtrar..."></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input placeholder="%"></th>
+  <th><input placeholder="%"></th>
+  <th><input placeholder="%"></th>
+  <th></th>
+</tr>
+`;
+
+    snap.forEach(d=>{
+      const m = d.data() || {};
+      const esPropio = (d.id === MI_UID);
+      const estaEditando = modoEdicionControl[d.id] || false;
+      
+      // En Control: Miembros pueden editar SU PROPIA fila (solo stats), Líder/Oficial pueden editar TODAS (todo)
+      const puedeEditar = esLiderOficial || esPropio;
+      
+      // Determinar clase para fila propia
+      const filaClase = esPropio ? "self-row" : "";
+
+      // Si está en modo edición
+      if (estaEditando) {
+        tabla.innerHTML += `
+          <tr id="fila_${d.id}" class="editing-mode ${filaClase}">
+            <td id="nombre_${d.id}">
+              ${esLiderOficial ? 
+                `<input type="text" class="name-input" id="editNombre_${d.id}" value="${m.name || ''}">` : 
+                m.name || "-"}
+            </td>
+            <td id="clase_${d.id}">
+              ${esLiderOficial ? 
+                `<select class="class-input" style="background: rgba(0, 0, 0, 0.3); color: #eee;" id="editClase_${d.id}">
+                  <option value="Arquero" ${m.clase==="Arquero"?"selected":""}>Arquero</option>
+                  <option value="Mago" ${m.clase==="Mago"?"selected":""}>Mago</option>
+                  <option value="Tanque" ${m.clase==="Tanque"?"selected":""}>Tanque</option>
+                  <option value="Healer" ${m.clase==="Healer"?"selected":""}>Healer</option>
+                </select>` : 
+                m.clase || "-"}
+            </td>
+            <td id="nivel_${d.id}"><input type="number" step="1" class="edit-input" id="edit_nivel_${d.id}" value="${m.nivel || ''}"></td>
+            <td id="poder_${d.id}"><input type="number" step="1" class="edit-input" id="edit_poder_${d.id}" value="${m.poder || ''}"></td>
+            <td id="physAtk_${d.id}"><input type="number" step="1" class="edit-input" id="edit_physAtk_${d.id}" value="${m.physAtk || ''}"></td>
+            <td id="physDmg_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_physDmg_${d.id}" value="${m.physDmg ? m.physDmg.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="magAtk_${d.id}"><input type="number" step="1" class="edit-input" id="edit_magAtk_${d.id}" value="${m.magAtk || ''}"></td>
+            <td id="magDmg_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_magDmg_${d.id}" value="${m.magDmg ? m.magDmg.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="physDef_${d.id}"><input type="number" step="1" class="edit-input" id="edit_physDef_${d.id}" value="${m.physDef || ''}"></td>
+            <td id="physDmgDef_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_physDmgDef_${d.id}" value="${m.physDmgDef ? m.physDmgDef.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="magDef_${d.id}"><input type="number" step="1" class="edit-input" id="edit_magDef_${d.id}" value="${m.magDef || ''}"></td>
+            <td id="magDmgDef_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_magDmgDef_${d.id}" value="${m.magDmgDef ? m.magDmgDef.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="acc_${d.id}"><input type="number" step="1" class="edit-input" id="edit_acc_${d.id}" value="${m.acc || ''}"></td>
+            <td id="eva_${d.id}"><input type="number" step="1" class="edit-input" id="edit_eva_${d.id}" value="${m.eva || ''}"></td>
+            <td id="monsterDmg_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_monsterDmg_${d.id}" value="${m.monsterDmg ? m.monsterDmg.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="monsterDmgDef_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_monsterDmgDef_${d.id}" value="${m.monsterDmgDef ? m.monsterDmgDef.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="bossDmg_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_bossDmg_${d.id}" value="${m.bossDmg ? m.bossDmg.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="bossDmgDef_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_bossDmgDef_${d.id}" value="${m.bossDmgDef ? m.bossDmgDef.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td>
+              <button class="btn" onclick="guardarControl('${d.id}')">Guardar</button>
+              <button class="btn cancel" onclick="cancelarEdicionControl('${d.id}')">Cancelar</button>
+            </td>
+          </tr>
+        `;
+      } else {
+        // Modo normal (solo lectura o mostrar datos)
+        tabla.innerHTML += `
+          <tr id="fila_${d.id}" class="${filaClase}">
+            <td id="nombre_${d.id}">${m.name ?? "-"} ${esPropio ? "<span style='color:#9d4edd; font-size:11px;'>(TÚ)</span>" : ""}</td>
+            <td id="clase_${d.id}">${m.clase ?? "-"}</td>
+            <td id="nivel_${d.id}">${mostrarValorNum(m.nivel)}</td>
+            <td id="poder_${d.id}">${mostrarValorNum(m.poder)}</td>
+            <td id="physAtk_${d.id}">${mostrarValorNum(m.physAtk)}</td>
+            <td id="physDmg_${d.id}">${mostrarValorPct(m.physDmg)}</td>
+            <td id="magAtk_${d.id}">${mostrarValorNum(m.magAtk)}</td>
+            <td id="magDmg_${d.id}">${mostrarValorPct(m.magDmg)}</td>
+            <td id="physDef_${d.id}">${mostrarValorNum(m.physDef)}</td>
+            <td id="physDmgDef_${d.id}">${mostrarValorPct(m.physDmgDef)}</td>
+            <td id="magDef_${d.id}">${mostrarValorNum(m.magDef)}</td>
+            <td id="magDmgDef_${d.id}">${mostrarValorPct(m.magDmgDef)}</td>
+            <td id="acc_${d.id}">${mostrarValorNum(m.acc)}</td>
+            <td id="eva_${d.id}">${mostrarValorNum(m.eva)}</td>
+            <td id="monsterDmg_${d.id}">${mostrarValorPct(m.monsterDmg)}</td>
+            <td id="monsterDmgDef_${d.id}">${mostrarValorPct(m.monsterDmgDef)}</td>
+            <td id="bossDmg_${d.id}">${mostrarValorPct(m.bossDmg)}</td>
+            <td id="bossDmgDef_${d.id}">${mostrarValorPct(m.bossDmgDef)}</td>
+            <td>
+              ${puedeEditar ? `<button class="btn" onclick="editarControl('${d.id}')">Editar</button>` : 
+                `<span style="color: #999; font-size: 11px; font-style: italic;">solo stats propios</span>`}
+            </td>
+          </tr>
+        `;
+      }
+    });
+
+    setTimeout(() => {
+      document.querySelectorAll(".filtros input").forEach(el => {
+        el.addEventListener("input", filtrarTabla);
+      });
+    }, 0);
+  });
+}
+
+/* === Editar en Control === */
+window.editarControl = (id)=>{
+  const esPropio = (id === MI_UID);
+  
+  // Verificar permisos CORRECTAMENTE: 
+  // - Líder/Oficial pueden editar TODAS las filas
+  // - Miembros solo pueden editar SU PROPIA fila
+  if(!esLiderOficial && !esPropio){ 
+    alert("❌ Solo puedes editar tu propia información de Control."); 
+    return; 
+  }
+
+  // Activar modo edición para esta fila
+  modoEdicionControl[id] = true;
+  
+  // Recargar solo esta fila en modo edición
+  cargarControl();
+};
+
+/* === Cancelar edición en Control === */
+window.cancelarEdicionControl = (id)=>{
+  // Desactivar modo edición
+  modoEdicionControl[id] = false;
+  
+  // Recargar tabla
+  cargarControl();
+};
+
+/* === Guardar cambios en Control === */
+window.guardarControl = async (id)=>{
+  const esPropio = (id === MI_UID);
+  
+  // Verificar permisos CORRECTAMENTE
+  if(!esLiderOficial && !esPropio){ 
+    alert("❌ Solo puedes guardar cambios en tu propia información."); 
+    return; 
+  }
+
+  const getVal = cid => document.getElementById(cid)?.value;
+
+  const updateData = {};
+  let cambioTxt = "";
+
+  // Para Líder/Oficial: también pueden editar nombre y clase
+  if (esLiderOficial) {
+    const nuevoNombre = getVal(`editNombre_${id}`);
+    if (nuevoNombre !== undefined && nuevoNombre !== null) {
+      updateData.name = nuevoNombre;
+      cambioTxt += `Nombre: ${nuevoNombre}`;
+    }
+    
+    const nuevaClase = getVal(`editClase_${id}`);
+    if (nuevaClase !== undefined && nuevaClase !== null) {
+      updateData.clase = nuevaClase;
+      cambioTxt += (cambioTxt ? ", " : "") + `Clase: ${nuevaClase}`;
+    }
+  }
+
+  // Numéricos: solo actualizar si el input no está vacío
+  const numeric = ["nivel","poder","physAtk","magAtk","physDef","magDef","acc","eva"];
+  for(const k of numeric){
+    const v = getVal(`edit_${k}_${id}`);
+    if(v !== undefined && v !== null && String(v).trim() !== ""){
+      const num = Number(v);
+      if(!isNaN(num)){
+        updateData[k] = num;
+        cambioTxt += (cambioTxt ? ", " : "") + `${k}: ${num}`;
+      }
+    }
+  }
+
+  // Porcentajes: solo actualizar si el input no está vacío; guardamos como cadena con %
+  const percent = ["physDmg","magDmg","physDmgDef","magDmgDef","monsterDmg","monsterDmgDef","bossDmg","bossDmgDef"];
+  for(const k of percent){
+    const v = getVal(`edit_${k}_${id}`);
+    if(v !== undefined && v !== null && String(v).trim() !== ""){
+      const num = Number(v);
+      if(!isNaN(num)){
+        const fmt = `${num}%`;
+        updateData[k] = fmt;
+        cambioTxt += (cambioTxt ? ", " : "") + `${k}: ${fmt}`;
+      }
+    }
+  }
+
+  // Si no hay cambios, no enviar updateDoc
+  if(Object.keys(updateData).length === 0){
+    alert("No hay cambios para guardar.");
+    modoEdicionControl[id] = false;
+    cargarControl();
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db,"members",id), updateData);
+
+    await addDoc(collection(db,"historial"),{
+      usuario: id,
+      rol: MI_ROL,
+      accion: "Actualización de Control Semanal",
+      cambio: cambioTxt || "Sin cambios",
+      fecha: Date.now()
+    });
+
+    // Desactivar modo edición
+    modoEdicionControl[id] = false;
+    
+    alert("✅ Cambios guardados y registrados en historial.");
+    
+    // Recargar tabla
+    cargarControl();
+    
+  } catch(e) {
+    alert("❌ Error al guardar: " + e.message);
+  }
+};
+
+/* === Reinicio semanal === */
+window.reinicioSemanal = async ()=>{
+  if(!esLiderOficial){
+    alert("❌ Solo Líderes y Oficiales pueden realizar el reinicio semanal.");
+    return;
+  }
+  
+  if(!confirm("¿Seguro que quieres reiniciar la semana? Sumará la semanal al total y reseteará Boss 45/55.")) return;
+
+  const snap = await getDocs(collection(db,"members"));
+  let count = 0;
+
+  for(const d of snap.docs){
+    const m = d.data() || {};
+    const semanalActual = Number(m.semanal ?? 0);
+    const totalActual = Number(m.totalContribution ?? 0);
+    const nuevoTotal = totalActual + semanalActual;
+
+    await updateDoc(doc(db,"members",d.id),{
+      totalContribution: nuevoTotal,
+      semanal: 0,
+      boss45: false,
+      boss55: false
+    });
+    count++;
+  }
+
+  await addDoc(collection(db,"historial"),{
+    usuario: "Sistema",
+    rol: MI_ROL,
+    accion: "Reinicio semanal",
+    cambio: `Se reinició contribución semanal y bosses de ${count} miembros`,
+    fecha: Date.now()
+  });
+
+  alert("✅ Reinicio semanal completado.");
+};
+
+/* ===== FILTRADO CONTROL ===== */
+function filtrarTabla(){
+  const tabla = document.getElementById("tablaControl");
+  const filtros = tabla.querySelectorAll(".filtros th");
+  const filas = tabla.querySelectorAll("tr[id^='fila_']");
+
+  filas.forEach(fila => {
+    let visible = true;
+    const celdas = fila.children;
+
+    filtros.forEach((filtro, i) => {
+      const input = filtro.querySelector("input");
+      if (!input || !input.value) return;
+
+      let celda = celdas[i].textContent.trim();
+      let filtroVal = input.value.trim();
+
+      celda = celda.replace("%", "");
+
+      if (!isNaN(filtroVal)) {
+        if (Number(celda) < Number(filtroVal)) visible = false;
+      } else {
+        if (!celda.toLowerCase().startsWith(filtroVal.toLowerCase())) {
+          visible = false;
+        }
+      }
+    });
+
+    fila.style.display = visible ? "" : "none";
+  });
+}
+
+/* ===== ORDEN CONTROL ===== */
+let ordenCol = null;
+let ordenAsc = true;
+
+window.ordenarTabla = (col) => {
+  const tabla = document.getElementById("tablaControl");
+  const filas = Array.from(tabla.querySelectorAll("tr[id^='fila_']"));
+
+  ordenAsc = ordenCol === col ? !ordenAsc : true;
+  ordenCol = col;
+
+  filas.sort((a, b) => {
+    let A = a.children[col].textContent.trim().replace("%","");
+    let B = b.children[col].textContent.trim().replace("%","");
+
+    if (A === "-" || A === "") A = "-999999";
+    if (B === "-" || B === "") B = "-999999";
+
+    if (!isNaN(A) && !isNaN(B)) {
+      return ordenAsc ? A - B : B - A;
+    }
+
+    return ordenAsc
+      ? A.localeCompare(B, "es", { sensitivity: "base" })
+      : B.localeCompare(A, "es", { sensitivity: "base" });
+  });
+
+  filas.forEach(f => tabla.appendChild(f));
+  filtrarTabla();
+};
+
+/* === Punto rojo en nav === */
+function escucharSolicitudesBadge(){
+  const q = collection(db,"solicitudes");
+  onSnapshot(q, snap=>{
+    const badge = document.getElementById("solicitudesBadge");
+    if(!badge) return;
+    badge.style.display = snap.size > 0 ? "block" : "none";
+  });
+}
+</script>
+
+</body>
+</html>

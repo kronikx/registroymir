@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>YMIR Guild - Signup (Admin)</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Sección superior: Hora y URL -->
+<div class="header-info">
+  <div class="time-section">
+    <div>
+      <span class="time-label">Hora Local:</span>
+      <span class="time-display" id="localTime">--:--:--</span>
+    </div>
+    <div>
+      <span class="time-label">Hora Servidor:</span>
+      <span class="time-display" id="serverTime">--:--:--</span>
+    </div>
+  </div>
+  
+  <div class="url-section">
+    <span class="url-text">www.19-de-consiste.de</span>
+    <span class="url-year">2023</span>
+    <span class="url-text"> • www.19-de-consiste.de</span>
+    <span class="url-year">2023</span>
+  </div>
+</div>
+
+<!-- Menú de navegación -->
+<nav class="menu">
+  <ul class="menu-nav">
+    <li class="menu-item">
+      <a href="panel.html" class="menu-link">
+        <span>👥</span>
+        Miembros
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="subastas.html" class="menu-link">
+        <span>💰</span>
+        Subastas
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="registro.html" class="menu-link">
+        <span>📋</span>
+        Historial
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="control.html" class="menu-link">
+        <span>🎮</span>
+        Control
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="solicitudes.html" class="menu-link" style="position:relative;">
+        <span>📨</span>
+        Solicitudes
+        <span class="solicitudes-badge" id="solicitudesBadge"></span>
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="signup.html" class="menu-link active">
+        <span>📝</span>
+        Signup
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1>Signup (Admin)</h1>
+
+  <div id="accessDenied" class="access-denied" style="display:none">
+    Acceso denegado: esta sección es solo para Líderes y Oficiales.
+  </div>
+
+  <div id="content" class="card" style="display:none">
+    <div class="table-scroll">
+      <table id="tablaSignup"></table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, doc, getDoc, setDoc, deleteDoc, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+/* === Actualizar relojes superiores === */
+function updateTopClocks() {
+  const now = new Date();
+  
+  const localTime = now.toLocaleTimeString('es-ES', { hour12: false });
+  document.getElementById('localTime').textContent = localTime;
+  
+  const serverTime = new Date(now.getTime() - (3 * 3600 * 1000));
+  const serverTimeStr = serverTime.toISOString().substr(11, 8);
+  document.getElementById('serverTime').textContent = serverTimeStr;
+}
+
+setInterval(updateTopClocks, 1000);
+updateTopClocks();
+
+let solicitudes = [];
+
+/* === Protección de roles (solo Líder/Oficial) === */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  const ref = doc(db, "members", user.uid);
+  const snap = await getDoc(ref);
+  const rol = snap.exists() ? (snap.data().rol || snap.data().proofImages?.role || "").toLowerCase() : "";
+
+  if (rol !== "lider" && rol !== "oficial") {
+    document.getElementById("accessDenied").style.display = "block";
+    document.getElementById("content").style.display = "none";
+    setTimeout(()=>{ window.location.href = "panel.html"; }, 2000);
+    return;
+  }
+
+  document.getElementById("accessDenied").style.display = "none";
+  document.getElementById("content").style.display = "block";
+  cargarSignupRealtime();
+});
+
+/* === Live updates: carga solicitudes en tiempo real === */
+function cargarSignupRealtime(){
+  const q = query(collection(db,"solicitudes"), orderBy("fecha","desc"));
+  onSnapshot(q, snap => {
+    solicitudes = [];
+    snap.forEach(d=>{
+      solicitudes.push({id:d.id, ...d.data()});
+    });
+    pintarTabla(solicitudes);
+  });
+}
+
+function pintarTabla(lista){
+  const tabla = document.getElementById("tablaSignup");
+
+  if(lista.length===0){
+    tabla.innerHTML = `<tr><td colspan="5">No hay solicitudes de signup</td></tr>`;
+    return;
+  }
+
+  tabla.innerHTML = `
+    <tr>
+      <th>Email</th>
+      <th>Usuario ID</th>
+      <th>Estado</th>
+      <th>Fecha</th>
+      <th>Acciones</th>
+    </tr>
+  `;
+
+  lista.forEach(s=>{
+    tabla.innerHTML += `
+      <tr>
+        <td>${s.email || "-"}</td>
+        <td>${s.usuarioId || "-"}</td>
+        <td><span class="badge badge-pendiente">${s.estado || "pendiente"}</span></td>
+        <td>${s.fecha ? new Date(s.fecha.toDate()).toLocaleString() : "-"}</td>
+        <td>
+          <button class="btn" onclick="aprobar('${s.id}','${s.usuarioId}','${s.email}')">Aprobar</button>
+          <button class="btn secondary" onclick="rechazar('${s.id}')">Rechazar</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+/* === Acciones === */
+window.aprobar = async (solicitudId, usuarioId, email)=>{
+  // Al aprobar: crear en members como 'miembro' y borrar de solicitudes
+  await setDoc(doc(db,"members",usuarioId), {
+    email: email,
+    rol: "miembro",
+    name: "",
+    clase: "",
+    nivel: 0,
+    poder: 0
+  });
+  await deleteDoc(doc(db,"solicitudes",solicitudId));
+};
+
+window.rechazar = async (solicitudId)=>{
+  await deleteDoc(doc(db,"solicitudes",solicitudId));
+};
+</script>
+
+</body>
+</html>

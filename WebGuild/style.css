@@ -1,0 +1,514 @@
+/* === Estilo global morado === */
+* {
+  box-sizing: border-box;
+  font-family: Segoe UI, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #240046, #090012);
+  color: #eee;
+}
+
+.container {
+  width: 98vw;
+  max-width: 1600px;
+  margin: auto;
+}
+
+/* === NUEVO: Estilo para el encabezado superior (hora y fecha) === */
+.header-info {
+  background: rgba(36, 0, 70, 0.9);
+  padding: 15px 20px;
+  margin: 15px 0;
+  border-radius: 10px;
+  border-left: 4px solid #9d4edd;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.time-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.time-display {
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(93, 24, 154, 0.3);
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(157, 78, 221, 0.5);
+}
+
+.time-label {
+  font-size: 14px;
+  color: #c77dff;
+  font-weight: 500;
+}
+
+.url-section {
+  text-align: center;
+  padding-top: 10px;
+  border-top: 1px solid rgba(157, 78, 221, 0.3);
+}
+
+.url-text {
+  font-size: 16px;
+  color: #fff;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.url-year {
+  color: #9d4edd;
+  font-weight: 600;
+}
+
+/* === NUEVO: Estilo para el menú === */
+.menu {
+  background: rgba(36, 0, 70, 0.8);
+  padding: 20px 0;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  border-radius: 0 0 12px 12px;
+}
+
+.menu-nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 40px;
+  flex-wrap: wrap;
+}
+
+.menu-item {
+  list-style: none;
+  position: relative;
+}
+
+.menu-link {
+  color: #eee;
+  text-decoration: none;
+  font-size: 18px;
+  font-weight: 600;
+  padding: 12px 20px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.menu-link:hover {
+  background: rgba(93, 24, 154, 0.4);
+  color: #fff;
+  transform: translateY(-2px);
+}
+
+.menu-link.active {
+  background: #5a189a;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(93, 24, 154, 0.4);
+}
+
+.menu-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 6px;
+  height: 6px;
+  background: #9d4edd;
+  border-radius: 50%;
+}
+
+.menu-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -20px;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 20px;
+  width: 1px;
+  background: rgba(157, 78, 221, 0.3);
+}
+
+/* Badge para solicitudes */
+.solicitudes-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 12px;
+  height: 12px;
+  background: red;
+  border-radius: 50%;
+  display: none;
+}
+
+/* === Cards === */
+.card {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  overflow: visible;
+}
+
+/* === Scroll SOLO para la tabla (FIX CLAVE) === */
+.table-scroll {
+  max-height: 70vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+/* === Tabla === */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  table-layout: fixed;
+  font-size: 14px;
+}
+
+/* === Cabecera === */
+th {
+  padding: 10px;
+  text-align: left;
+  font-weight: bold;
+  background-color: #12001f;
+  color: #fff;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  background-clip: padding-box;
+}
+
+/* Sticky header */
+table tr:first-child th {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+table tr.filtros th {
+  position: sticky;
+  top: 44px;
+  z-index: 9;
+}
+
+/* Primera fila (títulos) */
+table tr:first-child th {
+  top: 0;
+}
+
+/* Segunda fila (filtros) */
+table tr.filtros th {
+  top: 44px;
+}
+
+/* === Filtros === */
+table tr.filtros input,
+table tr.filtros select {
+  width: 100%;
+  padding: 4px 6px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+}
+
+/* === Celdas === */
+td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  background-color: transparent;
+  position: relative;
+  z-index: 1;
+}
+
+tr:hover td {
+  background: rgba(255,255,255,0.04);
+}
+
+/* === Botones === */
+.btn {
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  background: #5a189a;
+  color: #fff;
+}
+
+.btn.secondary {
+  background: #9d4edd;
+}
+
+.btn:hover {
+  opacity: 0.85;
+}
+
+/* === Orden clickable === */
+th[onclick] {
+  cursor: pointer;
+  user-select: none;
+}
+
+th[onclick]:hover {
+  color: #c77dff;
+}
+
+/* === Scrollbar (sin cambiar estética) === */
+.table-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.table-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+}
+
+.table-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* === FIX DEFINITIVO DEL BUG === */
+th {
+  backdrop-filter: none !important;
+}
+
+/* === Estilos específicos para páginas === */
+h1 {
+  color: #fff;
+  text-align: center;
+  margin: 20px 0;
+}
+
+/* === Reloj dual === */
+.clock-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 12px 0;
+}
+
+.clock-card {
+  display: flex;
+  gap: 40px;
+  padding: 16px 32px;
+  border-radius: 12px;
+  background: #4b0082;
+  box-shadow: 0 0 12px #a020f0, 0 0 24px #a020f0;
+  color: #fff;
+}
+
+.clock-box {
+  text-align: center;
+}
+
+.clock-title {
+  font-size: 14px;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.clock-time {
+  font-family: "SF Mono", Menlo, Consolas, monospace;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.clock-date {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+/* === Para index.html (login) === */
+.login-body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+.login-card {
+  max-width: 280px;
+  width: 100%;
+  margin: 20px auto;
+}
+
+/* === Badges === */
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+.badge-pendiente { background-color: #ffc107; color:#000; }
+.badge-poder { background-color: #6a4c93; }
+.badge-semanal { background-color: #198754; }
+.badge-puja { background-color: #ff6b6b; }
+.badge-boss { background-color: #0d6efd; }
+.badge-reinicio { background-color: #ffc107; color:#000; }
+.badge-baneado { background-color: #b00020; }
+
+/* === Access denied === */
+.access-denied {
+  margin: 1rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background: #331a1a;
+  color: #ffb3b3;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* === Pendiente box === */
+.pendiente-box {
+  margin: 50px auto;
+  max-width: 600px;
+  padding: 20px;
+  background: #331a1a;
+  color: #ffb3b3;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+/* === Subastas específico === */
+.item-img {
+  max-height: 28px;
+  vertical-align: middle;
+  margin-left: 6px;
+  border-radius: 4px;
+}
+/* === Indicadores de rol === */
+.role-badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: bold;
+  text-transform: uppercase;
+  display: inline-block;
+}
+
+.role-lider {
+  background: linear-gradient(135deg, #ff6b6b, #c44569);
+  color: white;
+}
+
+.role-oficial {
+  background: linear-gradient(135deg, #5a189a, #9d4edd);
+  color: white;
+}
+
+.role-miembro {
+  background: linear-gradient(135deg, #1a936f, #88d498);
+  color: white;
+}
+
+/* === Indicador de acceso denegado mejorado === */
+.access-denied {
+  margin: 2rem auto;
+  padding: 2rem;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #331a1a, #5d1f1f);
+  color: #ffb3b3;
+  font-weight: bold;
+  text-align: center;
+  max-width: 600px;
+  border-left: 6px solid #ff6b6b;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.access-denied h2 {
+  margin-top: 0;
+  color: #ff6b6b;
+}
+
+/* === Estilos para mensajes de permiso === */
+.permission-warning {
+  background: rgba(255, 193, 7, 0.15);
+  border-left: 4px solid #ffc107;
+  padding: 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  color: #ffc107;
+  font-weight: 500;
+}
+
+/* === FIX para desplegables (select) en subastas === */
+select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #5a189a;
+  background: rgba(36, 0, 70, 0.9) !important;
+  color: #fff !important;
+  font-size: 14px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239d4edd' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 12px;
+  padding-right: 30px;
+}
+
+select:hover {
+  border-color: #9d4edd;
+  background: rgba(93, 24, 154, 0.9) !important;
+}
+
+select:focus {
+  outline: none;
+  border-color: #c77dff;
+  box-shadow: 0 0 0 2px rgba(157, 78, 221, 0.3);
+}
+
+/* Estilos para las opciones del desplegable */
+select option {
+  background: rgba(36, 0, 70, 0.95) !important;
+  color: #fff !important;
+  padding: 10px !important;
+  border: none !important;
+}
+
+select option:hover,
+select option:focus,
+select option:checked {
+  background: rgba(93, 24, 154, 0.95) !important;
+  color: #fff !important;
+}
+
+/* Para navegadores basados en WebKit (Chrome, Edge, Safari) */
+select::-webkit-scrollbar {
+  width: 10px;
+}
+
+select::-webkit-scrollbar-track {
+  background: rgba(36, 0, 70, 0.9);
+  border-radius: 5px;
+}
+
+select::-webkit-scrollbar-thumb {
+  background: #5a189a;
+  border-radius: 5px;
+}
+
+select::-webkit-scrollbar-thumb:hover {
+  background: #9d4edd;
+}
+
+/* Para Firefox */
+select {
+  scrollbar-width: thin;
+  scrollbar-color: #5a189a rgba(36, 0, 70, 0.9);
+}

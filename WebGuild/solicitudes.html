@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>YMIR Guild - Solicitudes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Sección superior: Hora y URL -->
+<div class="header-info">
+  <div class="time-section">
+    <div>
+      <span class="time-label">Hora Local:</span>
+      <span class="time-display" id="localTime">--:--:--</span>
+    </div>
+    <div>
+      <span class="time-label">Hora Servidor:</span>
+      <span class="time-display" id="serverTime">--:--:--</span>
+    </div>
+  </div>
+
+<!-- Menú de navegación -->
+<nav class="menu">
+  <ul class="menu-nav">
+    <li class="menu-item">
+      <a href="panel.html" class="menu-link">
+        <span>👥</span>
+        Miembros
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="subastas.html" class="menu-link">
+        <span>💰</span>
+        Subastas
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="registro.html" class="menu-link">
+        <span>📋</span>
+        Historial
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="control.html" class="menu-link">
+        <span>🎮</span>
+        Control
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="solicitudes.html" class="menu-link active" style="position:relative;">
+        <span>📨</span>
+        Solicitudes
+        <span class="solicitudes-badge" id="solicitudesBadgeNav"></span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1>Solicitudes de Acceso <span id="userRoleBadge" class="role-badge" style="font-size: 14px; margin-left: 10px;"></span></h1>
+
+  <div id="accessDenied" class="access-denied" style="display:none">
+    <h2>🚫 Acceso Restringido</h2>
+    <p>Esta sección es exclusiva para <strong>Líderes</strong> y <strong>Oficiales</strong> del clan.</p>
+    <p>Tu rol actual no te permite acceder a esta funcionalidad.</p>
+    <div style="margin-top: 20px;">
+      <button class="btn" onclick="window.location.href='panel.html'">Volver al Panel</button>
+    </div>
+  </div>
+
+  <div id="content" class="card" style="display:none">
+    <div class="permission-warning" style="display: none;" id="permissionWarning">
+      <strong>⚠️ Recordatorio:</strong> Solo Líderes y Oficiales pueden aprobar/rechazar solicitudes.
+    </div>
+    
+    <div class="table-scroll">
+      <table id="tablaSolicitudes"></table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, orderBy, query, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+let solicitudes = [];
+let usuarioActual = null;
+let rolUsuario = null;
+let esLiderOficial = false;
+
+/* === Actualizar relojes superiores === */
+function updateTopClocks() {
+  const now = new Date();
+  
+  const localTime = now.toLocaleTimeString('es-ES', { hour12: false });
+  document.getElementById('localTime').textContent = localTime;
+  
+  const serverTime = new Date(now.getTime() - (3 * 3600 * 1000));
+  const serverTimeStr = serverTime.toISOString().substr(11, 8);
+  document.getElementById('serverTime').textContent = serverTimeStr;
+}
+
+setInterval(updateTopClocks, 1000);
+updateTopClocks();
+
+/* === Protección de roles (solo Líder/Oficial) === */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  usuarioActual = user;
+  
+  const meSnap = await getDoc(doc(db,"members",user.uid));
+  if (!meSnap.exists()) {
+    mostrarAccesoDenegado();
+    setTimeout(()=>{ window.location.href = "panel.html"; }, 3000);
+    return;
+  }
+
+  const data = meSnap.data() || {};
+  rolUsuario = data.role || data.rol || data.proofImages?.role || "Miembro";
+  const rolLower = rolUsuario.trim().toLowerCase();
+  
+  // Actualizar badge de rol
+  const roleBadge = document.getElementById("userRoleBadge");
+  if (roleBadge) {
+    roleBadge.textContent = rolUsuario;
+    roleBadge.className = "role-badge";
+    if (rolLower === "líder" || rolLower === "lider") {
+      roleBadge.classList.add("role-lider");
+    } else if (rolLower === "oficial") {
+      roleBadge.classList.add("role-oficial");
+    } else {
+      roleBadge.classList.add("role-miembro");
+    }
+  }
+
+  // Verificar si es Líder u Oficial
+  esLiderOficial = (rolLower === "líder" || rolLower === "lider" || rolLower === "oficial");
+  
+  if (!esLiderOficial) {
+    mostrarAccesoDenegado();
+    setTimeout(()=>{ window.location.href = "panel.html"; }, 3000);
+    return;
+  }
+
+  // Mostrar contenido y mostrar advertencia de permisos
+  document.getElementById("accessDenied").style.display = "none";
+  document.getElementById("content").style.display = "block";
+  document.getElementById("permissionWarning").style.display = "block";
+  
+  cargarSolicitudesRealtime();
+  escucharSolicitudesBadge();
+});
+
+function mostrarAccesoDenegado() {
+  document.getElementById("accessDenied").style.display = "block";
+  document.getElementById("content").style.display = "none";
+}
+
+/* === Cargar solicitudes en tiempo real === */
+function cargarSolicitudesRealtime(){
+  const q = query(collection(db,"solicitudes"), orderBy("fecha","desc"));
+  onSnapshot(q, snap => {
+    solicitudes = [];
+    snap.forEach(d=>{
+      solicitudes.push({id:d.id, ...d.data()});
+    });
+    pintarTabla(solicitudes);
+  });
+}
+
+function pintarTabla(lista){
+  const tabla = document.getElementById("tablaSolicitudes");
+
+  if(lista.length===0){
+    tabla.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 30px; color: #c77dff; font-style: italic;">No hay solicitudes pendientes</td></tr>`;
+    return;
+  }
+
+  tabla.innerHTML = `
+    <tr>
+      <th>Email</th>
+      <th>Usuario ID</th>
+      <th>Nombre</th>
+      <th>Clase</th>
+      <th>Estado</th>
+      <th>Fecha</th>
+      <th>Acciones</th>
+    </tr>
+  `;
+
+  lista.forEach(s=>{
+    // Solo mostrar botones si el usuario tiene permisos
+    const botones = esLiderOficial ? 
+      `<button class="btn" onclick="aprobar('${s.id}','${s.usuarioId}','${s.email}','${s.name}','${s.clase}')">Aprobar</button>
+       <button class="btn secondary" onclick="rechazar('${s.id}')">Rechazar</button>` :
+      `<span style="color: #999; font-style: italic;">Sin permisos</span>`;
+    
+    tabla.innerHTML += `
+      <tr>
+        <td>${s.email || "-"}</td>
+        <td><code style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px;">${s.usuarioId || "-"}</code></td>
+        <td><strong>${s.name || "-"}</strong></td>
+        <td>${s.clase || "-"}</td>
+        <td><span class="badge badge-pendiente">${s.estado || "pendiente"}</span></td>
+        <td style="font-size: 12px;">${s.fecha ? new Date(s.fecha.toDate()).toLocaleString() : "-"}</td>
+        <td>${botones}</td>
+      </tr>
+    `;
+  });
+}
+
+/* === Acciones === */
+window.aprobar = async (solicitudId, usuarioId, email, name, clase)=>{
+  if (!esLiderOficial) {
+    alert("No tienes permisos para aprobar solicitudes.");
+    return;
+  }
+  
+  if (!confirm(`¿Aprobar a ${name} (${clase}) como nuevo miembro?`)) return;
+  
+  try {
+    // Crear el miembro con datos básicos
+    await setDoc(doc(db,"members",usuarioId), {
+      email: email,
+      role: "Miembro",
+      name: name,
+      clase: clase,
+      nivel: 1,
+      poder: 0,
+      totalContribution: 0,
+      semanal: 0,
+      boss45: false,
+      boss55: false,
+      fechaIngreso: new Date()
+    });
+    
+    // Eliminar la solicitud
+    await deleteDoc(doc(db,"solicitudes",solicitudId));
+    
+    // Registrar en historial
+    await setDoc(doc(collection(db,"historial")), {
+      usuario: name,
+      rol: rolUsuario,
+      accion: "Nuevo miembro aprobado",
+      cambio: `Usuario ${name} (${clase}) aprobado por ${rolUsuario}`,
+      fecha: Date.now()
+    });
+    
+    alert(`✅ ${name} ha sido aprobado y añadido a los miembros.`);
+  } catch(e) {
+    alert("❌ Error al aprobar: " + e.message);
+  }
+};
+
+window.rechazar = async (solicitudId)=>{
+  if (!esLiderOficial) {
+    alert("No tienes permisos para rechazar solicitudes.");
+    return;
+  }
+  
+  if (!confirm("¿Rechazar esta solicitud? Esta acción no se puede deshacer.")) return;
+  
+  try {
+    await deleteDoc(doc(db,"solicitudes",solicitudId));
+    alert("✅ Solicitud rechazada.");
+  } catch(e) {
+    alert("❌ Error al rechazar: " + e.message);
+  }
+};
+
+/* === Punto rojo en nav === */
+function escucharSolicitudesBadge(){
+  const q = collection(db,"solicitudes");
+  onSnapshot(q, snap=>{
+    const badge = document.getElementById("solicitudesBadgeNav");
+    if(!badge) return;
+    badge.style.display = snap.size > 0 ? "block" : "none";
+  });
+}
+</script>
+
+</body>
+</html>

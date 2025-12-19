@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>YMIR Guild - Historial</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Sección superior: Hora y URL -->
+<div class="header-info">
+  <div class="time-section">
+    <div>
+      <span class="time-label">Hora Local:</span>
+      <span class="time-display" id="localTime">--:--:--</span>
+    </div>
+    <div>
+      <span class="time-label">Hora Servidor:</span>
+      <span class="time-display" id="serverTime">--:--:--</span>
+    </div>
+  </div>
+  
+
+<!-- Menú de navegación -->
+<nav class="menu">
+  <ul class="menu-nav">
+    <li class="menu-item">
+      <a href="panel.html" class="menu-link">
+        <span>👥</span>
+        Miembros
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="subastas.html" class="menu-link">
+        <span>💰</span>
+        Subastas
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="registro.html" class="menu-link active">
+        <span>📋</span>
+        Historial
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="control.html" class="menu-link">
+        <span>🎮</span>
+        Control
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="solicitudes.html" class="menu-link" style="position:relative;">
+        <span>📨</span>
+        Solicitudes
+        <span class="solicitudes-badge" id="solicitudesBadge"></span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1>Historial del Clan</h1>
+
+  <div class="card">
+    <div class="filters" style="margin-bottom: 15px; text-align: center;">
+      <button class="btn" onclick="filtrar('todos')">Todos</button>
+      <button class="btn secondary" onclick="filtrar('poder')">Poder/Nivel</button>
+      <button class="btn secondary" onclick="filtrar('semanal')">Semanal</button>
+      <button class="btn secondary" onclick="filtrar('Puja')">Pujas</button>
+      <button class="btn secondary" onclick="filtrar('boss')">Boss</button>
+      <button class="btn secondary" onclick="filtrar('reinicio')">Reinicio</button>
+    </div>
+    <div class="table-scroll">
+      <table id="tablaHistorial"></table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const db = getFirestore();
+
+/* === Actualizar relojes superiores === */
+function updateTopClocks() {
+  const now = new Date();
+  
+  const localTime = now.toLocaleTimeString('es-ES', { hour12: false });
+  document.getElementById('localTime').textContent = localTime;
+  
+  const serverTime = new Date(now.getTime() - (3 * 3600 * 1000));
+  const serverTimeStr = serverTime.toISOString().substr(11, 8);
+  document.getElementById('serverTime').textContent = serverTimeStr;
+}
+
+setInterval(updateTopClocks, 1000);
+updateTopClocks();
+
+let registros = [];
+
+/* === Cargar historial === */
+async function cargarHistorial(){
+  const q = query(collection(db,"historial"), orderBy("fecha","desc"));
+  const snap = await getDocs(q);
+
+  registros = [];
+  snap.forEach(d=>{
+    registros.push(d.data());
+  });
+
+  pintarTabla(registros);
+}
+
+function pintarTabla(lista){
+  const tabla = document.getElementById("tablaHistorial");
+
+  if(lista.length===0){
+    tabla.innerHTML = `<tr><td colspan="5">No hay registros</td></tr>`;
+    return;
+  }
+
+  tabla.innerHTML = `
+    <tr>
+      <th>Usuario</th>
+      <th>Rol</th>
+      <th>Acción</th>
+      <th>Cambio</th>
+      <th>Fecha</th>
+    </tr>
+  `;
+
+  lista.forEach(h=>{
+    let badgeClass = "";
+    if(h.accion.includes("poder") || h.accion.includes("nivel")){
+      badgeClass = "badge badge-poder";
+    }else if(h.accion.includes("semanal")){
+      badgeClass = "badge badge-semanal";
+    }else if(h.accion.includes("Puja")){
+      badgeClass = "badge badge-puja";
+    }else if(h.accion.includes("boss") || h.accion.includes("Boss")){
+      badgeClass = "badge badge-boss";
+    }else if(h.accion.includes("Reinicio")){
+      badgeClass = "badge badge-reinicio";
+    }
+
+    tabla.innerHTML += `
+      <tr>
+        <td>${h.usuario}</td>
+        <td>${h.rol ? h.rol : "-"}</td>
+        <td><span class="${badgeClass}">${h.accion}</span></td>
+        <td>${h.cambio}</td>
+        <td>${new Date(h.fecha).toLocaleString()}</td>
+      </tr>
+    `;
+  });
+}
+
+/* === Filtro === */
+window.filtrar = (tipo)=>{
+  if(tipo==="todos"){
+    pintarTabla(registros);
+    return;
+  }
+  const filtrados = registros.filter(h=>{
+    if(tipo==="poder") return h.accion.includes("poder") || h.accion.includes("nivel");
+    if(tipo==="semanal") return h.accion.includes("semanal");
+    if(tipo==="Puja") return h.accion.includes("Puja");
+    if(tipo==="boss") return h.accion.includes("boss") || h.accion.includes("Boss");
+    if(tipo==="reinicio") return h.accion.includes("Reinicio");
+    return true;
+  });
+  pintarTabla(filtrados);
+};
+
+cargarHistorial();
+</script>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+    authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+    projectId: "registro-de-guild-en-ymir"
+  });
+
+  const db = getFirestore(app);
+
+  /* === Punto rojo en nav === */
+  function escucharSolicitudesBadge(){
+    const q = collection(db,"solicitudes");
+    onSnapshot(q, snap=>{
+      const badge = document.getElementById("solicitudesBadge");
+      if(!badge) return;
+      badge.style.display = snap.size > 0 ? "block" : "none";
+    });
+  }
+  escucharSolicitudesBadge();
+</script>
+
+</body>
+</html>

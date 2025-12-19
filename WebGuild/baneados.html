@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>YMIR Guild - Baneados</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Sección superior: Hora y URL -->
+<div class="header-info">
+  <div class="time-section">
+    <div>
+      <span class="time-label">Hora Local:</span>
+      <span class="time-display" id="localTime">--:--:--</span>
+    </div>
+    <div>
+      <span class="time-label">Hora Servidor:</span>
+      <span class="time-display" id="serverTime">--:--:--</span>
+    </div>
+  </div>
+  
+  <div class="url-section">
+    <span class="url-text">www.19-de-consiste.de</span>
+    <span class="url-year">2023</span>
+    <span class="url-text"> • www.19-de-consiste.de</span>
+    <span class="url-year">2023</span>
+  </div>
+</div>
+
+<!-- Menú de navegación -->
+<nav class="menu">
+  <ul class="menu-nav">
+    <li class="menu-item">
+      <a href="panel.html" class="menu-link">
+        <span>👥</span>
+        Miembros
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="subastas.html" class="menu-link">
+        <span>💰</span>
+        Subastas
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="registro.html" class="menu-link">
+        <span>📋</span>
+        Historial
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="control.html" class="menu-link">
+        <span>🎮</span>
+        Control
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="solicitudes.html" class="menu-link" style="position:relative;">
+        <span>📨</span>
+        Solicitudes
+        <span class="solicitudes-badge" id="solicitudesBadge"></span>
+      </a>
+    </li>
+    <li class="menu-item">
+      <a href="baneados.html" class="menu-link active">
+        <span>🚫</span>
+        Baneados
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<div class="container">
+  <h1>Usuarios Baneados</h1>
+
+  <div id="accessDenied" class="access-denied" style="display:none">
+    Acceso denegado: esta sección es solo para Líderes y Oficiales.
+  </div>
+
+  <div id="content" class="card" style="display:none">
+    <div class="table-scroll">
+      <table id="tablaBaneados"></table>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, onSnapshot, doc, getDoc, orderBy, query, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+/* === Actualizar relojes superiores === */
+function updateTopClocks() {
+  const now = new Date();
+  
+  const localTime = now.toLocaleTimeString('es-ES', { hour12: false });
+  document.getElementById('localTime').textContent = localTime;
+  
+  const serverTime = new Date(now.getTime() - (3 * 3600 * 1000));
+  const serverTimeStr = serverTime.toISOString().substr(11, 8);
+  document.getElementById('serverTime').textContent = serverTimeStr;
+}
+
+setInterval(updateTopClocks, 1000);
+updateTopClocks();
+
+/* === Protección de roles + bloqueo si está baneado === */
+onAuthStateChanged(auth, async (user) => {
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  // Bloqueo inmediato si el usuario actual está en baneados
+  const banSnap = await getDoc(doc(db,"baneados",user.uid));
+  if (banSnap.exists()) {
+    alert("Acceso denegado: estás baneado.");
+    await auth.signOut();
+    location.href = "index.html";
+    return;
+  }
+
+  // Comprobación de rol por UID (igual que en panel)
+  const meSnap = await getDoc(doc(db,"members",user.uid));
+  if (!meSnap.exists()) {
+    document.getElementById("accessDenied").style.display = "block";
+    document.getElementById("content").style.display = "none";
+    setTimeout(()=>{ window.location.href = "panel.html"; }, 2000);
+    return;
+  }
+
+  const data = meSnap.data() || {};
+  const rol = data.role || data.rol || data.proofImages?.role || "Miembro";
+  const rolLower = rol.trim().toLowerCase();
+
+  if (rolLower !== "líder" && rolLower !== "lider" && rolLower !== "oficial") {
+    document.getElementById("accessDenied").style.display = "block";
+    document.getElementById("content").style.display = "none";
+    setTimeout(()=>{ window.location.href = "panel.html"; }, 2000);
+    return;
+  }
+
+  document.getElementById("accessDenied").style.display = "none";
+  document.getElementById("content").style.display = "block";
+  cargarBaneadosRealtime();
+});
+
+/* === Cargar baneados en tiempo real === */
+function cargarBaneadosRealtime(){
+  const q = query(collection(db,"baneados"), orderBy("fechaBaneo","desc"));
+  onSnapshot(q, snap => {
+    const lista = [];
+    snap.forEach(d=>{
+      lista.push({id:d.id, ...d.data()});
+    });
+    pintarTablaBaneados(lista);
+  });
+}
+
+function pintarTablaBaneados(lista){
+  const tabla = document.getElementById("tablaBaneados");
+
+  if(lista.length===0){
+    tabla.innerHTML = `<tr><td colspan="6">No hay usuarios baneados</td></tr>`;
+    return;
+  }
+
+  tabla.innerHTML = `
+    <tr>
+      <th>Email</th>
+      <th>Usuario ID</th>
+      <th>Nombre</th>
+      <th>Clase</th>
+      <th>Fecha baneo</th>
+      <th>Acciones</th>
+    </tr>
+  `;
+
+  lista.forEach(u=>{
+    tabla.innerHTML += `
+      <tr>
+        <td>${u.email || "-"}</td>
+        <td>${u.usuarioId || "-"}</td>
+        <td>${u.name || "-"}</td>
+        <td>${u.clase || "-"}</td>
+        <td>${u.fechaBaneo ? new Date(u.fechaBaneo.toDate()).toLocaleString() : "-"}</td>
+        <td>
+          <button class="btn" onclick="quitarBaneo('${u.id}')">Quitar baneo</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+/* === Quitar baneo === */
+window.quitarBaneo = async (uid)=>{
+  if(!confirm("¿Seguro que quieres quitar el estado baneado a este usuario?")) return;
+  try{
+    await deleteDoc(doc(db,"baneados",uid));
+    alert("El estado baneado ha sido eliminado.");
+  }catch(e){
+    alert("Error al quitar baneo: "+(e.message || e));
+  }
+};
+</script>
+
+</body>
+</html>
