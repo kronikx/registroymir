@@ -2,9 +2,354 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>YMIR Guild - Historial</title>
+<title>YMIR Guild - Control Semanal</title>
 <link rel="stylesheet" href="style.css">
 <style>
+  /* TABLA MÁS ANCHA - SIN SCROLL HORIZONTAL */
+  body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+  
+  .container {
+    max-width: 95vw;
+    margin: auto;
+    padding: 20px;
+    overflow: visible;
+  }
+  
+  #tablaControl {
+    width: 100%;
+    min-width: 1800px;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 0;
+    font-size: 14px;
+  }
+  
+  /* ANCHOS AMPLIADOS - ESPECIALMENTE PARA NOMBRE Y PODER */
+  #tablaControl th:nth-child(1),  /* Nombre */
+  #tablaControl td:nth-child(1) {
+    width: 180px;
+    min-width: 180px;
+    max-width: 200px;
+  }
+  
+  #tablaControl th:nth-child(2),  /* Clase */
+  #tablaControl td:nth-child(2) {
+    width: 120px;
+    min-width: 120px;
+  }
+  
+  #tablaControl th:nth-child(3),  /* Nivel */
+  #tablaControl td:nth-child(3) {
+    width: 80px;
+    min-width: 80px;
+  }
+  
+  #tablaControl th:nth-child(4),  /* Poder - MUY AMPLIADO */
+  #tablaControl td:nth-child(4) {
+    width: 150px;
+    min-width: 150px;
+  }
+  
+  /* STATS numéricos (ATK, DEF, etc.) */
+  #tablaControl th:nth-child(5),
+  #tablaControl th:nth-child(7),
+  #tablaControl th:nth-child(9),
+  #tablaControl th:nth-child(11),
+  #tablaControl td:nth-child(5),
+  #tablaControl td:nth-child(7),
+  #tablaControl td:nth-child(9),
+  #tablaControl td:nth-child(11) {
+    width: 100px;
+    min-width: 100px;
+  }
+  
+  /* Porcentajes (DMG, DMG DEF, etc.) */
+  #tablaControl th:nth-child(6),
+  #tablaControl th:nth-child(8),
+  #tablaControl th:nth-child(10),
+  #tablaControl th:nth-child(12),
+  #tablaControl th:nth-child(14),
+  #tablaControl th:nth-child(15),
+  #tablaControl th:nth-child(16),
+  #tablaControl th:nth-child(17),
+  #tablaControl td:nth-child(6),
+  #tablaControl td:nth-child(8),
+  #tablaControl td:nth-child(10),
+  #tablaControl td:nth-child(12),
+  #tablaControl td:nth-child(14),
+  #tablaControl td:nth-child(15),
+  #tablaControl td:nth-child(16),
+  #tablaControl td:nth-child(17) {
+    width: 110px;
+    min-width: 110px;
+  }
+  
+  /* ACC y EVA */
+  #tablaControl th:nth-child(13),
+  #tablaControl th:nth-child(18),
+  #tablaControl td:nth-child(13),
+  #tablaControl td:nth-child(18) {
+    width: 90px;
+    min-width: 90px;
+  }
+  
+  /* Acciones */
+  #tablaControl th:nth-child(19),
+  #tablaControl td:nth-child(19) {
+    width: 140px;
+    min-width: 140px;
+  }
+  
+  /* Asegurar que el contenido se ajuste - MANTENER ESTILO MORADO */
+  #tablaControl td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
+    padding: 8px 10px;
+    vertical-align: middle;
+    text-align: center;
+    background-color: transparent;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: #eee;
+  }
+  
+  /* HEADER CON ESTILO MORADO ORIGINAL */
+  #tablaControl th {
+    padding: 10px;
+    text-align: center;
+    background-color: #12001f !important;
+    color: #fff !important;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    font-weight: bold;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: none !important;
+  }
+  
+  /* Sticky para filtros */
+  #tablaControl tr.filtros th {
+    position: sticky;
+    top: 44px;
+    z-index: 9;
+    background-color: rgba(36, 0, 70, 0.9) !important;
+  }
+  
+  /* Inputs con estilo morado */
+  .edit-input { 
+    width: 100%; 
+    font-size: 13px; 
+    padding: 6px 8px; 
+    box-sizing: border-box; 
+    text-align: center; 
+    border: 1px solid #5a189a;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #eee;
+  }
+  
+  .edit-input-inline { 
+    width: 70px; 
+    font-size: 13px; 
+    padding: 6px 8px; 
+    box-sizing: border-box; 
+    text-align: center; 
+    border: 1px solid #5a189a;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #eee;
+  }
+  
+  .inline-field { 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  
+  /* BOTÓN REINICIO STATS CON EXPORTACIÓN - ESTILO MEJORADO (naranja/verde) */
+  #reinicioStatsBtn {
+    padding: 8px 16px;
+    font-size: 14px;
+    background: linear-gradient(135deg, #ff9800, #ff5722);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 4px 12px rgba(255, 87, 34, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  #reinicioStatsBtn:hover { 
+    background: linear-gradient(135deg, #f57c00, #e64a19);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 87, 34, 0.4);
+  }
+  
+  #reinicioStatsBtn:active {
+    transform: translateY(0);
+  }
+  
+  /* Botón separado para solo exportar (verde) */
+  #exportarBtn {
+    padding: 8px 16px;
+    font-size: 14px;
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+    box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  #exportarBtn:hover { 
+    background: linear-gradient(135deg, #388E3C, #1B5E20);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(76, 175, 80, 0.4);
+  }
+  
+  #exportarBtn:active {
+    transform: translateY(0);
+  }
+  
+  /* BOTONES - ESTILO MORADO ORIGINAL */
+  .btn {
+    font-size: 12px;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+    background-color: #5a189a;
+    color: #fff;
+    padding: 4px 8px;
+    display: inline-block;
+    margin: 2px;
+  }
+  
+  .btn:hover { 
+    background-color: #9d4edd; 
+  }
+  
+  .btn.cancel { 
+    background-color: #9d4edd; 
+  }
+  
+  .btn.cancel:hover { 
+    background-color: #7b2cbf; 
+  }
+  
+  .muted { 
+    font-size: 12px; 
+    color: #c7c7c7; 
+    margin-top: 8px;
+    line-height: 1.4;
+  }
+  
+  /* Indicador de edición propia - ESTILO MORADO */
+  .self-row {
+    background: rgba(93, 24, 154, 0.1) !important;
+  }
+  
+  .self-row:hover {
+    background: rgba(93, 24, 154, 0.2) !important;
+  }
+  
+  /* Modo edición - ESTILO MORADO */
+  .editing-mode {
+    border-left: 3px solid #ffc107;
+    background: rgba(255, 193, 7, 0.05) !important;
+  }
+  
+  /* Inputs para nombre y clase - ESTILO MORADO */
+  .name-input, .class-input {
+    width: 100%;
+    max-width: 140px;
+    text-align: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid #5a189a;
+    background: rgba(0, 0, 0, 0.3);
+    color: #eee;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  /* Estilo específico para el desplegable de clase - ESTILO MORADO */
+  .class-input {
+    background: rgba(0, 0, 0, 0.3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239d4edd' d='M6 8.825L1.175 4 2.238 2.938 6 6.7l3.763-3.762L10.825 4z'/%3E%3C/svg%3E") no-repeat right 8px center;
+    background-size: 12px;
+    padding-right: 24px;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    cursor: pointer;
+  }
+
+  .class-input option {
+    background: #12001f;
+    color: #eee;
+    padding: 8px;
+  }
+
+  /* Hover de filas - ESTILO MORADO */
+  #tablaControl tr:hover td {
+    background: rgba(255,255,255,0.04);
+  }
+  
+  /* Filtros - ESTILO MORADO */
+  .filtros input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 6px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    color: #eee;
+  }
+  
+  .filtros input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  /* Card - ESTILO MORADO ORIGINAL */
+  .card {
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+    overflow: visible;
+    width: 100%;
+    max-width: none;
+  }
+  
+  /* Mensaje de permisos - ESTILO MORADO */
+  #edicionPermisos {
+    padding: 10px;
+    background: rgba(255, 193, 7, 0.15);
+    border-left: 4px solid #ffc107;
+    border-radius: 6px;
+    margin: 10px 0;
+    color: #ffc107;
+    font-weight: 500;
+  }
+  
   /* === Botón Exportar a Excel === */
   .export-excel-container {
     position: fixed;
@@ -44,21 +389,11 @@
     font-size: 16px;
   }
   
-  /* Estilos para el botón de filtros */
-  .filters {
-    margin-bottom: 15px;
-    text-align: center;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    justify-content: center;
-    align-items: center;
-  }
-  
-  .filters .btn {
-    padding: 8px 16px;
-    font-size: 14px;
-    margin: 2px;
+  /* Responsive */
+  @media (max-width: 1920px) {
+    .container {
+      max-width: 98vw;
+    }
   }
 </style>
 </head>
@@ -76,7 +411,6 @@
       <span class="time-display" id="serverTime">--:--:--</span>
     </div>
   </div>
-  
 
 <!-- Menú de navegación -->
 <nav class="menu">
@@ -94,13 +428,13 @@
       </a>
     </li>
     <li class="menu-item">
-      <a href="registro.html" class="menu-link active">
+      <a href="registro.html" class="menu-link">
         <span>📋</span>
         Historial
       </a>
     </li>
     <li class="menu-item">
-      <a href="control.html" class="menu-link">
+      <a href="control.html" class="menu-link active">
         <span>🎮</span>
         Control
       </a>
@@ -116,43 +450,53 @@
 </nav>
 
 <div class="container">
-  <h1>Historial del Clan</h1>
+  <h1>Control Semanal <span id="userRoleBadge" class="role-badge" style="font-size: 14px; margin-left: 10px;"></span></h1>
+
+  <!-- Permiso de edición -->
+  <div id="edicionPermisos" class="permission-warning" style="display: none;">
+    <strong>⚠️ Permisos de Edición:</strong> Como <span id="currentRole"></span>, puedes editar <strong>TODOS los campos de todos los miembros</strong>. Los miembros normales solo pueden editar <strong>su propia información de stats</strong> (nivel, poder, stats).
+  </div>
+
+  <div style="text-align: right; margin-bottom: 15px;">
+    <button id="reinicioStatsBtn" onclick="iniciarReinicioConBackup()" style="display: none;">🔄 Reiniciar Stats</button>
+    <button id="exportarBtn" onclick="exportarAExcel()" style="display: none;">📊 Exportar Backup</button>
+  </div>
 
   <div class="card">
-    <div class="filters" style="margin-bottom: 15px;">
-      <button class="btn" onclick="filtrar('todos')">Todos</button>
-      <button class="btn secondary" onclick="filtrar('poder')">Poder/Nivel</button>
-      <button class="btn secondary" onclick="filtrar('semanal')">Semanal</button>
-      <button class="btn secondary" onclick="filtrar('Puja')">Pujas</button>
-      <button class="btn secondary" onclick="filtrar('boss')">Boss</button>
-      <button class="btn secondary" onclick="filtrar('reinicio')">Reinicio</button>
+    <div style="overflow: visible;">
+      <table id="tablaControl"></table>
     </div>
-    <div class="table-scroll">
-      <table id="tablaHistorial"></table>
-    </div>
+    
+    <p class="muted">
+      💡 <strong>Miembros:</strong> Puedes editar tu propia fila (nivel, poder, stats).<br>
+      💡 <strong>Líderes/Oficiales:</strong> Pueden editar todas las filas y TODOS los campos (nombre, clase, stats).<br>
+      📊 <strong>Reinicio Stats:</strong> Solo Líderes/Oficiales pueden reiniciar stats y exportar backups.
+    </p>
   </div>
 </div>
 
 <!-- Botón flotante para exportar a Excel -->
 <div class="export-excel-container">
-  <button class="export-excel-btn" onclick="exportarHistorialAExcel()">
+  <button class="export-excel-btn" onclick="exportarAExcel()">
     <span class="icon">📊</span>
-    Exportar Historial
+    Exportar a Excel
   </button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { 
-  getFirestore, 
-  collection, 
-  getDocs, 
-  orderBy, 
-  query,
-  doc,
-  getDoc 
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  doc,
+  updateDoc,
+  addDoc,
+  getDoc,
+  onSnapshot,
+  getDocs,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* === Firebase === */
 initializeApp({
@@ -160,13 +504,14 @@ initializeApp({
   authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
   projectId: "registro-de-guild-en-ymir"
 });
-const db = getFirestore();
 const auth = getAuth();
+const db = getFirestore();
 
-/* === Variables globales === */
-let registros = [];
-let esLiderOficial = false;
+/* === Estado global === */
 let MI_ROL = "Miembro";
+let MI_UID = null;
+let esLiderOficial = false;
+let modoEdicionControl = {}; // Para rastrear qué filas están en modo edición
 
 /* === Actualizar relojes superiores === */
 function updateTopClocks() {
@@ -183,157 +528,496 @@ function updateTopClocks() {
 setInterval(updateTopClocks, 1000);
 updateTopClocks();
 
-/* === Auth y verificación de rol === */
+/* === Auth y carga inicial === */
 onAuthStateChanged(auth, async user=>{
-  if(!user){ 
-    location.href = "index.html"; 
-    return; 
-  }
-  
+  if(!user){ location.href = "index.html"; return; }
+  MI_UID = user.uid;
   const meRef = doc(db,"members",user.uid);
   const meSnap = await getDoc(meRef);
   
-  if(meSnap.exists()){
+  if(!meSnap.exists()){
+    await setDoc(meRef,{
+      name: user.displayName || "SinNombre",
+      role: "Miembro",
+      clase: "SinClase",
+      nivel: 1,
+      poder: 0
+    });
+    MI_ROL = "Miembro";
+  } else {
     MI_ROL = meSnap.data()?.role || "Miembro";
-    const rolLower = MI_ROL.trim().toLowerCase();
-    esLiderOficial = (rolLower === "líder" || rolLower === "lider" || rolLower === "oficial");
-    
-    // Mostrar/ocultar botón de exportación según rol
-    const exportarFloatingBtn = document.querySelector(".export-excel-container");
-    if (exportarFloatingBtn) {
-      exportarFloatingBtn.style.display = esLiderOficial ? "block" : "none";
+  }
+  
+  // Verificar si es Líder u Oficial
+  const rolLower = MI_ROL.trim().toLowerCase();
+  esLiderOficial = (rolLower === "líder" || rolLower === "lider" || rolLower === "oficial");
+  
+  // Actualizar badge de rol
+  const roleBadge = document.getElementById("userRoleBadge");
+  if (roleBadge) {
+    roleBadge.textContent = MI_ROL;
+    roleBadge.className = "role-badge";
+    if (rolLower === "líder" || rolLower === "lider") {
+      roleBadge.classList.add("role-lider");
+    } else if (rolLower === "oficial") {
+      roleBadge.classList.add("role-oficial");
+    } else {
+      roleBadge.classList.add("role-miembro");
     }
   }
   
-  // Cargar historial después de verificar autenticación
-  cargarHistorial();
+  // Mostrar/ocultar advertencia de permisos
+  const permisosDiv = document.getElementById("edicionPermisos");
+  const currentRoleSpan = document.getElementById("currentRole");
+  if (permisosDiv && currentRoleSpan) {
+    if (esLiderOficial) {
+      permisosDiv.style.display = "block";
+      currentRoleSpan.textContent = MI_ROL;
+      permisosDiv.innerHTML = `<strong>⚠️ Permisos de Edición:</strong> Como <strong>${MI_ROL}</strong>, puedes editar <strong>TODOS los campos de todos los miembros</strong> (nombre, clase, stats).`;
+    } else {
+      permisosDiv.style.display = "block";
+      currentRoleSpan.textContent = MI_ROL;
+      permisosDiv.innerHTML = `<strong>⚠️ Permisos de Edición:</strong> Como <strong>${MI_ROL}</strong>, puedes editar <strong>solo tu propia información de stats</strong> (nivel, poder, stats).`;
+    }
+  }
+  
+  cargarControl();
+  escucharSolicitudesBadge();
+  
+  // MOSTRAR/OCULTAR BOTONES SEGÚN ROL
+  const reinicioBtn = document.getElementById("reinicioStatsBtn");
+  const exportarBtn = document.getElementById("exportarBtn");
+  const exportarFloatingBtn = document.querySelector(".export-excel-container");
+  
+  if(!esLiderOficial){
+    if (reinicioBtn) reinicioBtn.style.display = "none";
+    if (exportarBtn) exportarBtn.style.display = "none";
+    if (exportarFloatingBtn) exportarFloatingBtn.style.display = "none";
+  } else {
+    if (reinicioBtn) reinicioBtn.style.display = "flex";
+    if (exportarBtn) exportarBtn.style.display = "flex";
+    if (exportarFloatingBtn) exportarFloatingBtn.style.display = "block";
+  }
 });
 
-/* === Cargar historial === */
-async function cargarHistorial(){
-  const q = query(collection(db,"historial"), orderBy("fecha","desc"));
-  const snap = await getDocs(q);
-
-  registros = [];
-  snap.forEach(d=>{
-    registros.push(d.data());
-  });
-
-  pintarTabla(registros);
+/* === Utilidad para mostrar "-" si vacío o 0 === */
+function mostrarValorNum(v){
+  if(v === undefined || v === null) return "-";
+  if(typeof v === "string"){
+    const t = v.trim();
+    if(t === "" || t === "0") return "-";
+    const num = Number(t);
+    if(!isNaN(num) && num === 0) return "-";
+    return v;
+  }
+  if(typeof v === "number" && v === 0) return "-";
+  return v;
 }
 
-function pintarTabla(lista){
-  const tabla = document.getElementById("tablaHistorial");
+function mostrarValorPct(v){
+  if(v === undefined || v === null) return "-";
+  const s = String(v).trim();
+  if(s === "" || s === "0" || s === "0%") return "-";
+  return v;
+}
 
-  if(lista.length===0){
-    tabla.innerHTML = `<tr><td colspan="5">No hay registros</td></tr>`;
-    return;
-  }
+/* === Pintar tabla en tiempo real === */
+function cargarControl(){
+  const tabla = document.getElementById("tablaControl");
+  onSnapshot(collection(db,"members"), (snap) => {
+    tabla.innerHTML = `
+<tr>
+  <th onclick="ordenarTabla(0)">Nombre ⬍</th>
+  <th onclick="ordenarTabla(1)">Clase ⬍</th>
+  <th onclick="ordenarTabla(2)">Nivel ⬍</th>
+  <th onclick="ordenarTabla(3)">Poder ⬍</th>
+  <th onclick="ordenarTabla(4)">PHYS ATK ⬍</th>
+  <th onclick="ordenarTabla(5)">PHYS DMG ⬍</th>
+  <th onclick="ordenarTabla(6)">MAG ATK ⬍</th>
+  <th onclick="ordenarTabla(7)">MAG DMG ⬍</th>
+  <th onclick="ordenarTabla(8)">PHYS DEF ⬍</th>
+  <th onclick="ordenarTabla(9)">PHYS DMG DEF ⬍</th>
+  <th onclick="ordenarTabla(10)">MAG DEF ⬍</th>
+  <th onclick="ordenarTabla(11)">MAG DMG DEF ⬍</th>
+  <th onclick="ordenarTabla(12)">ACC ⬍</th>
+  <th onclick="ordenarTabla(13)">EVA ⬍</th>
+  <th onclick="ordenarTabla(14)">Monster DMG ⬍</th>
+  <th onclick="ordenarTabla(15)">Monster DMG DEF ⬍</th>
+  <th onclick="ordenarTabla(16)">Boss DMG ⬍</th>
+  <th onclick="ordenarTabla(17)">Boss DMG DEF ⬍</th>
+  <th>Acciones</th>
+</tr>
 
-  tabla.innerHTML = `
-    <tr>
-      <th>Usuario</th>
-      <th>Rol</th>
-      <th>Acción</th>
-      <th>Cambio</th>
-      <th>Fecha</th>
-    </tr>
-  `;
+<tr class="filtros">
+  <th><input placeholder="Filtrar..."></th>
+  <th><input placeholder="Filtrar..."></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input type="number" placeholder="Min..."></th>
+  <th><input placeholder="%"></th>
+  <th><input placeholder="%"></th>
+  <th><input placeholder="%"></th>
+  <th><input placeholder="%"></th>
+  <th></th>
+</tr>
+`;
 
-  lista.forEach(h=>{
-    let badgeClass = "";
-    if(h.accion.includes("poder") || h.accion.includes("nivel")){
-      badgeClass = "badge badge-poder";
-    }else if(h.accion.includes("semanal")){
-      badgeClass = "badge badge-semanal";
-    }else if(h.accion.includes("Puja")){
-      badgeClass = "badge badge-puja";
-    }else if(h.accion.includes("boss") || h.accion.includes("Boss")){
-      badgeClass = "badge badge-boss";
-    }else if(h.accion.includes("Reinicio")){
-      badgeClass = "badge badge-reinicio";
-    }
+    snap.forEach(d=>{
+      const m = d.data() || {};
+      const esPropio = (d.id === MI_UID);
+      const estaEditando = modoEdicionControl[d.id] || false;
+      
+      // En Control: Miembros pueden editar SU PROPIA fila (solo stats), Líder/Oficial pueden editar TODAS (todo)
+      const puedeEditar = esLiderOficial || esPropio;
+      
+      // Determinar clase para fila propia
+      const filaClase = esPropio ? "self-row" : "";
 
-    tabla.innerHTML += `
-      <tr>
-        <td>${h.usuario}</td>
-        <td>${h.rol ? h.rol : "-"}</td>
-        <td><span class="${badgeClass}">${h.accion}</span></td>
-        <td>${h.cambio}</td>
-        <td>${new Date(h.fecha).toLocaleString()}</td>
-      </tr>
-    `;
+      // Si está en modo edición
+      if (estaEditando) {
+        tabla.innerHTML += `
+          <tr id="fila_${d.id}" class="editing-mode ${filaClase}">
+            <td id="nombre_${d.id}">
+              ${esLiderOficial ? 
+                `<input type="text" class="name-input" id="editNombre_${d.id}" value="${m.name || ''}">` : 
+                m.name || "-"}
+            </td>
+            <td id="clase_${d.id}">
+              ${esLiderOficial ? 
+                `<select class="class-input" style="background: rgba(0, 0, 0, 0.3); color: #eee;" id="editClase_${d.id}">
+                  <option value="Arquero" ${m.clase==="Arquero"?"selected":""}>Arquero</option>
+                  <option value="Mago" ${m.clase==="Mago"?"selected":""}>Mago</option>
+                  <option value="Tanque" ${m.clase==="Tanque"?"selected":""}>Tanque</option>
+                  <option value="Healer" ${m.clase==="Healer"?"selected":""}>Healer</option>
+                </select>` : 
+                m.clase || "-"}
+            </td>
+            <td id="nivel_${d.id}"><input type="number" step="1" class="edit-input" id="edit_nivel_${d.id}" value="${m.nivel || ''}"></td>
+            <td id="poder_${d.id}"><input type="number" step="1" class="edit-input" id="edit_poder_${d.id}" value="${m.poder || ''}"></td>
+            <td id="physAtk_${d.id}"><input type="number" step="1" class="edit-input" id="edit_physAtk_${d.id}" value="${m.physAtk || ''}"></td>
+            <td id="physDmg_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_physDmg_${d.id}" value="${m.physDmg ? m.physDmg.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="magAtk_${d.id}"><input type="number" step="1" class="edit-input" id="edit_magAtk_${d.id}" value="${m.magAtk || ''}"></td>
+            <td id="magDmg_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_magDmg_${d.id}" value="${m.magDmg ? m.magDmg.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="physDef_${d.id}"><input type="number" step="1" class="edit-input" id="edit_physDef_${d.id}" value="${m.physDef || ''}"></td>
+            <td id="physDmgDef_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_physDmgDef_${d.id}" value="${m.physDmgDef ? m.physDmgDef.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="magDef_${d.id}"><input type="number" step="1" class="edit-input" id="edit_magDef_${d.id}" value="${m.magDef || ''}"></td>
+            <td id="magDmgDef_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_magDmgDef_${d.id}" value="${m.magDmgDef ? m.magDmgDef.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="acc_${d.id}"><input type="number" step="1" class="edit-input" id="edit_acc_${d.id}" value="${m.acc || ''}"></td>
+            <td id="eva_${d.id}"><input type="number" step="1" class="edit-input" id="edit_eva_${d.id}" value="${m.eva || ''}"></td>
+            <td id="monsterDmg_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_monsterDmg_${d.id}" value="${m.monsterDmg ? m.monsterDmg.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="monsterDmgDef_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_monsterDmgDef_${d.id}" value="${m.monsterDmgDef ? m.monsterDmgDef.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="bossDmg_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_bossDmg_${d.id}" value="${m.bossDmg ? m.bossDmg.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td id="bossDmgDef_${d.id}">
+              <div class="inline-field">
+                <input type="number" step="0.01" class="edit-input-inline" id="edit_bossDmgDef_${d.id}" value="${m.bossDmgDef ? m.bossDmgDef.replace('%','') : ''}">
+                <span>%</span>
+              </div>
+            </td>
+            <td>
+              <button class="btn" onclick="guardarControl('${d.id}')">Guardar</button>
+              <button class="btn cancel" onclick="cancelarEdicionControl('${d.id}')">Cancelar</button>
+            </td>
+          </tr>
+        `;
+      } else {
+        // Modo normal (solo lectura o mostrar datos)
+        tabla.innerHTML += `
+          <tr id="fila_${d.id}" class="${filaClase}">
+            <td id="nombre_${d.id}">${m.name ?? "-"} ${esPropio ? "<span style='color:#9d4edd; font-size:11px;'>(TÚ)</span>" : ""}</td>
+            <td id="clase_${d.id}">${m.clase ?? "-"}</td>
+            <td id="nivel_${d.id}">${mostrarValorNum(m.nivel)}</td>
+            <td id="poder_${d.id}">${mostrarValorNum(m.poder)}</td>
+            <td id="physAtk_${d.id}">${mostrarValorNum(m.physAtk)}</td>
+            <td id="physDmg_${d.id}">${mostrarValorPct(m.physDmg)}</td>
+            <td id="magAtk_${d.id}">${mostrarValorNum(m.magAtk)}</td>
+            <td id="magDmg_${d.id}">${mostrarValorPct(m.magDmg)}</td>
+            <td id="physDef_${d.id}">${mostrarValorNum(m.physDef)}</td>
+            <td id="physDmgDef_${d.id}">${mostrarValorPct(m.physDmgDef)}</td>
+            <td id="magDef_${d.id}">${mostrarValorNum(m.magDef)}</td>
+            <td id="magDmgDef_${d.id}">${mostrarValorPct(m.magDmgDef)}</td>
+            <td id="acc_${d.id}">${mostrarValorNum(m.acc)}</td>
+            <td id="eva_${d.id}">${mostrarValorNum(m.eva)}</td>
+            <td id="monsterDmg_${d.id}">${mostrarValorPct(m.monsterDmg)}</td>
+            <td id="monsterDmgDef_${d.id}">${mostrarValorPct(m.monsterDmgDef)}</td>
+            <td id="bossDmg_${d.id}">${mostrarValorPct(m.bossDmg)}</td>
+            <td id="bossDmgDef_${d.id}">${mostrarValorPct(m.bossDmgDef)}</td>
+            <td>
+              ${puedeEditar ? `<button class="btn" onclick="editarControl('${d.id}')">Editar</button>` : 
+                `<span style="color: #999; font-size: 11px; font-style: italic;">solo stats propios</span>`}
+            </td>
+          </tr>
+        `;
+      }
+    });
+
+    setTimeout(() => {
+      document.querySelectorAll(".filtros input").forEach(el => {
+        el.addEventListener("input", filtrarTabla);
+      });
+    }, 0);
   });
 }
 
-/* === Filtro === */
-window.filtrar = (tipo)=>{
-  if(tipo==="todos"){
-    pintarTabla(registros);
-    return;
+/* === Editar en Control === */
+window.editarControl = (id)=>{
+  const esPropio = (id === MI_UID);
+  
+  // Verificar permisos CORRECTAMENTE: 
+  // - Líder/Oficial pueden editar TODAS las filas
+  // - Miembros solo pueden editar SU PROPIA fila
+  if(!esLiderOficial && !esPropio){ 
+    alert("❌ Solo puedes editar tu propia información de Control."); 
+    return; 
   }
-  const filtrados = registros.filter(h=>{
-    if(tipo==="poder") return h.accion.includes("poder") || h.accion.includes("nivel");
-    if(tipo==="semanal") return h.accion.includes("semanal");
-    if(tipo==="Puja") return h.accion.includes("Puja");
-    if(tipo==="boss") return h.accion.includes("boss") || h.accion.includes("Boss");
-    if(tipo==="reinicio") return h.accion.includes("Reinicio");
-    return true;
-  });
-  pintarTabla(filtrados);
+
+  // Activar modo edición para esta fila
+  modoEdicionControl[id] = true;
+  
+  // Recargar solo esta fila en modo edición
+  cargarControl();
 };
 
-/* === Exportar historial a Excel === */
-window.exportarHistorialAExcel = async () => {
+/* === Cancelar edición en Control === */
+window.cancelarEdicionControl = (id)=>{
+  // Desactivar modo edición
+  modoEdicionControl[id] = false;
+  
+  // Recargar tabla
+  cargarControl();
+};
+
+/* === Guardar cambios en Control === */
+window.guardarControl = async (id)=>{
+  const esPropio = (id === MI_UID);
+  
+  // Verificar permisos CORRECTAMENTE
+  if(!esLiderOficial && !esPropio){ 
+    alert("❌ Solo puedes guardar cambios en tu propia información."); 
+    return; 
+  }
+
+  const getVal = cid => document.getElementById(cid)?.value;
+
+  const updateData = {};
+  let cambioTxt = "";
+
+  // Para Líder/Oficial: también pueden editar nombre y clase
+  if (esLiderOficial) {
+    const nuevoNombre = getVal(`editNombre_${id}`);
+    if (nuevoNombre !== undefined && nuevoNombre !== null) {
+      updateData.name = nuevoNombre;
+      cambioTxt += `Nombre: ${nuevoNombre}`;
+    }
+    
+    const nuevaClase = getVal(`editClase_${id}`);
+    if (nuevaClase !== undefined && nuevaClase !== null) {
+      updateData.clase = nuevaClase;
+      cambioTxt += (cambioTxt ? ", " : "") + `Clase: ${nuevaClase}`;
+    }
+  }
+
+  // Numéricos: solo actualizar si el input no está vacío
+  const numeric = ["nivel","poder","physAtk","magAtk","physDef","magDef","acc","eva"];
+  for(const k of numeric){
+    const v = getVal(`edit_${k}_${id}`);
+    if(v !== undefined && v !== null && String(v).trim() !== ""){
+      const num = Number(v);
+      if(!isNaN(num)){
+        updateData[k] = num;
+        cambioTxt += (cambioTxt ? ", " : "") + `${k}: ${num}`;
+      }
+    }
+  }
+
+  // Porcentajes: solo actualizar si el input no está vacío; guardamos como cadena con %
+  const percent = ["physDmg","magDmg","physDmgDef","magDmgDef","monsterDmg","monsterDmgDef","bossDmg","bossDmgDef"];
+  for(const k of percent){
+    const v = getVal(`edit_${k}_${id}`);
+    if(v !== undefined && v !== null && String(v).trim() !== ""){
+      const num = Number(v);
+      if(!isNaN(num)){
+        const fmt = `${num}%`;
+        updateData[k] = fmt;
+        cambioTxt += (cambioTxt ? ", " : "") + `${k}: ${fmt}`;
+      }
+    }
+  }
+
+  // Si no hay cambios, no enviar updateDoc
+  if(Object.keys(updateData).length === 0){
+    alert("No hay cambios para guardar.");
+    modoEdicionControl[id] = false;
+    cargarControl();
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db,"members",id), updateData);
+
+    await addDoc(collection(db,"historial"),{
+      usuario: id,
+      rol: MI_ROL,
+      accion: "Actualización de Control Semanal",
+      cambio: cambioTxt || "Sin cambios",
+      fecha: Date.now()
+    });
+
+    // Desactivar modo edición
+    modoEdicionControl[id] = false;
+    
+    alert("✅ Cambios guardados y registrados en historial.");
+    
+    // Recargar tabla
+    cargarControl();
+    
+  } catch(e) {
+    alert("❌ Error al guardar: " + e.message);
+  }
+};
+
+/* === Función principal: Iniciar reinicio con backup automático === */
+window.iniciarReinicioConBackup = async () => {
   if(!esLiderOficial){
-    alert("❌ Solo Líderes y Oficiales pueden exportar el historial.");
+    alert("❌ Solo Líderes y Oficiales pueden reiniciar los stats.");
     return;
   }
   
+  // Preguntar si quiere hacer backup primero
+  const respuesta = confirm("🔄 ¿REINICIAR TODOS LOS STATS?\n\n📊 Se crearÁ UN BACKUP automático antes del reinicio.\n\n¿Quieres proceder?");
+  
+  if(!respuesta) return;
+  
+  // 1. Crear backup automático
+  await crearBackupAutomatico();
+  
+  // 2. Preguntar confirmación final
+  const confirmacionFinal = confirm("✅ Backup creado exitosamente.\n\n¿Estás SEGURO de reiniciar TODOS los stats?\n\n📊 Se resetearán SOLO los stats (ATK, DEF, DMG, etc.)\n\n⚠️ NO se modificarán:\n• Nombre, Clase, Nivel, Poder\n• Contribución Semanal / Total\n• Bosses 45/55\n• Roles");
+  
+  if(!confirmacionFinal) {
+    alert("❌ Reinicio cancelado. El backup ya está guardado.");
+    return;
+  }
+  
+  // 3. Proceder con el reinicio
+  await reinicioStats();
+};
+
+/* === Crear backup automático === */
+async function crearBackupAutomatico() {
   try {
-    // Mostrar indicador de carga
-    const btn = document.querySelector('.export-excel-btn');
+    const btn = document.getElementById("reinicioStatsBtn");
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="icon">⏳</span> Generando...';
+    btn.innerHTML = '📊 Creando backup...';
     btn.disabled = true;
     
-    // Obtener datos de historial
-    const q = query(collection(db,"historial"), orderBy("fecha","desc"));
-    const snap = await getDocs(q);
+    // Obtener datos de miembros
+    const membersSnap = await getDocs(collection(db, "members"));
     
     // Crear encabezados del CSV
     const headers = [
-      'Fecha Completa', 'Fecha', 'Hora', 'Usuario', 'Rol', 
-      'Acción', 'Cambio', 'Timestamp'
+      'Nombre', 'Clase', 'Nivel', 'Poder', 
+      'PHYS ATK', 'PHYS DMG %', 
+      'MAG ATK', 'MAG DMG %', 
+      'PHYS DEF', 'PHYS DMG DEF %', 
+      'MAG DEF', 'MAG DMG DEF %', 
+      'ACC', 'EVA', 
+      'Monster DMG %', 'Monster DMG DEF %', 
+      'Boss DMG %', 'Boss DMG DEF %',
+      'Rol', 
+      'Contribución Semanal', 'Total Contribución',
+      'Boss 45', 'Boss 55',
+      'Última Actualización',
+      'Fecha Backup'
     ];
     
     // Crear filas de datos
     const rows = [headers];
     
-    snap.forEach(doc => {
-      const h = doc.data();
-      const fechaCompleta = new Date(h.fecha);
-      const fecha = fechaCompleta.toLocaleDateString('es-ES');
-      const hora = fechaCompleta.toLocaleTimeString('es-ES');
+    const fechaBackup = new Date().toLocaleString('es-ES');
+    
+    membersSnap.forEach(doc => {
+      const m = doc.data();
+      const fechaActualizacion = m.ultimaActualizacion 
+        ? new Date(m.ultimaActualizacion).toLocaleString('es-ES')
+        : 'No registrada';
       
       rows.push([
-        fechaCompleta.toLocaleString('es-ES'),
-        fecha,
-        hora,
-        h.usuario || '',
-        h.rol || '',
-        h.accion || '',
-        h.cambio || '',
-        h.fecha || ''
+        m.name || '',
+        m.clase || '',
+        m.nivel || '',
+        m.poder || '',
+        m.physAtk || '',
+        m.physDmg || '0%',
+        m.magAtk || '',
+        m.magDmg || '0%',
+        m.physDef || '',
+        m.physDmgDef || '0%',
+        m.magDef || '',
+        m.magDmgDef || '0%',
+        m.acc || '',
+        m.eva || '',
+        m.monsterDmg || '0%',
+        m.monsterDmgDef || '0%',
+        m.bossDmg || '0%',
+        m.bossDmgDef || '0%',
+        m.role || '',
+        m.semanal || '0',
+        m.totalContribution || '0',
+        m.boss45 ? '✅' : '❌',
+        m.boss55 ? '✅' : '❌',
+        fechaActualizacion,
+        fechaBackup
       ]);
     });
     
     // Convertir a CSV
     const csvContent = rows.map(row => 
       row.map(cell => {
-        // Escapar comillas y formatear
         const cellStr = String(cell);
-        // Si contiene comas, comillas o saltos de línea, envolver en comillas
         if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
           return `"${cellStr.replace(/"/g, '""')}"`;
         }
@@ -344,7 +1028,7 @@ window.exportarHistorialAExcel = async () => {
     // Crear y descargar archivo
     const fecha = new Date().toISOString().split('T')[0];
     const hora = new Date().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
-    const nombreArchivo = `YMIR_Historial_${fecha}_${hora}.csv`;
+    const nombreArchivo = `BACKUP_YMIR_Stats_${fecha}_${hora}.csv`;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -356,38 +1040,272 @@ window.exportarHistorialAExcel = async () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    alert(`✅ Exportación completada!\n\n📊 ${rows.length - 1} registros exportados\n📂 Archivo: ${nombreArchivo}\n\n1. Descarga el archivo CSV\n2. Ábrelo con Excel\n3. O pégalo en Google Sheets`);
+    // Registrar en historial
+    await addDoc(collection(db,"historial"),{
+      usuario: "Sistema",
+      rol: MI_ROL,
+      accion: "Backup automático antes de reinicio",
+      cambio: `Backup creado: ${nombreArchivo} (${rows.length - 1} miembros)`,
+      fecha: Date.now()
+    });
+    
+    return true;
+    
+  } catch (error) {
+    console.error('Error al crear backup:', error);
+    alert(`⚠️ Error al crear backup: ${error.message}\n\nContinuando con el reinicio...`);
+    return false;
+  } finally {
+    const btn = document.getElementById("reinicioStatsBtn");
+    if (btn) {
+      btn.innerHTML = '🔄 Reiniciar Stats';
+      btn.disabled = false;
+    }
+  }
+}
+
+/* === Reinicio SOLO stats (NO contribución ni bosses) === */
+async function reinicioStats() {
+  try {
+    const btn = document.getElementById("reinicioStatsBtn");
+    btn.innerHTML = '⏳ Reiniciando...';
+    btn.disabled = true;
+    
+    const snap = await getDocs(collection(db,"members"));
+    let count = 0;
+
+    for(const d of snap.docs){
+      // Solo resetear los stats, mantener todo lo demás
+      await updateDoc(doc(db,"members",d.id),{
+        // STATS NUMÉRICOS
+        physAtk: 0,
+        magAtk: 0,
+        physDef: 0,
+        magDef: 0,
+        acc: 0,
+        eva: 0,
+        
+        // STATS PORCENTUALES (como cadena con %)
+        physDmg: "0%",
+        magDmg: "0%",
+        physDmgDef: "0%",
+        magDmgDef: "0%",
+        monsterDmg: "0%",
+        monsterDmgDef: "0%",
+        bossDmg: "0%",
+        bossDmgDef: "0%"
+        
+        // NO TOCAR:
+        // name, clase, nivel, poder, role, semanal, totalContribution, boss45, boss55
+      });
+      count++;
+    }
+
+    await addDoc(collection(db,"historial"),{
+      usuario: "Sistema",
+      rol: MI_ROL,
+      accion: "Reinicio de stats (Control)",
+      cambio: `Se reiniciaron SOLO stats de ${count} miembros (sin tocar contribución/bosses)`,
+      fecha: Date.now()
+    });
+
+    alert(`✅ Reinicio de stats completado.\n\n📊 ${count} miembros actualizados\n✓ Stats reseteados: ATK, DEF, DMG, etc.\n✓ Mantenidos: Nombre, Clase, Nivel, Poder\n✓ No afectado: Contribución y Bosses (se reinician en Panel)\n\n📁 Backup descargado automáticamente.`);
+    
+  } catch(error) {
+    alert(`❌ Error al reiniciar stats: ${error.message}`);
+  } finally {
+    const btn = document.getElementById("reinicioStatsBtn");
+    if (btn) {
+      btn.innerHTML = '🔄 Reiniciar Stats';
+      btn.disabled = false;
+    }
+  }
+}
+
+/* === Exportar a Excel (CSV) - Función independiente === */
+window.exportarAExcel = async () => {
+  if(!esLiderOficial){
+    alert("❌ Solo Líderes y Oficiales pueden exportar backups.");
+    return;
+  }
+  
+  try {
+    // Mostrar indicador de carga
+    const btn = document.querySelector('.export-excel-btn') || document.getElementById("exportarBtn");
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '⏳ Generando...';
+    btn.disabled = true;
+    
+    // Obtener datos de miembros
+    const membersSnap = await getDocs(collection(db, "members"));
+    
+    // Crear encabezados del CSV
+    const headers = [
+      'Nombre', 'Clase', 'Nivel', 'Poder', 
+      'PHYS ATK', 'PHYS DMG %', 
+      'MAG ATK', 'MAG DMG %', 
+      'PHYS DEF', 'PHYS DMG DEF %', 
+      'MAG DEF', 'MAG DMG DEF %', 
+      'ACC', 'EVA', 
+      'Monster DMG %', 'Monster DMG DEF %', 
+      'Boss DMG %', 'Boss DMG DEF %',
+      'Rol', 
+      'Contribución Semanal', 'Total Contribución',
+      'Boss 45', 'Boss 55',
+      'Última Actualización'
+    ];
+    
+    // Crear filas de datos
+    const rows = [headers];
+    
+    membersSnap.forEach(doc => {
+      const m = doc.data();
+      const fechaActualizacion = m.ultimaActualizacion 
+        ? new Date(m.ultimaActualizacion).toLocaleString('es-ES')
+        : 'No registrada';
+      
+      rows.push([
+        m.name || '',
+        m.clase || '',
+        m.nivel || '',
+        m.poder || '',
+        m.physAtk || '',
+        m.physDmg || '0%',
+        m.magAtk || '',
+        m.magDmg || '0%',
+        m.physDef || '',
+        m.physDmgDef || '0%',
+        m.magDef || '',
+        m.magDmgDef || '0%',
+        m.acc || '',
+        m.eva || '',
+        m.monsterDmg || '0%',
+        m.monsterDmgDef || '0%',
+        m.bossDmg || '0%',
+        m.bossDmgDef || '0%',
+        m.role || '',
+        m.semanal || '0',
+        m.totalContribution || '0',
+        m.boss45 ? '✅' : '❌',
+        m.boss55 ? '✅' : '❌',
+        fechaActualizacion
+      ]);
+    });
+    
+    // Convertir a CSV
+    const csvContent = rows.map(row => 
+      row.map(cell => {
+        const cellStr = String(cell);
+        if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+          return `"${cellStr.replace(/"/g, '""')}"`;
+        }
+        return cellStr;
+      }).join(',')
+    ).join('\n');
+    
+    // Crear y descargar archivo
+    const fecha = new Date().toISOString().split('T')[0];
+    const hora = new Date().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
+    const nombreArchivo = `YMIR_Control_Backup_${fecha}_${hora}.csv`;
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nombreArchivo;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    alert(`✅ Exportación completada!\n\n📊 ${rows.length - 1} miembros exportados\n📂 Archivo: ${nombreArchivo}`);
     
   } catch (error) {
     console.error('Error al exportar:', error);
     alert(`❌ Error al exportar: ${error.message}`);
   } finally {
-    // Restaurar botón
-    const btn = document.querySelector('.export-excel-btn');
+    const btn = document.querySelector('.export-excel-btn') || document.getElementById("exportarBtn");
     if (btn) {
-      btn.innerHTML = '<span class="icon">📊</span> Exportar Historial';
+      btn.innerHTML = '📊 Exportar Backup';
       btn.disabled = false;
     }
   }
 };
 
+/* ===== FILTRADO CONTROL ===== */
+function filtrarTabla(){
+  const tabla = document.getElementById("tablaControl");
+  const filtros = tabla.querySelectorAll(".filtros th");
+  const filas = tabla.querySelectorAll("tr[id^='fila_']");
+
+  filas.forEach(fila => {
+    let visible = true;
+    const celdas = fila.children;
+
+    filtros.forEach((filtro, i) => {
+      const input = filtro.querySelector("input");
+      if (!input || !input.value) return;
+
+      let celda = celdas[i].textContent.trim();
+      let filtroVal = input.value.trim();
+
+      celda = celda.replace("%", "");
+
+      if (!isNaN(filtroVal)) {
+        if (Number(celda) < Number(filtroVal)) visible = false;
+      } else {
+        if (!celda.toLowerCase().startsWith(filtroVal.toLowerCase())) {
+          visible = false;
+        }
+      }
+    });
+
+    fila.style.display = visible ? "" : "none";
+  });
+}
+
+/* ===== ORDEN CONTROL ===== */
+let ordenCol = null;
+let ordenAsc = true;
+
+window.ordenarTabla = (col) => {
+  const tabla = document.getElementById("tablaControl");
+  const filas = Array.from(tabla.querySelectorAll("tr[id^='fila_']"));
+
+  ordenAsc = ordenCol === col ? !ordenAsc : true;
+  ordenCol = col;
+
+  filas.sort((a, b) => {
+    let A = a.children[col].textContent.trim().replace("%","");
+    let B = b.children[col].textContent.trim().replace("%","");
+
+    if (A === "-" || A === "") A = "-999999";
+    if (B === "-" || B === "") B = "-999999";
+
+    if (!isNaN(A) && !isNaN(B)) {
+      return ordenAsc ? A - B : B - A;
+    }
+
+    return ordenAsc
+      ? A.localeCompare(B, "es", { sensitivity: "base" })
+      : B.localeCompare(A, "es", { sensitivity: "base" });
+  });
+
+  filas.forEach(f => tabla.appendChild(f));
+  filtrarTabla();
+};
+
 /* === Punto rojo en nav === */
 function escucharSolicitudesBadge(){
   const q = collection(db,"solicitudes");
-  const unsubscribe = onSnapshot(q, snap=>{
+  onSnapshot(q, snap=>{
     const badge = document.getElementById("solicitudesBadge");
     if(!badge) return;
     badge.style.display = snap.size > 0 ? "block" : "none";
   });
-  
-  // Llamar a la función para empezar a escuchar
-  escucharSolicitudesBadge();
 }
 
-// Inicializar cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
-  updateTopClocks();
-});
+cargarControl();
 </script>
 
 </body>
