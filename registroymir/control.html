@@ -134,11 +134,18 @@ th[onclick]:hover {
 
   <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
 
-  <div class="card">
+ <div class="card">
+
+  <div class="table-scroll">
     <table id="tablaControl"></table>
-    <p class="muted">Tip: pulsa “Editar” para desbloquear la fila y “Guardar” para aplicar cambios en vivo.</p>
   </div>
+
+  <p class="muted">
+    Tip: pulsa “Editar” para desbloquear la fila y “Guardar” para aplicar cambios en vivo.
+  </p>
+
 </div>
+
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
