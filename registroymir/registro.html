@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YMIR Guild - Historial</title>
 <link rel="stylesheet" href="style.css">
 <style>
@@ -113,7 +114,7 @@
       <span class="time-display" id="serverTime">--:--:--</span>
     </div>
   </div>
-  
+</div>
 
 <!-- Menú de navegación -->
 <nav class="menu">
@@ -147,6 +148,13 @@
         <span>📨</span>
         Solicitudes
         <span class="solicitudes-badge" id="solicitudesBadge"></span>
+      </a>
+    </li>
+    <!-- Añadir enlace a baneados (se mostrará dinámicamente para Líder/Oficial) -->
+    <li class="menu-item" id="baneadosMenuItem" style="display: none;">
+      <a href="baneados.html" class="menu-link">
+        <span>🚫</span>
+        Baneados
       </a>
     </li>
   </ul>
@@ -241,6 +249,15 @@ onAuthStateChanged(auth, async user=>{
     return; 
   }
   
+  // === BLOQUEO SI ESTÁ BANEADO ===
+  const banSnap = await getDoc(doc(db, "baneados", user.uid));
+  if (banSnap.exists()) {
+    alert("Acceso denegado: estás baneado.");
+    await auth.signOut();
+    location.href = "index.html";
+    return;
+  }
+  
   MI_UID = user.uid;
   const meRef = doc(db,"members",user.uid);
   const meSnap = await getDoc(meRef);
@@ -257,6 +274,12 @@ onAuthStateChanged(auth, async user=>{
     if (esLiderOficial) {
       if (exportarFloatingBtn) exportarFloatingBtn.style.display = "block";
       if (limpiarBtn) limpiarBtn.style.display = "flex";
+      
+      // Mostrar enlace a baneados en menú
+      const baneadosMenuItem = document.getElementById("baneadosMenuItem");
+      if (baneadosMenuItem) {
+        baneadosMenuItem.style.display = "list-item";
+      }
     } else {
       if (exportarFloatingBtn) exportarFloatingBtn.style.display = "none";
       if (limpiarBtn) limpiarBtn.style.display = "none";

@@ -569,3 +569,272 @@ select {
 #reinicioBtn:hover { 
   background-color: #ff5252; 
 }
+
+/* =========================== */
+/* RESPONSIVE PARA MÓVILES     */
+/* =========================== */
+
+/* Para pantallas menores a 768px (móviles) */
+@media screen and (max-width: 768px) {
+  /* --- Contenedor principal --- */
+  .container {
+    width: 95vw;
+    padding: 0 10px;
+    margin: auto;
+  }
+  
+  /* --- Header superior (hora) --- */
+  .header-info {
+    padding: 10px;
+    margin: 10px 0;
+  }
+  
+  .time-section {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .time-display {
+    font-size: 16px;
+    padding: 6px 12px;
+  }
+  
+  .time-label {
+    font-size: 12px;
+  }
+  
+  /* --- Menú de navegación --- */
+  .menu {
+    padding: 10px 0;
+    overflow-x: auto;
+  }
+  
+  .menu-nav {
+    gap: 10px;
+    flex-wrap: nowrap;
+    padding: 0 10px;
+  }
+  
+  .menu-item {
+    min-width: fit-content;
+  }
+  
+  .menu-link {
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+  
+  .menu-item:not(:last-child)::after {
+    right: -5px;
+  }
+  
+  /* --- Tarjetas --- */
+  .card {
+    padding: 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+  }
+  
+  /* --- Tablas RESPONSIVE --- */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: 60vh;
+  }
+  
+  table {
+    font-size: 12px;
+    min-width: 1000px; /* Ancho mínimo para que la tabla no se rompa */
+  }
+  
+  th, td {
+    padding: 6px 8px;
+  }
+  
+  /* --- Inputs y selects --- */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  select {
+    font-size: 14px;
+    padding: 10px;
+  }
+  
+  /* --- Botones --- */
+  .btn {
+    padding: 8px 12px;
+    font-size: 14px;
+    min-height: 40px;
+  }
+  
+  /* --- Login page específica --- */
+  .login-body {
+    padding: 20px;
+  }
+  
+  .login-card {
+    max-width: 100%;
+    padding: 20px;
+  }
+  
+  /* --- Títulos --- */
+  h1 {
+    font-size: 1.5rem;
+    margin: 15px 0;
+  }
+  
+  h3 {
+    font-size: 1.2rem;
+  }
+  
+  /* --- Layout específico de subastas --- */
+  #crearSubasta .grid-container {
+    grid-template-columns: 1fr !important;
+    gap: 10px;
+  }
+  
+  /* --- Sección de saldo en subastas --- */
+  .saldo-section {
+    min-width: 100% !important;
+    margin-top: 15px;
+  }
+  
+  /* --- Botón exportar flotante --- */
+  .export-excel-container {
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .export-excel-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+/* Para pantallas menores a 480px (móviles pequeños) */
+@media screen and (max-width: 480px) {
+  .container {
+    width: 100vw;
+    padding: 0 8px;
+  }
+  
+  .menu-link {
+    font-size: 12px;
+    padding: 6px 8px;
+  }
+  
+  .menu-nav {
+    gap: 5px;
+  }
+  
+  .menu-item span:first-child {
+    display: none; /* Ocultar emojis en móvil muy pequeño */
+  }
+  
+  table {
+    font-size: 11px;
+  }
+  
+  .edit-input, .edit-select {
+    font-size: 12px;
+    width: 100%;
+  }
+  
+  /* --- Login muy pequeño --- */
+  .login-card {
+    padding: 15px;
+  }
+  
+  #email, #password, 
+  #regEmail, #regPassword, #regName {
+    font-size: 16px !important; /* Evitar zoom en iOS */
+  }
+}
+
+/* Para tablets (768px - 1024px) */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .container {
+    width: 96vw;
+  }
+  
+  .menu-nav {
+    gap: 20px;
+  }
+  
+  table {
+    font-size: 13px;
+  }
+}
+
+/* =========================== */
+/* MEJORAS ESPECÍFICAS PARA MÓVIL */
+/* =========================== */
+
+/* Evitar zoom automático en inputs en iOS */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Mejorar toque en móviles */
+@media screen and (max-width: 768px) {
+  button,
+  .btn,
+  a,
+  [onclick] {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .menu-link {
+    min-height: 44px;
+  }
+}
+
+/* Ajustar formulario de login para móvil */
+@media screen and (max-width: 768px) {
+  body {
+    padding: 10px;
+    min-height: 100vh;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    padding-top: 20px;
+  }
+}
+
+/* Ocultar elementos no esenciales en móvil */
+@media screen and (max-width: 480px) {
+  .url-section {
+    display: none;
+  }
+  
+  .muted {
+    font-size: 11px;
+  }
+}
+
+/* Ajustes específicos para tabla de Control */
+@media screen and (max-width: 768px) {
+  #tablaControl th,
+  #tablaControl td {
+    min-width: 60px !important;
+    max-width: 100px !important;
+    padding: 4px 6px !important;
+  }
+}
+
+/* Mejorar scroll en móviles */
+.table-scroll {
+  -webkit-overflow-scrolling: touch;
+}

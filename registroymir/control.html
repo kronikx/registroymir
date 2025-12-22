@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YMIR Guild - Control Semanal</title>
 <link rel="stylesheet" href="style.css">
 <style>
@@ -411,6 +412,7 @@
       <span class="time-display" id="serverTime">--:--:--</span>
     </div>
   </div>
+</div>
 
 <!-- Menú de navegación -->
 <nav class="menu">
@@ -444,6 +446,13 @@
         <span>📨</span>
         Solicitudes
         <span class="solicitudes-badge" id="solicitudesBadge"></span>
+      </a>
+    </li>
+    <!-- Enlace a baneados (solo Líder/Oficial) -->
+    <li class="menu-item" id="baneadosMenuItem" style="display: none;">
+      <a href="baneados.html" class="menu-link">
+        <span>🚫</span>
+        Baneados
       </a>
     </li>
   </ul>
@@ -495,7 +504,8 @@ import {
   getDoc,
   onSnapshot,
   getDocs,
-  setDoc
+  setDoc,
+  deleteDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* === Firebase === */
@@ -511,7 +521,7 @@ const db = getFirestore();
 let MI_ROL = "Miembro";
 let MI_UID = null;
 let esLiderOficial = false;
-let modoEdicionControl = {}; // Para rastrear qué filas están en modo edición
+let modoEdicionControl = {};
 
 /* === Actualizar relojes superiores === */
 function updateTopClocks() {
@@ -531,6 +541,16 @@ updateTopClocks();
 /* === Auth y carga inicial === */
 onAuthStateChanged(auth, async user=>{
   if(!user){ location.href = "index.html"; return; }
+  
+  // === BLOQUEO SI ESTÁ BANEADO ===
+  const banSnap = await getDoc(doc(db, "baneados", user.uid));
+  if (banSnap.exists()) {
+    alert("Acceso denegado: estás baneado.");
+    await auth.signOut();
+    location.href = "index.html";
+    return;
+  }
+  
   MI_UID = user.uid;
   const meRef = doc(db,"members",user.uid);
   const meSnap = await getDoc(meRef);
@@ -564,6 +584,12 @@ onAuthStateChanged(auth, async user=>{
     } else {
       roleBadge.classList.add("role-miembro");
     }
+  }
+  
+  // Mostrar/ocultar opción de baneados en menú
+  const baneadosMenuItem = document.getElementById("baneadosMenuItem");
+  if (baneadosMenuItem && esLiderOficial) {
+    baneadosMenuItem.style.display = "list-item";
   }
   
   // Mostrar/ocultar advertencia de permisos
@@ -806,27 +832,18 @@ function cargarControl(){
 window.editarControl = (id)=>{
   const esPropio = (id === MI_UID);
   
-  // Verificar permisos CORRECTAMENTE: 
-  // - Líder/Oficial pueden editar TODAS las filas
-  // - Miembros solo pueden editar SU PROPIA fila
   if(!esLiderOficial && !esPropio){ 
     alert("❌ Solo puedes editar tu propia información de Control."); 
     return; 
   }
 
-  // Activar modo edición para esta fila
   modoEdicionControl[id] = true;
-  
-  // Recargar solo esta fila en modo edición
   cargarControl();
 };
 
 /* === Cancelar edición en Control === */
 window.cancelarEdicionControl = (id)=>{
-  // Desactivar modo edición
   modoEdicionControl[id] = false;
-  
-  // Recargar tabla
   cargarControl();
 };
 
@@ -834,7 +851,6 @@ window.cancelarEdicionControl = (id)=>{
 window.guardarControl = async (id)=>{
   const esPropio = (id === MI_UID);
   
-  // Verificar permisos CORRECTAMENTE
   if(!esLiderOficial && !esPropio){ 
     alert("❌ Solo puedes guardar cambios en tu propia información."); 
     return; 
@@ -887,7 +903,6 @@ window.guardarControl = async (id)=>{
     }
   }
 
-  // Si no hay cambios, no enviar updateDoc
   if(Object.keys(updateData).length === 0){
     alert("No hay cambios para guardar.");
     modoEdicionControl[id] = false;
@@ -906,12 +921,10 @@ window.guardarControl = async (id)=>{
       fecha: Date.now()
     });
 
-    // Desactivar modo edición
     modoEdicionControl[id] = false;
     
     alert("✅ Cambios guardados y registrados en historial.");
     
-    // Recargar tabla
     cargarControl();
     
   } catch(e) {
@@ -926,15 +939,12 @@ window.iniciarReinicioConBackup = async () => {
     return;
   }
   
-  // Preguntar si quiere hacer backup primero
   const respuesta = confirm("🔄 ¿REINICIAR TODOS LOS STATS?\n\n📊 Se crearÁ UN BACKUP automático antes del reinicio.\n\n¿Quieres proceder?");
   
   if(!respuesta) return;
   
-  // 1. Crear backup automático
   await crearBackupAutomatico();
   
-  // 2. Preguntar confirmación final
   const confirmacionFinal = confirm("✅ Backup creado exitosamente.\n\n¿Estás SEGURO de reiniciar TODOS los stats?\n\n📊 Se resetearán SOLO los stats (ATK, DEF, DMG, etc.)\n\n⚠️ NO se modificarán:\n• Nombre, Clase, Nivel, Poder\n• Contribución Semanal / Total\n• Bosses 45/55\n• Roles");
   
   if(!confirmacionFinal) {
@@ -942,7 +952,6 @@ window.iniciarReinicioConBackup = async () => {
     return;
   }
   
-  // 3. Proceder con el reinicio
   await reinicioStats();
 };
 
@@ -954,10 +963,8 @@ async function crearBackupAutomatico() {
     btn.innerHTML = '📊 Creando backup...';
     btn.disabled = true;
     
-    // Obtener datos de miembros
     const membersSnap = await getDocs(collection(db, "members"));
     
-    // Crear encabezados del CSV
     const headers = [
       'Nombre', 'Clase', 'Nivel', 'Poder', 
       'PHYS ATK', 'PHYS DMG %', 
@@ -974,7 +981,6 @@ async function crearBackupAutomatico() {
       'Fecha Backup'
     ];
     
-    // Crear filas de datos
     const rows = [headers];
     
     const fechaBackup = new Date().toLocaleString('es-ES');
@@ -1014,7 +1020,6 @@ async function crearBackupAutomatico() {
       ]);
     });
     
-    // Convertir a CSV
     const csvContent = rows.map(row => 
       row.map(cell => {
         const cellStr = String(cell);
@@ -1025,7 +1030,6 @@ async function crearBackupAutomatico() {
       }).join(',')
     ).join('\n');
     
-    // Crear y descargar archivo
     const fecha = new Date().toISOString().split('T')[0];
     const hora = new Date().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
     const nombreArchivo = `BACKUP_YMIR_Stats_${fecha}_${hora}.csv`;
@@ -1040,7 +1044,6 @@ async function crearBackupAutomatico() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    // Registrar en historial
     await addDoc(collection(db,"historial"),{
       usuario: "Sistema",
       rol: MI_ROL,
@@ -1075,17 +1078,13 @@ async function reinicioStats() {
     let count = 0;
 
     for(const d of snap.docs){
-      // Solo resetear los stats, mantener todo lo demás
       await updateDoc(doc(db,"members",d.id),{
-        // STATS NUMÉRICOS
         physAtk: 0,
         magAtk: 0,
         physDef: 0,
         magDef: 0,
         acc: 0,
         eva: 0,
-        
-        // STATS PORCENTUALES (como cadena con %)
         physDmg: "0%",
         magDmg: "0%",
         physDmgDef: "0%",
@@ -1094,9 +1093,6 @@ async function reinicioStats() {
         monsterDmgDef: "0%",
         bossDmg: "0%",
         bossDmgDef: "0%"
-        
-        // NO TOCAR:
-        // name, clase, nivel, poder, role, semanal, totalContribution, boss45, boss55
       });
       count++;
     }
@@ -1130,16 +1126,13 @@ window.exportarAExcel = async () => {
   }
   
   try {
-    // Mostrar indicador de carga
     const btn = document.querySelector('.export-excel-btn') || document.getElementById("exportarBtn");
     const originalText = btn.innerHTML;
     btn.innerHTML = '⏳ Generando...';
     btn.disabled = true;
     
-    // Obtener datos de miembros
     const membersSnap = await getDocs(collection(db, "members"));
     
-    // Crear encabezados del CSV
     const headers = [
       'Nombre', 'Clase', 'Nivel', 'Poder', 
       'PHYS ATK', 'PHYS DMG %', 
@@ -1155,7 +1148,6 @@ window.exportarAExcel = async () => {
       'Última Actualización'
     ];
     
-    // Crear filas de datos
     const rows = [headers];
     
     membersSnap.forEach(doc => {
@@ -1192,7 +1184,6 @@ window.exportarAExcel = async () => {
       ]);
     });
     
-    // Convertir a CSV
     const csvContent = rows.map(row => 
       row.map(cell => {
         const cellStr = String(cell);
@@ -1203,7 +1194,6 @@ window.exportarAExcel = async () => {
       }).join(',')
     ).join('\n');
     
-    // Crear y descargar archivo
     const fecha = new Date().toISOString().split('T')[0];
     const hora = new Date().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
     const nombreArchivo = `YMIR_Control_Backup_${fecha}_${hora}.csv`;

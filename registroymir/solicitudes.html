@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YMIR Guild - Solicitudes</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -19,6 +20,7 @@
       <span class="time-display" id="serverTime">--:--:--</span>
     </div>
   </div>
+</div>
 
 <!-- Menú de navegación -->
 <nav class="menu">
@@ -52,6 +54,13 @@
         <span>📨</span>
         Solicitudes
         <span class="solicitudes-badge" id="solicitudesBadgeNav"></span>
+      </a>
+    </li>
+    <!-- Añadir enlace a baneados (se mostrará dinámicamente para Líder/Oficial) -->
+    <li class="menu-item" id="baneadosMenuItem" style="display: none;">
+      <a href="baneados.html" class="menu-link">
+        <span>🚫</span>
+        Baneados
       </a>
     </li>
   </ul>
@@ -123,6 +132,15 @@ onAuthStateChanged(auth, async (user) => {
 
   usuarioActual = user;
   
+  // === BLOQUEO SI ESTÁ BANEADO ===
+  const banSnap = await getDoc(doc(db, "baneados", user.uid));
+  if (banSnap.exists()) {
+    alert("Acceso denegado: estás baneado.");
+    await auth.signOut();
+    location.href = "index.html";
+    return;
+  }
+
   const meSnap = await getDoc(doc(db,"members",user.uid));
   if (!meSnap.exists()) {
     mostrarAccesoDenegado();
@@ -150,6 +168,12 @@ onAuthStateChanged(auth, async (user) => {
 
   // Verificar si es Líder u Oficial
   esLiderOficial = (rolLower === "líder" || rolLower === "lider" || rolLower === "oficial");
+  
+  // Mostrar/ocultar enlace a baneados en menú
+  const baneadosMenuItem = document.getElementById("baneadosMenuItem");
+  if (baneadosMenuItem && esLiderOficial) {
+    baneadosMenuItem.style.display = "list-item";
+  }
   
   if (!esLiderOficial) {
     mostrarAccesoDenegado();

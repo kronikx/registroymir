@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>YMIR Guild - Panel</title>
 <link rel="stylesheet" href="style.css">
 <style>
@@ -67,7 +68,7 @@
     padding: 4px;
     border-radius: 4px;
     border: 1px solid #5a189a;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255,255,255,0.1);
     color: white;
   }
   
@@ -75,6 +76,15 @@
   .editing-mode {
     border-left: 3px solid #ffc107;
     background: rgba(255, 193, 7, 0.05) !important;
+  }
+  
+  /* Estilos para sección de baneados */
+  .baneados-table th {
+    background-color: #5a189a !important;
+  }
+  
+  .baneados-table tr:hover td {
+    background: rgba(255, 107, 107, 0.1) !important;
   }
 </style>
 </head>
@@ -92,6 +102,7 @@
       <span class="time-display" id="serverTime">--:--:--</span>
     </div>
   </div>
+</div>
 
 <!-- Menú de navegación -->
 <nav class="menu">
@@ -127,6 +138,13 @@
         <span class="solicitudes-badge" id="solicitudesBadge"></span>
       </a>
     </li>
+    <!-- Enlace a página de baneados (solo para Líder/Oficial) -->
+    <li class="menu-item" id="baneadosMenuItem" style="display: none;">
+      <a href="baneados.html" class="menu-link">
+        <span>🚫</span>
+        Baneados
+      </a>
+    </li>
   </ul>
 </nav>
 
@@ -147,9 +165,37 @@
     <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
   </div>
 
+  <!-- TABLA DE MIEMBROS -->
   <div class="card">
     <div class="table-scroll">
       <table id="tablaMiembros"></table>
+    </div>
+  </div>
+
+  <!-- SECCIÓN DE BANEADOS (solo para Líder/Oficial) -->
+  <div id="baneadosSection" style="display: none; margin-top: 40px;">
+    <h2 style="color: #ff6b6b; border-bottom: 2px solid #ff6b6b; padding-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+      <span>🚫</span> Usuarios Baneados
+    </h2>
+    
+    <div class="card" style="background: rgba(179, 0, 0, 0.1); border: 1px solid #ff6b6b;">
+      <div class="permission-warning" style="margin-bottom: 15px; background: rgba(255, 107, 107, 0.15); border-left-color: #ff6b6b; color: #ff6b6b;">
+        <strong>⚠️ Sección de Administración:</strong> Solo visible para Líderes y Oficiales.
+      </div>
+      
+      <div class="table-scroll">
+        <table id="tablaBaneadosPanel">
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 30px; color: #c77dff; font-style: italic;">
+              Cargando usuarios baneados...
+            </td>
+          </tr>
+        </table>
+      </div>
+      
+      <p class="muted" style="margin-top: 15px; color: #ff9999;">
+        👑 <strong>Función de Administrador:</strong> Solo Líderes y Oficiales pueden ver y gestionar esta sección.
+      </p>
     </div>
   </div>
 </div>
@@ -182,7 +228,7 @@ const db = getFirestore();
 let MI_ROL = "Miembro";
 let MI_UID = null;
 let esLiderOficial = false;
-let modoEdicion = {}; // Para rastrear qué filas están en modo edición
+let modoEdicion = {};
 
 /* === Actualizar relojes superiores === */
 function updateTopClocks() {
@@ -202,6 +248,16 @@ updateTopClocks();
 /* === Auth y carga inicial === */
 onAuthStateChanged(auth, async user=>{
   if(!user){ location.href = "index.html"; return; }
+  
+  // === BLOQUEO SI ESTÁ BANEADO (EN TODAS LAS PÁGINAS) ===
+  const banSnap = await getDoc(doc(db, "baneados", user.uid));
+  if (banSnap.exists()) {
+    alert("Acceso denegado: estás baneado.");
+    await auth.signOut();
+    location.href = "index.html";
+    return;
+  }
+  
   MI_UID = user.uid;
   const meSnap = await getDoc(doc(db,"members",user.uid));
 
@@ -240,12 +296,23 @@ onAuthStateChanged(auth, async user=>{
     if (miembroDiv) miembroDiv.style.display = "block";
   }
 
+  // Mostrar/ocultar opción de baneados en menú
+  const baneadosMenuItem = document.getElementById("baneadosMenuItem");
+  if (baneadosMenuItem && esLiderOficial) {
+    baneadosMenuItem.style.display = "list-item";
+  }
+
   cargarMiembros();
   escucharSolicitudesBadge();
   
   if(!esLiderOficial){
     const btn = document.getElementById("reinicioBtn");
     if(btn) btn.style.display = "none";
+  }
+  
+  // Cargar baneados si es Líder/Oficial
+  if (esLiderOficial) {
+    cargarBaneadosEnPanel();
   }
 });
 
@@ -407,39 +474,116 @@ function cargarMiembros(){
   });
 }
 
+/* === Cargar usuarios baneados en el panel (solo Líder/Oficial) === */
+function cargarBaneadosEnPanel() {
+  if (!esLiderOficial) return;
+  
+  const tabla = document.getElementById("tablaBaneadosPanel");
+  const section = document.getElementById("baneadosSection");
+  
+  // Mostrar la sección
+  if (section) {
+    section.style.display = "block";
+  }
+  
+  // Escuchar cambios en la colección de baneados
+  onSnapshot(collection(db, "baneados"), (snap) => {
+    if (snap.empty) {
+      tabla.innerHTML = `
+        <tr>
+          <td colspan="5" style="text-align: center; padding: 30px; color: #c77dff; font-style: italic;">
+            No hay usuarios baneados
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    tabla.innerHTML = `
+      <tr>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Clase</th>
+        <th>Fecha baneo</th>
+        <th>Acciones</th>
+      </tr>
+    `;
+    
+    snap.forEach((doc) => {
+      const usuario = doc.data();
+      const fechaBaneo = usuario.fechaBaneo ? 
+        new Date(usuario.fechaBaneo.toDate()).toLocaleString() : 
+        "Sin fecha";
+      
+      tabla.innerHTML += `
+        <tr>
+          <td><strong>${usuario.name || "-"}</strong></td>
+          <td><small>${usuario.email || "-"}</small></td>
+          <td>${usuario.clase || "-"}</td>
+          <td style="font-size: 12px;">${fechaBaneo}</td>
+          <td>
+            <button class="btn" onclick="quitarBaneoDesdePanel('${doc.id}', '${usuario.name || "Usuario"}')" 
+                    style="background: #4CAF50; color: white; padding: 5px 10px; font-size: 12px;">
+              Quitar baneo
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+  });
+}
+
+/* === Función para quitar baneo desde el panel === */
+window.quitarBaneoDesdePanel = async (uid, nombre) => {
+  if (!esLiderOficial) {
+    alert("No tienes permisos para realizar esta acción.");
+    return;
+  }
+  
+  if (!confirm(`¿Seguro que quieres quitar el baneo a ${nombre}?`)) return;
+  
+  try {
+    await deleteDoc(doc(db, "baneados", uid));
+    
+    // Registrar en historial
+    await addDoc(collection(db, "historial"), {
+      usuario: nombre,
+      rol: MI_ROL,
+      accion: "Baneo eliminado",
+      cambio: `Se quitó el baneo a ${nombre}`,
+      fecha: Date.now()
+    });
+    
+    alert(`✅ Baneo eliminado para ${nombre}.`);
+  } catch (e) {
+    alert("❌ Error al quitar baneo: " + e.message);
+  }
+};
+
 /* === Editar fila (solo Líder/Oficial) === */
 window.editar = (id, nombre)=>{
-  // Verificar permisos - SOLO Líder/Oficial
   if(!esLiderOficial){ 
     alert("❌ Solo Líderes y Oficiales pueden editar en el Panel."); 
     return; 
   }
   
-  // Activar modo edición para esta fila
   modoEdicion[id] = true;
-  
-  // Recargar solo esta fila en modo edición
   cargarMiembros();
 };
 
 /* === Cancelar edición === */
 window.cancelarEdicion = (id)=>{
-  // Desactivar modo edición
   modoEdicion[id] = false;
-  
-  // Recargar tabla
   cargarMiembros();
 };
 
 /* === Guardar cambios (solo para Líder/Oficial) === */
 window.guardar = async (id, nombreAnterior)=>{
-  // Verificar permisos - SOLO Líder/Oficial
   if(!esLiderOficial){ 
     alert("❌ Solo Líderes y Oficiales pueden guardar cambios."); 
     return; 
   }
 
-  // Obtener valores de los inputs
   const nuevoNombre = document.getElementById("editNombre_"+id)?.value;
   const rolSel = document.getElementById("editRol_"+id)?.value;
   const claseSel = document.getElementById("editClase_"+id)?.value;
@@ -450,37 +594,29 @@ window.guardar = async (id, nombreAnterior)=>{
   let updateData = {};
   let cambioTxt = "";
 
-  // Nombre
   if(nuevoNombre && nuevoNombre !== nombreAnterior){
     updateData.name = nuevoNombre;
     cambioTxt += `Nombre: ${nuevoNombre}`;
   }
 
-  // Rol
   if(rolSel){
     updateData.role = rolSel;
     cambioTxt += (cambioTxt ? ", " : "") + `Rol: ${rolSel}`;
   }
 
-  // Clase
   if(claseSel){
     updateData.clase = claseSel;
     cambioTxt += (cambioTxt ? ", " : "") + `Clase: ${claseSel}`;
   }
 
-  // Contribución Semanal (NO se modifica Contribución Total aquí)
   if(semanalEl){
     const semanal = Number(semanalEl.value);
     if(!isNaN(semanal)){
       updateData.semanal = semanal;
       cambioTxt += (cambioTxt ? ", " : "") + `Semanal: ${semanal}`;
-      
-      // IMPORTANTE: La Contribución Total NO se modifica aquí
-      // Solo se modifica en el Reinicio Semanal o cuando se puja en subastas
     }
   }
 
-  // Bosses
   if(boss45Sel !== undefined){
     const b45 = (boss45Sel === "Sí");
     updateData.boss45 = b45;
@@ -493,7 +629,6 @@ window.guardar = async (id, nombreAnterior)=>{
     cambioTxt += (cambioTxt ? ", " : "") + `Boss55: ${b55 ? "Sí" : "No"}`;
   }
 
-  // Si no hay cambios, mostrar mensaje y salir
   if(Object.keys(updateData).length === 0){
     alert("No hay cambios para guardar.");
     modoEdicion[id] = false;
@@ -502,10 +637,8 @@ window.guardar = async (id, nombreAnterior)=>{
   }
 
   try {
-    // Actualizar en Firebase
     await updateDoc(doc(db,"members",id), updateData);
 
-    // Registrar en historial
     await addDoc(collection(db,"historial"),{
       usuario: nombreAnterior || "Usuario",
       rol: MI_ROL,
@@ -514,12 +647,10 @@ window.guardar = async (id, nombreAnterior)=>{
       fecha: Date.now()
     });
 
-    // Desactivar modo edición
     modoEdicion[id] = false;
     
     alert("✅ Datos actualizados y registrados en historial");
     
-    // Recargar tabla
     cargarMiembros();
     
   } catch(e) {
@@ -529,7 +660,6 @@ window.guardar = async (id, nombreAnterior)=>{
 
 /* === Eliminar miembro SOLO de Firestore (mantiene Auth) === */
 window.eliminarMiembro = async (uid)=>{
-  // Solo el usuario específico (IPsOS0geYjbsH0ZQZ5RAoNZ00XL2) puede eliminar
   if(MI_UID !== "IPsOS0geYjbsH0ZQZ5RAoNZ00XL2"){
     alert("❌ No tienes permisos para eliminar miembros.");
     return;
@@ -540,7 +670,6 @@ window.eliminarMiembro = async (uid)=>{
   try{
     await deleteDoc(doc(db,"members",uid));
 
-    // Quitar la fila del HTML inmediatamente
     const fila = document.getElementById("fila_"+uid);
     if(fila) fila.remove();
 

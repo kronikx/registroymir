@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YMIR Guild - Baneados</title>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -72,16 +73,29 @@
 </nav>
 
 <div class="container">
-  <h1>Usuarios Baneados</h1>
+  <h1>Usuarios Baneados <span id="userRoleBadge" class="role-badge" style="font-size: 14px; margin-left: 10px;"></span></h1>
 
   <div id="accessDenied" class="access-denied" style="display:none">
-    Acceso denegado: esta sección es solo para Líderes y Oficiales.
+    <h2>🚫 Acceso Restringido</h2>
+    <p>Esta sección es exclusiva para <strong>Líderes</strong> y <strong>Oficiales</strong> del clan.</p>
+    <p>Tu rol actual no te permite acceder a esta funcionalidad.</p>
+    <div style="margin-top: 20px;">
+      <button class="btn" onclick="window.location.href='panel.html'">Volver al Panel</button>
+    </div>
   </div>
 
   <div id="content" class="card" style="display:none">
+    <div class="permission-warning" style="margin-bottom: 15px;">
+      <strong⚠️ Permisos:</strong> Solo Líderes y Oficiales pueden ver y gestionar usuarios baneados.
+    </div>
+    
     <div class="table-scroll">
       <table id="tablaBaneados"></table>
     </div>
+    
+    <p class="muted" style="margin-top: 15px;">
+      👑 <strong>Funcionalidad de Administrador:</strong> Solo visible para Líderes y Oficiales
+    </p>
   </div>
 </div>
 
@@ -99,6 +113,11 @@ initializeApp({
 const auth = getAuth();
 const db = getFirestore();
 
+/* === Variables globales === */
+let usuarioActual = null;
+let rolUsuario = null;
+let esLiderOficial = false;
+
 /* === Actualizar relojes superiores === */
 function updateTopClocks() {
   const now = new Date();
@@ -114,13 +133,15 @@ function updateTopClocks() {
 setInterval(updateTopClocks, 1000);
 updateTopClocks();
 
-/* === Protección de roles + bloqueo si está baneado === */
+/* === Protección de roles (solo Líder/Oficial) === */
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     window.location.href = "index.html";
     return;
   }
 
+  usuarioActual = user;
+  
   // Bloqueo inmediato si el usuario actual está en baneados
   const banSnap = await getDoc(doc(db,"baneados",user.uid));
   if (banSnap.exists()) {
@@ -130,30 +151,52 @@ onAuthStateChanged(auth, async (user) => {
     return;
   }
 
-  // Comprobación de rol por UID (igual que en panel)
+  // Comprobación de rol en members
   const meSnap = await getDoc(doc(db,"members",user.uid));
   if (!meSnap.exists()) {
-    document.getElementById("accessDenied").style.display = "block";
-    document.getElementById("content").style.display = "none";
-    setTimeout(()=>{ window.location.href = "panel.html"; }, 2000);
+    mostrarAccesoDenegado();
+    setTimeout(()=>{ window.location.href = "panel.html"; }, 3000);
     return;
   }
 
   const data = meSnap.data() || {};
-  const rol = data.role || data.rol || data.proofImages?.role || "Miembro";
-  const rolLower = rol.trim().toLowerCase();
+  rolUsuario = data.role || data.rol || data.proofImages?.role || "Miembro";
+  const rolLower = rolUsuario.trim().toLowerCase();
+  
+  // Actualizar badge de rol
+  const roleBadge = document.getElementById("userRoleBadge");
+  if (roleBadge) {
+    roleBadge.textContent = rolUsuario;
+    roleBadge.className = "role-badge";
+    if (rolLower === "líder" || rolLower === "lider") {
+      roleBadge.classList.add("role-lider");
+    } else if (rolLower === "oficial") {
+      roleBadge.classList.add("role-oficial");
+    } else {
+      roleBadge.classList.add("role-miembro");
+    }
+  }
 
-  if (rolLower !== "líder" && rolLower !== "lider" && rolLower !== "oficial") {
-    document.getElementById("accessDenied").style.display = "block";
-    document.getElementById("content").style.display = "none";
-    setTimeout(()=>{ window.location.href = "panel.html"; }, 2000);
+  // Verificar si es Líder u Oficial
+  esLiderOficial = (rolLower === "líder" || rolLower === "lider" || rolLower === "oficial");
+  
+  if (!esLiderOficial) {
+    mostrarAccesoDenegado();
+    setTimeout(()=>{ window.location.href = "panel.html"; }, 3000);
     return;
   }
 
+  // Mostrar contenido
   document.getElementById("accessDenied").style.display = "none";
   document.getElementById("content").style.display = "block";
+  
   cargarBaneadosRealtime();
 });
+
+function mostrarAccesoDenegado() {
+  document.getElementById("accessDenied").style.display = "block";
+  document.getElementById("content").style.display = "none";
+}
 
 /* === Cargar baneados en tiempo real === */
 function cargarBaneadosRealtime(){
@@ -171,7 +214,7 @@ function pintarTablaBaneados(lista){
   const tabla = document.getElementById("tablaBaneados");
 
   if(lista.length===0){
-    tabla.innerHTML = `<tr><td colspan="6">No hay usuarios baneados</td></tr>`;
+    tabla.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 30px; color: #c77dff; font-style: italic;">No hay usuarios baneados</td></tr>`;
     return;
   }
 
@@ -190,10 +233,10 @@ function pintarTablaBaneados(lista){
     tabla.innerHTML += `
       <tr>
         <td>${u.email || "-"}</td>
-        <td>${u.usuarioId || "-"}</td>
-        <td>${u.name || "-"}</td>
+        <td><code style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 3px;">${u.usuarioId || "-"}</code></td>
+        <td><strong>${u.name || "-"}</strong></td>
         <td>${u.clase || "-"}</td>
-        <td>${u.fechaBaneo ? new Date(u.fechaBaneo.toDate()).toLocaleString() : "-"}</td>
+        <td style="font-size: 12px;">${u.fechaBaneo ? new Date(u.fechaBaneo.toDate()).toLocaleString() : "-"}</td>
         <td>
           <button class="btn" onclick="quitarBaneo('${u.id}')">Quitar baneo</button>
         </td>
@@ -204,12 +247,17 @@ function pintarTablaBaneados(lista){
 
 /* === Quitar baneo === */
 window.quitarBaneo = async (uid)=>{
+  if(!esLiderOficial){
+    alert("No tienes permisos para quitar baneos.");
+    return;
+  }
+  
   if(!confirm("¿Seguro que quieres quitar el estado baneado a este usuario?")) return;
   try{
     await deleteDoc(doc(db,"baneados",uid));
-    alert("El estado baneado ha sido eliminado.");
+    alert("✅ El estado baneado ha sido eliminado.");
   }catch(e){
-    alert("Error al quitar baneo: "+(e.message || e));
+    alert("❌ Error al quitar baneo: "+(e.message || e));
   }
 };
 </script>
