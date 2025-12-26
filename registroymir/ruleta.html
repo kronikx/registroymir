@@ -1,0 +1,2241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YMIR Guild - Ruleta de Items</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ESTILOS PARA LA RULETA */
+  :root {
+    --primary-color: #4ecca3;
+    --secondary-color: #3db393;
+    --accent-color: #ff9800;
+    --danger-color: #ff6b6b;
+    --success-color: #4ecca3;
+    --background-dark: #1a1a2e;
+    --background-light: rgba(255, 255, 255, 0.1);
+    --text-color: #fff;
+    --text-muted: #aaa;
+  }
+
+  body {
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+
+  .header-info {
+    background: rgba(36, 0, 70, 0.8);
+    padding: 15px 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .time-section {
+    display: flex;
+    gap: 30px;
+  }
+
+  .time-label {
+    color: #c77dff;
+    font-weight: bold;
+    margin-right: 10px;
+  }
+
+  .time-display {
+    color: #fff;
+    font-family: 'Courier New', monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 5px 10px;
+    border-radius: 5px;
+  }
+
+  /* Menú de navegación (SIN RULETA) */
+  .menu {
+    background: rgba(36, 0, 70, 0.8);
+    border-radius: 10px;
+    margin-bottom: 20px;
+  }
+
+  .menu-nav {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-wrap: wrap;
+  }
+
+  .menu-item {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .menu-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 15px 10px;
+    color: #c77dff;
+    text-decoration: none;
+    transition: all 0.3s;
+    border-bottom: 3px solid transparent;
+  }
+
+  .menu-link:hover {
+    background: rgba(157, 78, 221, 0.2);
+    color: #9d4edd;
+  }
+
+  .menu-link.active {
+    background: rgba(157, 78, 221, 0.3);
+    color: #9d4edd;
+    border-bottom-color: #9d4edd;
+  }
+
+  .menu-link span {
+    font-size: 20px;
+    margin-bottom: 5px;
+  }
+
+  /* Contenedor principal */
+  .trash-roulette-container {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    border: 2px solid #0f3460;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+
+  .trash-roulette-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+  }
+
+  .title-text {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: var(--primary-color);
+    font-size: 24px;
+    font-weight: bold;
+  }
+
+  /* Botón para volver a subastas */
+  .btn-subastas {
+    background: linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-subastas:hover {
+    background: linear-gradient(135deg, #7b2cbf 0%, #5a189a 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(157, 78, 221, 0.3);
+  }
+
+  .trash-roulette-content {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+  }
+
+  .trash-items-section {
+    flex: 1;
+    min-width: 350px;
+  }
+
+  .trash-controls-section {
+    flex: 1;
+    min-width: 350px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Sección de agregar items */
+  .add-item-form {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .form-title {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .form-input {
+    flex: 1;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--primary-color);
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 14px;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 2px rgba(78, 204, 163, 0.2);
+  }
+
+  .quantity-input {
+    width: 100px;
+  }
+
+  .btn-add {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+  }
+
+  .btn-add:hover {
+    background: var(--secondary-color);
+  }
+
+  /* Lista de items */
+  .trash-items-list {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+  }
+
+  .trash-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+    transition: transform 0.2s;
+  }
+
+  .trash-item:hover {
+    transform: translateX(5px);
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .trash-item-name {
+    flex: 1;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .trash-item-quantity {
+    background: rgba(78, 204, 163, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--primary-color);
+    font-weight: bold;
+    margin: 0 10px;
+  }
+
+  .trash-item-remove {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.3s;
+  }
+
+  .trash-item-remove:hover {
+    background: #ff5252;
+  }
+
+  /* Sección de subida de capturas */
+  .upload-section {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .upload-area {
+    border: 2px dashed var(--primary-color);
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 15px;
+  }
+
+  .upload-area:hover {
+    background: rgba(78, 204, 163, 0.1);
+    border-color: var(--secondary-color);
+  }
+
+  .upload-area.dragover {
+    background: rgba(78, 204, 163, 0.2);
+    border-color: var(--secondary-color);
+    transform: scale(1.02);
+  }
+
+  .upload-icon {
+    font-size: 40px;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+  }
+
+  .upload-text {
+    color: #ddd;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .upload-hint {
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .upload-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 15px;
+    justify-content: center;
+  }
+
+  .preview-image {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid var(--primary-color);
+  }
+
+  .btn-process {
+    background: #9d4edd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    margin-top: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .btn-process:hover:not(:disabled) {
+    background: #7b2cbf;
+  }
+
+  .btn-process:disabled {
+    background: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .ocr-results {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+
+  .ocr-text-preview {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    padding: 10px;
+    margin: 10px 0;
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: #ddd;
+    white-space: pre-wrap;
+    max-height: 100px;
+    overflow-y: auto;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .ocr-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    border-left: 3px solid #9d4edd;
+  }
+
+  .ocr-item-name {
+    flex: 1;
+    font-size: 13px;
+    color: #fff;
+    font-weight: 500;
+  }
+
+  .ocr-item-quantity {
+    background: rgba(78, 204, 163, 0.2);
+    padding: 3px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    color: var(--primary-color);
+    font-weight: bold;
+    margin: 0 8px;
+    min-width: 40px;
+    text-align: center;
+  }
+
+  .btn-add-all {
+    background: var(--success-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .btn-add-all:hover {
+    background: #3db393;
+  }
+
+  /* Panel de requisitos */
+  .trash-requirements {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  .requirements-title {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .requirements-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .requirements-list li {
+    padding: 8px 0;
+    font-size: 14px;
+    color: #ddd;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .requirements-list li:last-child {
+    border-bottom: none;
+  }
+
+  .requirement-icon {
+    color: var(--primary-color);
+    font-size: 16px;
+  }
+
+  /* Panel de miembros elegibles */
+  .trash-eligible-members {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  .eligible-title {
+    color: var(--primary-color);
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 18px;
+  }
+
+  .eligible-count {
+    font-size: 36px;
+    font-weight: bold;
+    color: var(--primary-color);
+    margin: 15px 0;
+  }
+
+  .eligible-count-label {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  .distribution-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  /* Botón de girar ruleta */
+  .spin-roulette-btn {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 20px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .spin-roulette-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, #2d9a7a 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(78, 204, 163, 0.4);
+  }
+
+  .spin-roulette-btn:disabled {
+    background: #666;
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .spin-roulette-btn.spinning {
+    animation: pulse 1.5s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  /* Resultados */
+  .results-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+  }
+
+  .results-title {
+    color: var(--primary-color);
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .btn-clear {
+    background: var(--danger-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 15px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .btn-clear:hover {
+    background: #ff5252;
+  }
+
+  .results-list {
+    max-height: 250px;
+    overflow-y: auto;
+  }
+
+  .result-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    border-left: 4px solid #9d4edd;
+  }
+
+  .result-member {
+    font-weight: bold;
+    color: #fff;
+  }
+
+  .result-award {
+    color: var(--primary-color);
+    font-weight: bold;
+  }
+
+  .round-info {
+    text-align: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* Botones de acción */
+  .action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .btn-clear-all {
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex: 1;
+  }
+
+  .btn-clear-all:hover {
+    background: #f57c00;
+  }
+
+  .btn-reset-dist {
+    background: #9d4edd;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    flex: 1;
+  }
+
+  .btn-reset-dist:hover {
+    background: #7b2cbf;
+  }
+
+  /* Progress bar */
+  .progress-container {
+    margin-top: 10px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 5px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ecca3 0%, #3db393 100%);
+    width: 0%;
+    transition: width 0.3s;
+  }
+
+  .progress-text {
+    font-size: 11px;
+    color: #aaa;
+    text-align: center;
+  }
+
+  /* Loading spinner */
+  .spinner {
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid #4ecca3;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  /* Modal de ajuste manual */
+  .adjust-item-field {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+
+  .adjust-item-field input {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #5a189a;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+  }
+
+  .adjust-item-name {
+    flex: 2;
+  }
+
+  .adjust-item-quantity {
+    width: 80px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .trash-roulette-content {
+      flex-direction: column;
+    }
+    
+    .trash-items-section,
+    .trash-controls-section {
+      min-width: 100%;
+    }
+    
+    .header-info {
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .time-section {
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+    }
+    
+    .menu-nav {
+      flex-direction: column;
+    }
+    
+    .menu-item {
+      width: 100%;
+    }
+    
+    .input-group {
+      flex-direction: column;
+    }
+    
+    .quantity-input {
+      width: 100%;
+    }
+    
+    .trash-roulette-title {
+      flex-direction: column;
+      gap: 15px;
+      text-align: center;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Contenedor principal de la ruleta -->
+  <div class="trash-roulette-container">
+    <div class="trash-roulette-title">
+      <div class="title-text">
+        <span>🎰 Ruleta de Items</span>
+      </div>
+      <button class="btn-subastas" onclick="location.href='subastas.html'">
+        <span>💰</span>
+        Volver a Subastas
+      </button>
+    </div>
+    
+    <div class="trash-roulette-content">
+      <!-- Sección izquierda: Gestión de items -->
+      <div class="trash-items-section">
+        <!-- Formulario para agregar items manualmente (SOLO LIDER/OFICIAL) -->
+        <div class="add-item-form" id="addItemForm" style="display: none;">
+          <h3 class="form-title">➕ Agregar Items Manualmente</h3>
+          <div class="input-group">
+            <input type="text" id="newTrashItem" class="form-input" placeholder="Nombre del item (ej: Twilight Stone)" />
+            <input type="number" id="newTrashQuantity" class="form-input quantity-input" placeholder="Cant." value="1" min="1" />
+          </div>
+          <button id="addTrashItemBtn" class="btn-add">Agregar Item</button>
+        </div>
+        
+        <!-- Lista de items agregados -->
+        <div class="trash-items-list" id="trashItemsList">
+          <div style="text-align: center; padding: 40px; color: #999;">
+            <div style="font-size: 48px; margin-bottom: 15px;">📦</div>
+            <div>No hay items agregados</div>
+            <div style="font-size: 12px; margin-top: 10px;">Los líderes y oficiales pueden agregar items</div>
+          </div>
+        </div>
+        
+        <!-- Botones de acción (SOLO LIDER/OFICIAL) -->
+        <div class="action-buttons" id="actionButtons" style="display: none;">
+          <button id="clearTrashItemsBtn" class="btn-clear-all">
+            🗑️ Limpiar todos los items
+          </button>
+          <button id="resetDistributionBtn" class="btn-reset-dist">
+            🔄 Reiniciar distribución
+          </button>
+        </div>
+        
+        <!-- Sección para subir capturas (SOLO LIDER/OFICIAL) -->
+        <div class="upload-section" id="uploadSection" style="display: none;">
+          <h3 class="form-title">📸 Extraer Texto de Capturas</h3>
+          
+          <div class="upload-area" id="uploadArea">
+            <div class="upload-icon">📎</div>
+            <div class="upload-text">Arrastra y suelta capturas aquí</div>
+            <div class="upload-hint">o haz clic para seleccionar archivos (JPG, PNG, etc.)</div>
+            <input type="file" id="fileInput" accept="image/*" multiple style="display: none;">
+          </div>
+          
+          <div class="upload-preview" id="uploadPreview"></div>
+          
+          <div style="margin-top: 15px;">
+            <div style="color: #4ecca3; font-size: 13px; font-weight: bold; margin-bottom: 8px;">
+              🔍 Extraer Texto con OCR
+            </div>
+            <div style="color: #aaa; font-size: 12px; margin-bottom: 10px; padding: 10px; background: rgba(78, 204, 163, 0.1); border-radius: 6px;">
+              <strong>Instrucciones:</strong> 
+              1. Sube tu captura de pantalla<br>
+              2. Haz clic en "Extraer Texto"<br>
+              3. El sistema extraerá todo el texto de la imagen<br>
+              4. <strong>Tú ajustarás manualmente las cantidades (por defecto: 1)</strong>
+            </div>
+            <button id="processOCRBtn" class="btn-process" disabled>
+              🔍 Extraer Texto
+            </button>
+          </div>
+          
+          <!-- Progress bar -->
+          <div class="progress-container" id="progressContainer" style="display: none;">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="progress-text" id="progressText">0%</div>
+          </div>
+          
+          <!-- Loading spinner -->
+          <div id="loadingSpinner" style="display: none; text-align: center; padding: 20px;">
+            <div class="spinner"></div>
+            <div style="color: #4ecca3; margin-top: 10px; font-size: 13px;">Procesando imagen...</div>
+          </div>
+          
+          <div id="ocrResultsContainer" style="display: none;">
+            <div class="ocr-results" id="ocrResults">
+              <!-- Los resultados se mostrarán aquí -->
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+              <button id="addOCRResultsBtn" class="btn-add-all" style="flex: 2;">
+                ✅ Agregar Items Ajustados
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Información para miembros -->
+        <div id="memberInfo" style="background: rgba(157, 78, 221, 0.1); border-radius: 10px; padding: 20px; margin-top: 20px;">
+          <h3 style="color: #9d4edd; margin-top: 0; margin-bottom: 15px;">👀 Vista de Miembro</h3>
+          <p style="color: #c77dff; font-size: 14px; margin-bottom: 10px;">
+            Los miembros solo pueden ver los items disponibles y los resultados del reparto.
+          </p>
+          <p style="color: #aaa; font-size: 12px;">
+            Para agregar items, girar la ruleta o realizar cualquier acción, contacta a un líder u oficial.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Sección derecha: Controles y resultados -->
+      <div class="trash-controls-section">
+        <!-- Requisitos para participar -->
+        <div class="trash-requirements">
+          <h3 class="requirements-title">✅ Requisitos para participar</h3>
+          <ul class="requirements-list">
+            <li><span class="requirement-icon">✓</span> Bosses 45 y 55 completados</li>
+            <li><span class="requirement-icon">✓</span> Contribución semanal ≥ 5000 puntos</li>
+            <li><span class="requirement-icon">✓</span> Control semanal completo</li>
+            <li><span class="requirement-icon">✓</span> Miembro activo (no baneado)</li>
+          </ul>
+        </div>
+        
+        <!-- Miembros elegibles -->
+        <div class="trash-eligible-members">
+          <h3 class="eligible-title">👥 Miembros Elegibles</h3>
+          <div class="eligible-count" id="eligibleMembersCount">0</div>
+          <div class="eligible-count-label" id="distributionStatus">
+            miembros cumplen los requisitos
+          </div>
+          <div class="distribution-info" id="distributionInfo">
+            Sistema de rondas: 1 item por miembro por ronda
+          </div>
+        </div>
+        
+        <!-- Botón para girar ruleta (SOLO LIDER/OFICIAL) -->
+        <button id="spinRouletteBtn" class="spin-roulette-btn" disabled style="display: none;">
+          <span>🎰</span>
+          Girar Ruleta
+        </button>
+        
+        <!-- Mensaje para miembros -->
+        <div id="memberSpinMessage" style="background: rgba(255, 152, 0, 0.1); border-radius: 10px; padding: 20px; text-align: center;">
+          <h4 style="color: #ff9800; margin-top: 0;">🎰 Esperando reparto</h4>
+          <p style="color: #ffc107; font-size: 14px;">
+            La ruleta será girada por un líder u oficial cuando haya items disponibles.
+          </p>
+          <p style="color: #aaa; font-size: 12px; margin-top: 10px;">
+            Puedes ver los resultados del reparto más abajo.
+          </p>
+        </div>
+        
+        <!-- Resultados del reparto -->
+        <div class="results-container" id="rouletteResults" style="display: none;">
+          <div class="results-header">
+            <div class="results-title">
+              <span>🏆 Resultados del Reparto</span>
+            </div>
+            <button id="clearResultsBtn" class="btn-clear">
+              🗑️ Limpiar
+            </button>
+          </div>
+          <div class="results-list" id="resultsList">
+            <!-- Los resultados se mostrarán aquí -->
+          </div>
+          <div class="round-info">
+            <span id="distributionRoundInfo">Ronda: 1</span>
+          </div>
+        </div>
+        
+        <!-- Historial de repartos -->
+        <div style="background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 20px; margin-top: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="color: #9d4edd; margin-top: 0; font-size: 16px;">📊 Historial de Repartos</h3>
+            <button id="clearHistoryBtn" class="btn-clear" style="display: none;">
+              🗑️ Limpiar Historial
+            </button>
+          </div>
+          <div style="max-height: 200px; overflow-y: auto;" id="distributionHistory">
+            <div style="text-align: center; padding: 30px; color: #999;">
+              <div style="font-size: 32px; margin-bottom: 10px;">📝</div>
+              <div>No hay historial disponible</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Tesseract.js from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, doc, getDoc, updateDoc, deleteDoc, onSnapshot, getDocs, query, orderBy, where, writeBatch } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* === Firebase === */
+initializeApp({
+  apiKey: "AIzaSyBt9Kqhw6V1l5ZkQLK5FKxmeW1kQ68LIbE",
+  authDomain: "registro-de-guild-en-ymir.firebaseapp.com",
+  projectId: "registro-de-guild-en-ymir"
+});
+const auth = getAuth();
+const db = getFirestore();
+
+let trashItems = []; // Array para almacenar items
+let eligibleMembers = []; // Array para miembros elegibles
+let distributionRound = 1; // Ronda actual de distribución
+let membersReceived = new Set(); // Miembros que ya han recibido en esta ronda
+let uploadImages = []; // Array para almacenar imágenes subidas
+let currentUserRole = "Miembro"; // Rol del usuario actual
+let tesseractWorker = null; // Worker de Tesseract
+
+
+/* === INICIALIZAR TESSERACT OCR === */
+async function initializeTesseract() {
+  try {
+    // Crear worker de Tesseract
+    tesseractWorker = await Tesseract.createWorker('eng', 1, {
+      logger: (m) => {
+        if (m.status === 'recognizing text') {
+          const progress = Math.min(100, Math.round(m.progress * 100));
+          updateOCRProgress(progress);
+        }
+      }
+    });
+    
+    console.log("Tesseract OCR inicializado correctamente");
+    return true;
+  } catch (error) {
+    console.error("Error inicializando Tesseract:", error);
+    return false;
+  }
+}
+
+// Actualizar progreso de OCR
+function updateOCRProgress(percent) {
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  
+  if (progressFill && progressText) {
+    progressFill.style.width = `${percent}%`;
+    progressText.textContent = `${percent}% procesado`;
+  }
+}
+
+/* === FUNCIONES PARA LA RULETA DE ITEMS === */
+
+// Función para verificar si un miembro es elegible para la ruleta
+async function isEligibleForTrashRoulette(memberId, memberData) {
+  // Verificar si está baneado
+  const banSnap = await getDoc(doc(db, "baneados", memberId));
+  if (banSnap.exists()) return false;
+  
+  // Verificar bosses 45 y 55
+  const boss45 = !!memberData.boss45;
+  const boss55 = !!memberData.boss55;
+  if (!(boss45 && boss55)) return false;
+  
+  // Verificar contribución semanal ≥ 5000
+  const semanal = memberData.semanal ?? 0;
+  if (semanal < 5000) return false;
+  
+  // Verificar control completo
+  const completo = await controlCompleto(memberId);
+  if (!completo) return false;
+  
+  return true;
+}
+
+// Función para cargar miembros elegibles
+async function loadEligibleMembers() {
+  try {
+    const membersSnapshot = await getDocs(collection(db, "members"));
+    eligibleMembers = [];
+    
+    for (const memberDoc of membersSnapshot.docs) {
+      const memberId = memberDoc.id;
+      const memberData = memberDoc.data();
+      
+      if (await isEligibleForTrashRoulette(memberId, memberData)) {
+        eligibleMembers.push({
+          id: memberId,
+          name: memberData.name || "Sin nombre",
+          email: memberData.email || ""
+        });
+      }
+    }
+    
+    // Actualizar contador y estado
+    document.getElementById('eligibleMembersCount').textContent = eligibleMembers.length;
+    updateDistributionStatus();
+    
+    // Habilitar/deshabilitar botón de girar ruleta solo para líderes/oficiales
+    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+      const spinBtn = document.getElementById('spinRouletteBtn');
+      spinBtn.disabled = eligibleMembers.length === 0 || trashItems.length === 0 || membersReceived.size >= eligibleMembers.length;
+    }
+    
+    return eligibleMembers;
+  } catch (error) {
+    console.error("Error cargando miembros elegibles:", error);
+    return [];
+  }
+}
+
+// Función para actualizar el estado de distribución
+function updateDistributionStatus() {
+  const statusElement = document.getElementById('distributionStatus');
+  const roundInfoElement = document.getElementById('distributionRoundInfo');
+  const distributionInfoElement = document.getElementById('distributionInfo');
+  
+  if (eligibleMembers.length === 0) {
+    statusElement.textContent = "miembros cumplen los requisitos";
+    distributionInfoElement.textContent = "Esperando miembros elegibles";
+    return;
+  }
+  
+  const membersWithoutItem = eligibleMembers.length - membersReceived.size;
+  const roundText = membersReceived.size === 0 ? `Ronda: ${distributionRound}` : 
+                    membersReceived.size >= eligibleMembers.length ? `Ronda ${distributionRound} completada` : 
+                    `Ronda: ${distributionRound} (${membersReceived.size}/${eligibleMembers.length})`;
+  
+  statusElement.textContent = `${eligibleMembers.length} miembros elegibles`;
+  roundInfoElement.textContent = roundText;
+  
+  if (membersReceived.size >= eligibleMembers.length) {
+    distributionInfoElement.textContent = `✅ Ronda ${distributionRound} completada. Todos recibieron un item.`;
+  } else {
+    distributionInfoElement.textContent = `${membersWithoutItem} miembros aún no han recibido en esta ronda`;
+  }
+}
+
+// Función para renderizar items
+function renderTrashItems() {
+  const itemsList = document.getElementById('trashItemsList');
+  
+  if (trashItems.length === 0) {
+    itemsList.innerHTML = `
+      <div style="text-align: center; padding: 40px; color: #999;">
+        <div style="font-size: 48px; margin-bottom: 15px;">📦</div>
+        <div>No hay items agregados</div>
+        <div style="font-size: 12px; margin-top: 10px;">${currentUserRole === "Miembro" ? "Los líderes y oficiales pueden agregar items" : "Agrega items manualmente o sube capturas"}</div>
+      </div>
+    `;
+    return;
+  }
+  
+  itemsList.innerHTML = '';
+  
+  // Calcular total de items
+  const totalItems = trashItems.reduce((sum, item) => sum + item.quantity, 0);
+  
+  trashItems.forEach((item, index) => {
+    const itemElement = document.createElement('div');
+    itemElement.className = 'trash-item';
+    
+    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+      itemElement.innerHTML = `
+        <div class="trash-item-name">${item.name}</div>
+        <div class="trash-item-quantity">${item.quantity}</div>
+        <button class="trash-item-remove" data-index="${index}" title="Eliminar item">×</button>
+      `;
+    } else {
+      itemElement.innerHTML = `
+        <div class="trash-item-name">${item.name}</div>
+        <div class="trash-item-quantity">${item.quantity}</div>
+        <div style="width: 28px;"></div> <!-- Espacio para alinear -->
+      `;
+    }
+    
+    itemsList.appendChild(itemElement);
+  });
+  
+  // Agregar total al final
+  const totalElement = document.createElement('div');
+  totalElement.style.padding = '10px';
+  totalElement.style.borderTop = '1px solid rgba(255,255,255,0.1)';
+  totalElement.style.marginTop = '10px';
+  totalElement.innerHTML = `
+    <div style="display: flex; justify-content: space-between; font-weight: bold;">
+      <span>Total:</span>
+      <span style="color: #4ecca3;">${totalItems} items</span>
+    </div>
+  `;
+  itemsList.appendChild(totalElement);
+  
+  // Agregar event listeners para botones de eliminar (solo líderes/oficiales)
+  if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+    document.querySelectorAll('.trash-item-remove').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const index = parseInt(this.getAttribute('data-index'));
+        removeTrashItem(index);
+      });
+    });
+  }
+  
+  updateDistributionStatus();
+}
+
+// Función para agregar item
+function addTrashItem() {
+  const nameInput = document.getElementById('newTrashItem');
+  const quantityInput = document.getElementById('newTrashQuantity');
+  
+  const name = nameInput.value.trim();
+  const quantity = parseInt(quantityInput.value) || 1;
+  
+  if (!name) {
+    alert('Por favor, introduce un nombre para el item');
+    nameInput.focus();
+    return;
+  }
+  
+  if (quantity < 1) {
+    alert('La cantidad debe ser al menos 1');
+    quantityInput.focus();
+    quantityInput.select();
+    return;
+  }
+  
+  // Verificar si el item ya existe y sumar cantidades
+  const existingIndex = trashItems.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
+  if (existingIndex !== -1) {
+    trashItems[existingIndex].quantity += quantity;
+  } else {
+    trashItems.push({
+      name: name,
+      quantity: quantity
+    });
+  }
+  
+  // Limpiar inputs
+  nameInput.value = '';
+  quantityInput.value = '1';
+  nameInput.focus();
+  
+  // Renderizar items
+  renderTrashItems();
+  
+  // Actualizar estado del botón de girar ruleta (solo líderes/oficiales)
+  if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+    const spinBtn = document.getElementById('spinRouletteBtn');
+    spinBtn.disabled = eligibleMembers.length === 0 || trashItems.length === 0 || membersReceived.size >= eligibleMembers.length;
+  }
+}
+
+// Función para eliminar item
+function removeTrashItem(index) {
+  if (index >= 0 && index < trashItems.length) {
+    if (confirm(`¿Eliminar "${trashItems[index].name}"?`)) {
+      trashItems.splice(index, 1);
+      renderTrashItems();
+      
+      // Actualizar estado del botón de girar ruleta
+      if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+        const spinBtn = document.getElementById('spinRouletteBtn');
+        spinBtn.disabled = eligibleMembers.length === 0 || trashItems.length === 0 || membersReceived.size >= eligibleMembers.length;
+      }
+    }
+  }
+}
+
+// Función para limpiar todos los items
+function clearAllTrashItems() {
+  if (trashItems.length === 0) return;
+  
+  if (confirm('¿Estás seguro de que quieres eliminar todos los items?')) {
+    trashItems = [];
+    renderTrashItems();
+    
+    // Actualizar estado del botón de girar ruleta
+    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+      const spinBtn = document.getElementById('spinRouletteBtn');
+      spinBtn.disabled = true;
+    }
+  }
+}
+
+// Función para girar la ruleta y repartir items
+async function spinTrashRoulette() {
+  if (eligibleMembers.length === 0) {
+    alert('❌ No hay miembros elegibles para el reparto');
+    return;
+  }
+  
+  if (trashItems.length === 0) {
+    alert('❌ No hay items para repartir');
+    return;
+  }
+  
+  // Verificar si todos ya recibieron en esta ronda
+  if (membersReceived.size >= eligibleMembers.length) {
+    if (confirm(`✅ Todos los miembros ya recibieron un item en la ronda ${distributionRound}.\n\n¿Quieres empezar una nueva ronda?`)) {
+      membersReceived.clear();
+      distributionRound++;
+      alert(`🎉 Comenzando ronda ${distributionRound}. Todos los miembros pueden recibir nuevamente.`);
+      updateDistributionStatus();
+    } else {
+      return;
+    }
+  }
+  
+  // Obtener miembros que aún no han recibido
+  const membersWithoutItem = eligibleMembers.filter(member => !membersReceived.has(member.id));
+  if (membersWithoutItem.length === 0) {
+    alert('Todos los miembros ya han recibido un item en esta ronda');
+    return;
+  }
+  
+  const spinBtn = document.getElementById('spinRouletteBtn');
+  spinBtn.classList.add('spinning');
+  spinBtn.disabled = true;
+  spinBtn.innerHTML = '<span>⏳ Repartiendo items...</span>';
+  
+  // Simular proceso de reparto
+  setTimeout(async () => {
+    try {
+      // Crear copia de los items para no modificar el original
+      const itemsToDistribute = [...trashItems];
+      
+      // Mezclar aleatoriamente los miembros que no han recibido
+      const shuffledMembers = membersWithoutItem.sort(() => Math.random() - 0.5);
+      
+      // Repartir items (máximo 1 por miembro en esta ronda)
+      const results = [];
+      let itemIndex = 0;
+      let memberIndex = 0;
+      
+      while (itemIndex < itemsToDistribute.length && memberIndex < shuffledMembers.length) {
+        const item = itemsToDistribute[itemIndex];
+        const member = shuffledMembers[memberIndex];
+        
+        // Solo dar 1 item por miembro en esta ronda
+        const quantityToGive = Math.min(item.quantity, 1);
+        
+        if (quantityToGive > 0) {
+          results.push({
+            memberId: member.id,
+            memberName: member.name,
+            itemName: item.name,
+            quantity: quantityToGive,
+            round: distributionRound
+          });
+          
+          // Registrar el reparto en Firestore (historial)
+          await addDoc(collection(db, "trashDistributions"), {
+            memberId: member.id,
+            memberName: member.name,
+            itemName: item.name,
+            quantity: quantityToGive,
+            distributedBy: auth.currentUser.uid,
+            distributedByRole: currentUserRole,
+            distributedAt: new Date(),
+            type: "ruleta_items",
+            round: distributionRound
+          });
+          
+          // Marcar miembro como que ya recibió
+          membersReceived.add(member.id);
+          
+          // Actualizar cantidad del item
+          if (item.quantity > quantityToGive) {
+            item.quantity -= quantityToGive;
+          } else {
+            // Si se agotó el item, pasamos al siguiente
+            itemIndex++;
+          }
+          
+          // Pasamos al siguiente miembro
+          memberIndex++;
+        } else {
+          itemIndex++;
+        }
+      }
+      
+      // Actualizar lista de items (eliminar los que se agotaron)
+      trashItems = itemsToDistribute.filter(item => item.quantity > 0);
+      
+      // Mostrar resultados
+      showRouletteResults(results);
+      
+      // Actualizar estado
+      renderTrashItems();
+      
+      // Cargar historial actualizado
+      loadDistributionHistory();
+      
+      // Verificar si se completó la ronda
+      if (membersReceived.size >= eligibleMembers.length) {
+        alert(`✅ Ronda ${distributionRound} completada. Todos los miembros recibieron un item.`);
+      }
+      
+    } catch (error) {
+      console.error("Error en el reparto:", error);
+      alert("❌ Error al repartir los items: " + error.message);
+    } finally {
+      // Restaurar botón
+      spinBtn.classList.remove('spinning');
+      if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+        spinBtn.disabled = eligibleMembers.length === 0 || trashItems.length === 0 || membersReceived.size >= eligibleMembers.length;
+      }
+      spinBtn.innerHTML = '<span>🎰</span> Girar Ruleta';
+    }
+  }, 2000); // Simular proceso de 2 segundos
+}
+
+// Función para mostrar resultados del reparto
+function showRouletteResults(results) {
+  const resultsContainer = document.getElementById('rouletteResults');
+  const resultsList = document.getElementById('resultsList');
+  
+  resultsContainer.style.display = 'block';
+  resultsList.innerHTML = '';
+  
+  if (results.length === 0) {
+    resultsList.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">No hay resultados que mostrar</div>';
+  } else {
+    // Agrupar resultados por miembro
+    const groupedResults = {};
+    results.forEach(result => {
+      if (!groupedResults[result.memberName]) {
+        groupedResults[result.memberName] = [];
+      }
+      groupedResults[result.memberName].push(result);
+    });
+    
+    // Mostrar resultados agrupados
+    Object.keys(groupedResults).forEach(memberName => {
+      const memberResults = groupedResults[memberName];
+      const resultElement = document.createElement('div');
+      resultElement.className = 'result-item';
+      
+      const itemsText = memberResults.map(r => `${r.quantity}x ${r.itemName}`).join(', ');
+      resultElement.innerHTML = `
+        <div class="result-member">${memberName}</div>
+        <div class="result-award">${itemsText}</div>
+      `;
+      resultsList.appendChild(resultElement);
+    });
+    
+    // Mostrar resumen
+    const summaryElement = document.createElement('div');
+    summaryElement.style.padding = '10px';
+    summaryElement.style.borderTop = '1px solid rgba(255,255,255,0.1)';
+    summaryElement.style.marginTop = '10px';
+    summaryElement.style.fontSize = '12px';
+    summaryElement.style.color = '#aaa';
+    summaryElement.innerHTML = `
+      <div style="display: flex; justify-content: space-between;">
+        <span>Total repartido:</span>
+        <span>${results.length} items a ${Object.keys(groupedResults).length} miembros</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+        <span>Repartido por:</span>
+        <span style="color: #9d4edd;">${auth.currentUser?.email?.split('@')[0] || 'Sistema'}</span>
+      </div>
+    `;
+    resultsList.appendChild(summaryElement);
+  }
+  
+  // Actualizar información de la ronda
+  updateDistributionStatus();
+  
+  // Auto-scroll a resultados
+  resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+// Función para limpiar resultados mostrados
+function clearResults() {
+  if (confirm('¿Estás seguro de que quieres limpiar los resultados mostrados?\n\nEsto solo ocultará los resultados de la pantalla, no eliminará el historial.')) {
+    document.getElementById('rouletteResults').style.display = 'none';
+    document.getElementById('resultsList').innerHTML = '';
+  }
+}
+
+// Función para reiniciar distribución
+function resetDistribution() {
+  if (confirm('¿Estás seguro de que quieres reiniciar la distribución?\n\nEsto limpiará el registro de miembros que ya recibieron items, permitiendo que todos puedan recibir nuevamente en la próxima ronda.')) {
+    membersReceived.clear();
+    distributionRound = 1;
+    updateDistributionStatus();
+    
+    // Actualizar estado del botón de girar ruleta
+    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+      const spinBtn = document.getElementById('spinRouletteBtn');
+      spinBtn.disabled = eligibleMembers.length === 0 || trashItems.length === 0;
+    }
+    
+    // Limpiar resultados mostrados
+    document.getElementById('rouletteResults').style.display = 'none';
+    document.getElementById('resultsList').innerHTML = '';
+    
+    alert('✅ Distribución reiniciada. Todos los miembros pueden recibir items nuevamente.');
+  }
+}
+
+/* === FUNCIONES PARA PROCESAR CAPTURAS DE PANTALLA CON OCR SIMPLIFICADO === */
+
+// Inicializar sistema de subida de archivos
+function initializeFileUpload() {
+  const uploadArea = document.getElementById('uploadArea');
+  const fileInput = document.getElementById('fileInput');
+  const uploadPreview = document.getElementById('uploadPreview');
+  
+  // Click en el área para seleccionar archivos
+  uploadArea.addEventListener('click', () => {
+    fileInput.click();
+  });
+  
+  // Arrastrar y soltar archivos
+  uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+  });
+  
+  uploadArea.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+  });
+  
+  uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    
+    const files = e.dataTransfer.files;
+    handleFileSelection(files);
+  });
+  
+  // Selección de archivos mediante input
+  fileInput.addEventListener('change', (e) => {
+    handleFileSelection(e.target.files);
+  });
+}
+
+// Manejar selección de archivos
+function handleFileSelection(files) {
+  uploadImages = [];
+  const preview = document.getElementById('uploadPreview');
+  preview.innerHTML = '';
+  
+  const validFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+  
+  if (validFiles.length === 0 && files.length > 0) {
+    alert('❌ Por favor, selecciona solo archivos de imagen (JPG, PNG, etc.)');
+    return;
+  }
+  
+  // Limitar a 3 imágenes máximo para no sobrecargar el OCR
+  const limitedFiles = validFiles.slice(0, 3);
+  if (validFiles.length > 3) {
+    alert(`⚠️ Se seleccionaron ${validFiles.length} imágenes. Solo se procesarán las primeras 3.`);
+  }
+  
+  let loadedCount = 0;
+  
+  limitedFiles.forEach(file => {
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      const imageData = {
+        name: file.name,
+        data: e.target.result,
+        file: file,
+        size: file.size,
+        type: file.type
+      };
+      uploadImages.push(imageData);
+      loadedCount++;
+      
+      // Mostrar previsualización
+      const img = document.createElement('img');
+      img.className = 'preview-image';
+      img.src = e.target.result;
+      img.title = `${file.name} (${formatFileSize(file.size)})`;
+      preview.appendChild(img);
+      
+      // Cuando todas las imágenes estén cargadas
+      if (loadedCount === limitedFiles.length) {
+        // Habilitar botón de procesar
+        document.getElementById('processOCRBtn').disabled = false;
+        
+        // Mostrar mensaje de éxito
+        const successMsg = document.createElement('div');
+        successMsg.style.textAlign = 'center';
+        successMsg.style.color = '#4ecca3';
+        successMsg.style.fontSize = '12px';
+        successMsg.style.marginTop = '10px';
+        successMsg.style.width = '100%';
+        successMsg.textContent = `✅ ${uploadImages.length} imagen(es) cargada(s). Haz clic en "Extraer Texto".`;
+        preview.appendChild(successMsg);
+      }
+    };
+    
+    reader.readAsDataURL(file);
+  });
+}
+
+// Formatear tamaño de archivo
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// Función para procesar imágenes con OCR - VERSIÓN SIMPLIFICADA
+async function processImagesWithOCR() {
+  if (uploadImages.length === 0) {
+    alert('❌ No hay imágenes para procesar');
+    return;
+  }
+  
+  const processBtn = document.getElementById('processOCRBtn');
+  const progressContainer = document.getElementById('progressContainer');
+  const loadingSpinner = document.getElementById('loadingSpinner');
+  const resultsContainer = document.getElementById('ocrResultsContainer');
+  const ocrResults = document.getElementById('ocrResults');
+  
+  // Mostrar elementos de progreso
+  processBtn.disabled = true;
+  processBtn.innerHTML = '⏳ Extrayendo texto...';
+  progressContainer.style.display = 'block';
+  loadingSpinner.style.display = 'block';
+  ocrResults.innerHTML = '';
+  
+  try {
+    // Inicializar Tesseract si no está inicializado
+    if (!tesseractWorker) {
+      const initialized = await initializeTesseract();
+      if (!initialized) {
+        throw new Error("No se pudo inicializar el sistema OCR");
+      }
+    }
+    
+    let allDetectedItems = [];
+    let fullText = "";
+    
+    // Procesar cada imagen
+    for (let i = 0; i < uploadImages.length; i++) {
+      const image = uploadImages[i];
+      updateOCRProgress(Math.round((i / uploadImages.length) * 30));
+      
+      try {
+        console.log(`Procesando imagen ${i + 1}/${uploadImages.length}: ${image.name}`);
+        
+        // Usar Tesseract para reconocer texto
+        const { data: { text } } = await tesseractWorker.recognize(image.data);
+        
+        fullText += `=== Imagen ${i + 1}: ${image.name} ===\n${text}\n\n`;
+        
+        // Extraer líneas de texto (sin procesar automáticamente)
+        const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 2);
+        
+        // Para cada línea que no sea solo números, crear un item con cantidad 1 por defecto
+        lines.forEach(line => {
+          // Limpiar línea básicamente
+          let cleanedLine = line
+            .replace(/^[|¢\s]+\s*/, '')
+            .replace(/\s*[|¢]\s*$/, '')
+            .replace(/\s*EES\]\s*$/, '')
+            .trim();
+          
+          // Si la línea tiene más de 2 caracteres y no es solo números
+          if (cleanedLine.length > 2 && !/^\d+$/.test(cleanedLine)) {
+            // Verificar si ya termina con "(Bound)" y normalizar
+            if (cleanedLine.includes('(Bound)') || cleanedLine.includes('(Bound')) {
+              cleanedLine = cleanedLine.replace(/\(Bound\)/gi, '(Bound)').replace(/\(Bound/gi, '(Bound)');
+            }
+            
+            allDetectedItems.push({
+              name: cleanedLine,
+              quantity: 1 // Por defecto 1
+            });
+          }
+        });
+        
+      } catch (error) {
+        console.error(`Error procesando imagen ${image.name}:`, error);
+      }
+    }
+    
+    updateOCRProgress(100);
+    
+    // Ocultar elementos de progreso
+    setTimeout(() => {
+      progressContainer.style.display = 'none';
+      loadingSpinner.style.display = 'none';
+      
+      // Mostrar resultados en un modal de ajuste manual
+      showManualAdjustmentModal(allDetectedItems, fullText);
+      
+      // Restaurar botón
+      processBtn.disabled = false;
+      processBtn.innerHTML = '🔍 Extraer Texto';
+      
+    }, 500);
+    
+  } catch (error) {
+    console.error("Error en OCR:", error);
+    alert("❌ Error al procesar las imágenes: " + error.message);
+    
+    // Ocultar elementos de progreso
+    progressContainer.style.display = 'none';
+    loadingSpinner.style.display = 'none';
+    processBtn.disabled = false;
+    processBtn.innerHTML = '🔍 Extraer Texto';
+  }
+}
+
+// Función para mostrar modal de ajuste manual
+function showManualAdjustmentModal(detectedItems, fullText) {
+  // Crear modal
+  const modal = document.createElement('div');
+  modal.style.position = 'fixed';
+  modal.style.top = '0';
+  modal.style.left = '0';
+  modal.style.width = '100%';
+  modal.style.height = '100%';
+  modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  modal.style.display = 'flex';
+  modal.style.justifyContent = 'center';
+  modal.style.alignItems = 'center';
+  modal.style.zIndex = '9999';
+  modal.style.padding = '20px';
+  
+  const modalContent = document.createElement('div');
+  modalContent.style.background = 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)';
+  modalContent.style.borderRadius = '10px';
+  modalContent.style.padding = '25px';
+  modalContent.style.width = '90%';
+  modalContent.style.maxWidth = '800px';
+  modalContent.style.maxHeight = '90vh';
+  modalContent.style.overflowY = 'auto';
+  modalContent.style.border = '2px solid #0f3460';
+  
+  modalContent.innerHTML = `
+    <h3 style="color: #ff9800; margin-top: 0; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+      ✏️ Ajustar Items Detectados
+    </h3>
+    
+    <div style="margin-bottom: 20px;">
+      <div style="color: #4ecca3; font-weight: bold; margin-bottom: 5px;">🔍 Texto extraído de la imagen:</div>
+      <div class="ocr-text-preview">${fullText.substring(0, 800)}${fullText.length > 800 ? '...' : ''}</div>
+      <div style="color: #aaa; font-size: 11px; margin-top: 5px; text-align: right;">
+        ${fullText.length} caracteres detectados
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 15px;">
+      <div style="color: #4ecca3; font-weight: bold; margin-bottom: 10px;">
+        📝 Items detectados (ajusta las cantidades):
+      </div>
+      <div style="color: #aaa; font-size: 12px; margin-bottom: 10px;">
+        <strong>Instrucción:</strong> Cada línea se convierte en un item. <br>
+        <strong>Cantidad por defecto:</strong> 1 (cámbiala si hay más unidades)
+      </div>
+    </div>
+    
+    <div id="adjustItemsContainer" style="margin-bottom: 20px; max-height: 300px; overflow-y: auto;">
+      <!-- Los items se agregarán aquí dinámicamente -->
+    </div>
+    
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+      <button id="addNewItemBtn" style="flex: 1; padding: 10px; background: #9d4edd; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+        ➕ Agregar item manual
+      </button>
+      <button id="cancelAdjustBtn" style="flex: 1; padding: 10px; background: #666; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+        ❌ Cancelar
+      </button>
+    </div>
+    
+    <div style="display: flex; gap: 10px; margin-top: 20px;">
+      <button id="saveAdjustedItemsBtn" style="flex: 3; padding: 15px; background: #4ecca3; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px;">
+        ✅ Guardar y Agregar Items Ajustados
+      </button>
+    </div>
+  `;
+  
+  modal.appendChild(modalContent);
+  document.body.appendChild(modal);
+  
+  // Contenedor para items
+  const itemsContainer = document.getElementById('adjustItemsContainer');
+  
+  // Función para agregar un campo de item
+  function addItemField(item = null, index = 0) {
+    const itemField = document.createElement('div');
+    itemField.className = 'adjust-item-field';
+    itemField.style.display = 'flex';
+    itemField.style.gap = '10px';
+    itemField.style.marginBottom = '10px';
+    itemField.style.alignItems = 'center';
+    itemField.style.padding = '8px';
+    itemField.style.background = 'rgba(255, 255, 255, 0.05)';
+    itemField.style.borderRadius = '6px';
+    
+    const itemName = item ? item.name : '';
+    const itemQuantity = item ? item.quantity : 1;
+    
+    itemField.innerHTML = `
+      <div style="flex: 3;">
+        <input type="text" class="adjust-item-name" value="${itemName}" placeholder="Nombre del item" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #5a189a; background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
+      </div>
+      <div style="flex: 1;">
+        <input type="number" class="adjust-item-quantity" value="${itemQuantity}" min="1" style="width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #5a189a; background: rgba(255,255,255,0.1); color: white; font-size: 13px;">
+      </div>
+      <button type="button" class="remove-adjust-item-btn" style="padding: 10px 15px; background: #ff6b6b; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">×</button>
+    `;
+    
+    itemsContainer.appendChild(itemField);
+    
+    // Event listener para el botón de eliminar
+    const removeBtn = itemField.querySelector('.remove-adjust-item-btn');
+    removeBtn.addEventListener('click', () => {
+      itemField.remove();
+    });
+  }
+  
+  // Agregar campos para cada item detectado
+  if (detectedItems.length === 0) {
+    // Si no se detectó nada, mostrar un mensaje y un campo vacío
+    const noItemsMsg = document.createElement('div');
+    noItemsMsg.style.textAlign = 'center';
+    noItemsMsg.style.padding = '20px';
+    noItemsMsg.style.color = '#ff9800';
+    noItemsMsg.style.fontSize = '14px';
+    noItemsMsg.innerHTML = `
+      <div style="font-size: 24px; margin-bottom: 10px;">⚠️</div>
+      <div>No se detectaron items automáticamente</div>
+      <div style="font-size: 12px; margin-top: 5px; color: #aaa;">
+        Revisa el texto arriba y agrega los items manualmente.
+      </div>
+    `;
+    itemsContainer.appendChild(noItemsMsg);
+    
+    // Agregar un campo vacío para empezar
+    addItemField();
+  } else {
+    // Mostrar cada item detectado
+    detectedItems.forEach((item, index) => {
+      addItemField(item, index);
+    });
+  }
+  
+  // Variables para devolver los datos
+  let adjustedItems = null;
+  
+  // Botón para agregar otro item
+  document.getElementById('addNewItemBtn').addEventListener('click', () => {
+    addItemField();
+  });
+  
+  // Botón para cancelar
+  document.getElementById('cancelAdjustBtn').addEventListener('click', () => {
+    document.body.removeChild(modal);
+    // Limpiar resultados
+    document.getElementById('ocrResultsContainer').style.display = 'none';
+    document.getElementById('uploadPreview').innerHTML = '';
+    document.getElementById('processOCRBtn').disabled = true;
+    uploadImages = [];
+    document.getElementById('fileInput').value = '';
+  });
+  
+  // Botón para guardar
+  document.getElementById('saveAdjustedItemsBtn').addEventListener('click', () => {
+    const items = [];
+    const nameInputs = document.querySelectorAll('.adjust-item-name');
+    const quantityInputs = document.querySelectorAll('.adjust-item-quantity');
+    
+    for (let i = 0; i < nameInputs.length; i++) {
+      const name = nameInputs[i].value.trim();
+      const quantity = parseInt(quantityInputs[i].value) || 1;
+      
+      if (name && quantity > 0) {
+        items.push({
+          name: name,
+          quantity: quantity
+        });
+      }
+    }
+    
+    if (items.length === 0) {
+      alert('❌ Por favor, ingresa al menos un item válido');
+      return;
+    }
+    
+    adjustedItems = items;
+    
+    // Agregar items a la lista principal
+    items.forEach(item => {
+      const existingIndex = trashItems.findIndex(t => 
+        t.name.toLowerCase() === item.name.toLowerCase());
+      
+      if (existingIndex !== -1) {
+        trashItems[existingIndex].quantity += item.quantity;
+      } else {
+        trashItems.push({ name: item.name, quantity: item.quantity });
+      }
+    });
+    
+    // Actualizar lista
+    renderTrashItems();
+    
+    // Cerrar modal
+    document.body.removeChild(modal);
+    
+    // Limpiar resultados
+    document.getElementById('ocrResultsContainer').style.display = 'none';
+    document.getElementById('uploadPreview').innerHTML = '';
+    document.getElementById('processOCRBtn').disabled = true;
+    uploadImages = [];
+    document.getElementById('fileInput').value = '';
+    
+    // Mostrar mensaje de éxito
+    alert(`✅ Se agregaron ${items.length} tipo(s) de items a la ruleta`);
+    
+    // Actualizar estado del botón de girar ruleta
+    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+      const spinBtn = document.getElementById('spinRouletteBtn');
+      spinBtn.disabled = eligibleMembers.length === 0 || trashItems.length === 0 || membersReceived.size >= eligibleMembers.length;
+    }
+  });
+  
+  // Permitir cerrar con ESC
+  document.addEventListener('keydown', function escHandler(e) {
+    if (e.key === 'Escape') {
+      document.body.removeChild(modal);
+      document.removeEventListener('keydown', escHandler);
+      // Limpiar resultados
+      document.getElementById('ocrResultsContainer').style.display = 'none';
+      document.getElementById('uploadPreview').innerHTML = '';
+      document.getElementById('processOCRBtn').disabled = true;
+      uploadImages = [];
+      document.getElementById('fileInput').value = '';
+    }
+  });
+}
+
+// Agregar items detectados por OCR a la lista
+async function addOCRResults() {
+  // Esta función ya no se usa directamente, se maneja desde el modal
+  // Pero la mantenemos por compatibilidad
+  const ocrResults = document.getElementById('ocrResults');
+  let items = [];
+  
+  // Extraer items del DOM (por si acaso)
+  const itemElements = ocrResults.querySelectorAll('.ocr-item');
+  
+  if (itemElements.length === 0) {
+    alert('❌ No hay items para agregar');
+    return;
+  }
+  
+  // Extraer de los elementos del DOM
+  itemElements.forEach(element => {
+    const nameElement = element.querySelector('.ocr-item-name');
+    const quantityElement = element.querySelector('.ocr-item-quantity');
+    
+    if (nameElement && quantityElement) {
+      const name = nameElement.textContent.trim();
+      const quantity = parseInt(quantityElement.textContent);
+      
+      if (name && !isNaN(quantity) && quantity > 0) {
+        items.push({ name, quantity });
+      }
+    }
+  });
+  
+  // Agregar items a la lista
+  items.forEach(item => {
+    const existingIndex = trashItems.findIndex(t => 
+      t.name.toLowerCase() === item.name.toLowerCase());
+    
+    if (existingIndex !== -1) {
+      trashItems[existingIndex].quantity += item.quantity;
+    } else {
+      trashItems.push({ name: item.name, quantity: item.quantity });
+    }
+  });
+  
+  // Actualizar lista
+  renderTrashItems();
+  
+  // Limpiar resultados
+  document.getElementById('ocrResultsContainer').style.display = 'none';
+  document.getElementById('uploadPreview').innerHTML = '';
+  document.getElementById('processOCRBtn').disabled = true;
+  uploadImages = [];
+  document.getElementById('fileInput').value = '';
+  
+  const addedCount = items.length;
+  alert(`✅ Se agregaron ${addedCount} tipo(s) de items a la ruleta`);
+}
+
+// Función para cargar historial de repartos
+async function loadDistributionHistory() {
+  try {
+    const historyQuery = query(
+      collection(db, "trashDistributions"),
+      orderBy("distributedAt", "desc")
+    );
+    
+    const historySnapshot = await getDocs(historyQuery);
+    const historyList = document.getElementById('distributionHistory');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    
+    if (historySnapshot.empty) {
+      historyList.innerHTML = `
+        <div style="text-align: center; padding: 30px; color: #999;">
+          <div style="font-size: 32px; margin-bottom: 10px;">📝</div>
+          <div>No hay historial disponible</div>
+        </div>
+      `;
+      // Ocultar botón de limpiar historial
+      if (clearHistoryBtn) clearHistoryBtn.style.display = 'none';
+      return;
+    }
+    
+    historyList.innerHTML = '';
+    let count = 0;
+    
+    historySnapshot.forEach(doc => {
+      // Limitar a 10 registros para no sobrecargar
+      if (count >= 10) return;
+      count++;
+      
+      const data = doc.data();
+      const historyItem = document.createElement('div');
+      historyItem.style.padding = '10px';
+      historyItem.style.marginBottom = '8px';
+      historyItem.style.background = 'rgba(255, 255, 255, 0.05)';
+      historyItem.style.borderRadius = '6px';
+      historyItem.style.borderLeft = '3px solid #9d4edd';
+      historyItem.style.fontSize = '12px';
+      
+      const date = new Date(data.distributedAt?.toDate() || new Date());
+      const formattedDate = date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      historyItem.innerHTML = `
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <span style="color: #4ecca3; font-weight: bold;">${data.memberName}</span>
+          <span style="color: #aaa; font-size: 11px;">${formattedDate}</span>
+        </div>
+        <div style="color: #c77dff;">
+          ${data.quantity}x ${data.itemName}
+        </div>
+        <div style="color: #999; font-size: 11px; margin-top: 3px;">
+          Ronda ${data.round} • Por: ${data.distributedByRole || 'Sistema'}
+        </div>
+      `;
+      
+      historyList.appendChild(historyItem);
+    });
+    
+    // Mostrar el botón de limpiar historial solo para líderes/oficiales
+    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+      if (clearHistoryBtn) clearHistoryBtn.style.display = 'block';
+    }
+    
+  } catch (error) {
+    console.error("Error cargando historial:", error);
+  }
+}
+
+// Función para limpiar todo el historial de repartos
+async function clearAllHistory() {
+  if (!confirm('⚠️ ¿ESTÁS SEGURO DE QUE QUIERES ELIMINAR TODO EL HISTORIAL DE REPARTOS?\n\nEsta acción es PERMANENTE y NO SE PUEDE DESHACER.\nSe eliminarán todos los registros de repartos anteriores.')) {
+    return;
+  }
+  
+  try {
+    // Obtener todas las distribuciones
+    const distributionsQuery = query(collection(db, "trashDistributions"));
+    const snapshot = await getDocs(distributionsQuery);
+    
+    if (snapshot.empty) {
+      alert('✅ El historial ya está vacío.');
+      return;
+    }
+    
+    // Usar un batch para eliminar todos los documentos
+    const batch = writeBatch(db);
+    snapshot.docs.forEach(docSnapshot => {
+      batch.delete(docSnapshot.ref);
+    });
+    
+    // Ejecutar el batch
+    await batch.commit();
+    
+    // Actualizar la vista
+    await loadDistributionHistory();
+    
+    alert(`✅ Historial limpiado correctamente. Se eliminaron ${snapshot.size} registros.`);
+    
+  } catch (error) {
+    console.error("Error eliminando historial:", error);
+    alert(`❌ Error al limpiar el historial: ${error.message}`);
+  }
+}
+
+// Función para validar control completo
+async function controlCompleto(uid){
+  const memberSnap = await getDoc(doc(db,"members",uid));
+  if(!memberSnap.exists()) return false;
+  const datos = memberSnap.data();
+  const campos = [
+    "nivel","poder",
+    "physAtk","physDmg",
+    "magAtk","magDmg",
+    "physDef","physDmgDef",
+    "magDef","magDmgDef",
+    "acc","eva",
+    "monsterDmg","monsterDmgDef",
+    "bossDmg","bossDmgDef"
+  ];
+  return !campos.some(c=>{
+    const v = datos[c];
+    if(v===undefined || v===null) return true;
+    const s = String(v).trim();
+    return (s==="" || s==="0" || s==="0%");
+  });
+}
+
+/* === Punto rojo en nav === */
+function escucharSolicitudesBadge(){
+  const q = collection(db,"solicitudes");
+  onSnapshot(q, snap=>{
+    const badge = document.getElementById("solicitudesBadge");
+    if(!badge) return;
+    badge.style.display = snap.size > 0 ? "block" : "none";
+  });
+}
+
+/* === Inicializar la ruleta === */
+function initializeTrashRoulette() {
+  // Configurar event listeners según el rol
+  if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+    document.getElementById('addTrashItemBtn').addEventListener('click', addTrashItem);
+    document.getElementById('clearTrashItemsBtn').addEventListener('click', clearAllTrashItems);
+    document.getElementById('resetDistributionBtn').addEventListener('click', resetDistribution);
+    document.getElementById('spinRouletteBtn').addEventListener('click', spinTrashRoulette);
+    document.getElementById('clearHistoryBtn').addEventListener('click', clearAllHistory);
+    
+    // Sistema de subida de archivos
+    initializeFileUpload();
+    document.getElementById('processOCRBtn').addEventListener('click', processImagesWithOCR);
+    document.getElementById('addOCRResultsBtn').addEventListener('click', addOCRResults);
+    
+    // Permitir agregar con Enter
+    document.getElementById('newTrashItem').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') addTrashItem();
+    });
+    
+    document.getElementById('newTrashQuantity').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') addTrashItem();
+    });
+    
+    // Mostrar controles de líder/oficial
+    document.getElementById('addItemForm').style.display = 'block';
+    document.getElementById('actionButtons').style.display = 'flex';
+    document.getElementById('uploadSection').style.display = 'block';
+    document.getElementById('spinRouletteBtn').style.display = 'block';
+    document.getElementById('memberSpinMessage').style.display = 'none';
+    document.getElementById('memberInfo').style.display = 'none';
+  } else {
+    // Ocultar controles para miembros
+    document.getElementById('addItemForm').style.display = 'none';
+    document.getElementById('actionButtons').style.display = 'none';
+    document.getElementById('uploadSection').style.display = 'none';
+    document.getElementById('spinRouletteBtn').style.display = 'none';
+    document.getElementById('memberSpinMessage').style.display = 'block';
+    document.getElementById('clearHistoryBtn').style.display = 'none';
+  }
+  
+  document.getElementById('clearResultsBtn').addEventListener('click', clearResults);
+  
+  // Cargar miembros elegibles al inicio y cada minuto
+  loadEligibleMembers();
+  setInterval(loadEligibleMembers, 60000);
+  
+  // Cargar historial
+  loadDistributionHistory();
+  
+  // Inicializar Tesseract OCR
+  initializeTesseract().then(success => {
+    if (success) {
+      console.log("OCR listo para usar");
+    } else {
+      console.warn("OCR no disponible, se usará modo manual");
+    }
+  });
+}
+
+/* === Auth y visibilidad === */
+onAuthStateChanged(auth, async user=>{
+  if(!user){ location.href = "index.html"; return; }
+  
+  // === BLOQUEO SI ESTÁ BANEADO ===
+  const banSnap = await getDoc(doc(db, "baneados", user.uid));
+  if (banSnap.exists()) {
+    alert("Acceso denegado: estás baneado.");
+    await auth.signOut();
+    location.href = "index.html";
+    return;
+  }
+  
+  const meSnap = await getDoc(doc(db,"members",user.uid));
+  const meData = meSnap.data() || {};
+  currentUserRole = meData.role || "Miembro";
+  
+  // Mostrar enlace a baneados en menú si es Líder/Oficial
+  if(currentUserRole === "Líder" || currentUserRole === "Oficial"){
+    const baneadosMenuItem = document.getElementById("baneadosMenuItem");
+    if (baneadosMenuItem) {
+      baneadosMenuItem.style.display = "list-item";
+    }
+  }
+  
+  // Inicializar ruleta según el rol
+  initializeTrashRoulette();
+  
+  // Escuchar solicitudes
+  escucharSolicitudesBadge();
+});
+
+</script>
+
+</body>
+</html>

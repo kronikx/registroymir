@@ -106,6 +106,10 @@
   .tier-libre { background: #240046; }
   .tier-t2 { background: #5a189a; }
   .tier-t3 { background: #9d4edd; }
+  .tier-rojo { 
+    background: linear-gradient(135deg, #ff0000 0%, #990000 100%);
+    border: 1px solid #ff3333;
+  }
   
   /* Estilos para filtros */
   .filters-container {
@@ -133,6 +137,28 @@
   
   .filter-btn:hover {
     background: rgba(90, 24, 154, 0.5);
+  }
+  
+  /* Botón para ir a ruleta */
+  .btn-ruleta {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #4ecca3 0%, #3db393 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 13px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .btn-ruleta:hover {
+    background: linear-gradient(135deg, #3db393 0%, #2d9a7a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(78, 204, 163, 0.3);
   }
   
   /* Panel de puntos mejorado */
@@ -222,6 +248,15 @@
       min-width: 100%;
       margin-top: 20px;
     }
+    
+    .filters-container {
+      justify-content: center;
+    }
+    
+    .filter-btn, .btn-ruleta {
+      padding: 6px 12px;
+      font-size: 12px;
+    }
   }
 </style>
 </head>
@@ -241,7 +276,7 @@
   </div>
 </div>
 
-<!-- Menú de navegación (ESTRUCTURA ORIGINAL) -->
+<!-- Menú de navegación (SIN RULETA) -->
 <nav class="menu">
   <ul class="menu-nav">
     <li class="menu-item">
@@ -288,15 +323,18 @@
 <div class="container">
   <h1>Subastas del Clan</h1>
 
-  <!-- Filtros mejorados (NUEVO) -->
+  <!-- Filtros mejorados CON BOTÓN DE RULETA -->
   <div class="filters-container">
     <button class="filter-btn active" data-filter="all">Todas las subastas</button>
     <button class="filter-btn" data-filter="active">🟢 Activas</button>
     <button class="filter-btn" data-filter="ended">🔴 Finalizadas</button>
     <button class="filter-btn" data-filter="mybids">Mis pujas</button>
+    <button class="btn-ruleta" onclick="location.href='ruleta.html'">
+      🎰 Ir a Ruleta
+    </button>
   </div>
 
-  <!-- Crear subasta (solo Líder/Oficial) - MANTENIDO CON MEJORAS -->
+  <!-- Crear subasta (solo Líder/Oficial) -->
   <div class="card" id="crearSubasta" style="display:none; margin-bottom: 20px;">
     <h3 style="margin-top: 0; color: #9d4edd;">🎯 Nueva Subasta</h3>
     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
@@ -332,6 +370,7 @@
           <option value="Libre">Libre</option>
           <option value="T2">T2</option>
           <option value="T3">T3</option>
+          <option value="Items Rojos">🔴 Items Rojos</option>
         </select>
       </div>
     </div>
@@ -391,6 +430,8 @@
             <li>Pujas: Total + Semanal</li>
             <li>Sin ganador = reembolso total</li>
             <li>Control completo requerido</li>
+            <li><strong>Items Rojos:</strong> T3 + 8400pts + bosses + control + clase</li>
+            <li><strong>Ruleta:</strong> Reparto de items basura</li>
           </ul>
         </div>
       </div>
@@ -435,7 +476,7 @@ function updateTopClocks() {
 setInterval(updateTopClocks, 1000);
 updateTopClocks();
 
-/* === Configurar filtros (NUEVO) === */
+/* === Configurar filtros === */
 function setupFilters() {
   const filterBtns = document.querySelectorAll('.filter-btn');
   filterBtns.forEach(btn => {
@@ -449,7 +490,7 @@ function setupFilters() {
   });
 }
 
-/* === Filtrar subastas (NUEVO) === */
+/* === Filtrar subastas === */
 function filterAuctions(filterType) {
   const rows = document.querySelectorAll('#tabla tr');
   if (rows.length <= 1) return;
@@ -544,7 +585,7 @@ onAuthStateChanged(auth, async user=>{
   escucharSolicitudesBadge();
 });
 
-/* === Saldo en tiempo real - MEJORADO === */
+/* === Saldo en tiempo real === */
 function escucharSaldo(){
   const user = auth.currentUser;
   if(!user) return;
@@ -580,14 +621,14 @@ function escucharSaldo(){
   });
 }
 
-/* === Crear subasta - MEJORADO === */
+/* === Crear subasta === */
 document.getElementById("crear").onclick = async ()=>{
   const item = document.getElementById("item").value.trim();
   const imagen = document.getElementById("imagen").value.trim();
   const precio = Number(document.getElementById("precio").value);
   const tiempo = Number(document.getElementById("tiempo").value);
   const claseItem = document.getElementById("claseItem").value;
-  const tierItem = document.getElementById("tierItem").value;
+  let tierItem = document.getElementById("tierItem").value;
 
   if(!item || !precio || !tiempo){
     document.getElementById("crearMsg").textContent = "Completa todos los campos obligatorios";
@@ -601,12 +642,18 @@ document.getElementById("crear").onclick = async ()=>{
     return;
   }
 
+  // Si se selecciona "Items Rojos", guardamos como T3 pero con reglas especiales
+  const esItemRojo = (tierItem === "Items Rojos");
+  const tierFirestore = esItemRojo ? "T3" : tierItem;
+  const esItemRojoField = esItemRojo; // Campo adicional para identificar items rojos
+
   try{
     await addDoc(collection(db,"subastas"),{
       item,
       imagen: imagen || "",
       claseItem,
-      tierItem,
+      tierItem: tierFirestore,
+      esItemRojo: esItemRojo, // Nuevo campo para identificar items rojos
       precioBase: precio,
       pujaActual: precio,
       ganador: "",
@@ -626,6 +673,7 @@ document.getElementById("crear").onclick = async ()=>{
     document.getElementById("imagen").value = "";
     document.getElementById("precio").value = "";
     document.getElementById("tiempo").value = "";
+    document.getElementById("tierItem").value = "Libre"; // Resetear a valor por defecto
     
     // Ocultar mensaje después de 3 segundos
     setTimeout(() => {
@@ -661,7 +709,7 @@ async function controlCompleto(uid){
   });
 }
 
-/* === Cargar subastas en tiempo real - MEJORADO === */
+/* === Cargar subastas en tiempo real === */
 function cargarSubastas(){
   const tabla = document.getElementById("tabla");
   const user = auth.currentUser;
@@ -722,6 +770,7 @@ function cargarSubastas(){
       const itemNombre = s.item ?? "(sin nombre)";
       const claseItem = s.claseItem ?? "Neutral";
       const tierItem = s.tierItem ?? "Libre";
+      const esItemRojo = !!s.esItemRojo; // Verificar si es item rojo
       const precioBase = s.precioBase ?? 0;
       const pujaActual = s.pujaActual ?? precioBase;
       const ganador = s.ganador || "-";
@@ -736,9 +785,18 @@ function cargarSubastas(){
       const yaPuje = (s.historial || []).some(h => h.uid === user.uid);
       const claseOk = (claseItem==="Neutral" || claseItem===miClase);
       let tierOk = true;
-      if(!yaPuje){
-        if(tierItem==="T2"){ tierOk = (miSemanal >= 8000 && miSemanal <= 8399); }
-        else if(tierItem==="T3"){ tierOk = (miSemanal >= 8400); }
+      
+      // Para items rojos, aplicar reglas especiales
+      if (esItemRojo) {
+        if(!yaPuje){
+          // Items rojos requieren SEMANAL ≥ 8400, bosses completos, control completo y clase
+          tierOk = (miSemanal >= 8400) && bossesOk && completo;
+        }
+      } else {
+        if(!yaPuje){
+          if(tierItem==="T2"){ tierOk = (miSemanal >= 8000 && miSemanal <= 8399); }
+          else if(tierItem==="T3"){ tierOk = (miSemanal >= 8400); }
+        }
       }
 
       let celdaPuja;
@@ -754,9 +812,18 @@ function cargarSubastas(){
             </div>
           `;
         }else{
-          const motivo = !completo ? "Control" :
-                         (!bossesOk ? "Bosses" :
-                         (!tierOk ? "Tier" : "Clase"));
+          let motivo = "";
+          if (!completo) motivo = "Control";
+          else if (!bossesOk) motivo = "Bosses";
+          else if (!tierOk) {
+            if (esItemRojo) {
+              motivo = "Items Rojos: requiere 8400+ pts semanales";
+            } else {
+              motivo = "Tier";
+            }
+          }
+          else if (!claseOk) motivo = "Clase";
+          
           celdaPuja = `<span style="color: #ff6b6b; font-size: 11px;">No disponible (${motivo})</span>`;
         }
       }else{
@@ -775,6 +842,10 @@ function cargarSubastas(){
         timeColor = "#ff9800";
       }
 
+      // Determinar texto del tier (mostrar "Items Rojos" si es item rojo)
+      const tierDisplay = esItemRojo ? "Items Rojos" : tierItem;
+      const tierClass = esItemRojo ? "tier-rojo" : `tier-${tierItem.toLowerCase()}`;
+
       tabla.innerHTML += `
         <tr>
           <td>
@@ -785,8 +856,8 @@ function cargarSubastas(){
           </td>
           <td>${claseItem}</td>
           <td>
-            <span class="tier-badge tier-${tierItem.toLowerCase()}">
-              ${tierItem}
+            <span class="tier-badge ${tierClass}">
+              ${tierDisplay}
             </span>
           </td>
           <td>${precioBase}</td>
@@ -827,7 +898,7 @@ function cargarSubastas(){
   });
 }
 
-/* === Pujar: con validación mejorada === */
+/* === Pujar === */
 window.pujar = async (id)=>{
   const user = auth.currentUser;
   if(!user){ alert("No autenticado"); return; }
@@ -866,6 +937,7 @@ window.pujar = async (id)=>{
   const miSemanal = me.semanal ?? 0;
   const claseItem = sub.claseItem || "Neutral";
   const tierItem = sub.tierItem || "Libre";
+  const esItemRojo = !!sub.esItemRojo;
   const boss45 = !!me.boss45;
   const boss55 = !!me.boss55;
   const yaPuje = (sub.historial || []).some(h => h.uid === user.uid);
@@ -878,7 +950,19 @@ window.pujar = async (id)=>{
     alert("Solo jugadores con boss45 y boss55 en 'Sí' pueden pujar");
     return;
   }
-  if(!yaPuje){
+  
+  // Validación especial para Items Rojos
+  if (esItemRojo && !yaPuje) {
+    if (miSemanal < 8400) {
+      alert("❌ Items Rojos: requieres al menos 8400 puntos semanales para pujar");
+      return;
+    }
+    if (!completo) {
+      alert("❌ Items Rojos: debes completar tu Control (sin vacíos ni 0/0%)");
+      return;
+    }
+  } else if (!yaPuje) {
+    // Validación normal para otros tiers
     if(tierItem==="T2" && !(miSemanal >= 8000 && miSemanal <= 8399)){
       alert("Solo jugadores con semanal entre 8000 y 8399 pueden pujar por T2");
       return;
@@ -942,13 +1026,18 @@ window.pujar = async (id)=>{
   });
 
   inputEl.value = "";
-  alert(`✅ ¡Puja realizada por ${cantidad} puntos!`);
+  
+  if (esItemRojo) {
+    alert(`✅ ¡Puja realizada por ${cantidad} puntos en Item Rojo!`);
+  } else {
+    alert(`✅ ¡Puja realizada por ${cantidad} puntos!`);
+  }
   
   // Actualizar puntos en pantalla
   escucharSaldo();
 };
 
-/* === Eliminar subasta: reembolso si no está finalizada === */
+/* === Eliminar subasta === */
 window.eliminarSubasta = async (id)=>{
   const user = auth.currentUser;
   if(!user){ alert("No autenticado"); return; }
