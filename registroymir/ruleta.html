@@ -297,7 +297,7 @@
     background: #ff5252;
   }
 
-  /* Sección de subida de capturas */
+  /* Sección para subida de capturas */
   .upload-section {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
@@ -918,7 +918,7 @@
           <h3 class="requirements-title">✅ Requisitos para participar</h3>
           <ul class="requirements-list">
             <li><span class="requirement-icon">✓</span> Bosses 45 y 55 completados</li>
-            <li><span class="requirement-icon">✓</span> Contribución semanal ≥ 5000 puntos</li>
+            <li><span class="requirement-icon">✓</span> Contribución semanal ≥ 8000 puntos</li> <!-- CAMBIADO DE 5000 A 8000 -->
             <li><span class="requirement-icon">✓</span> Control semanal completo</li>
             <li><span class="requirement-icon">✓</span> Miembro activo (no baneado)</li>
           </ul>
@@ -1062,9 +1062,9 @@ async function isEligibleForTrashRoulette(memberId, memberData) {
   const boss55 = !!memberData.boss55;
   if (!(boss45 && boss55)) return false;
   
-  // Verificar contribución semanal ≥ 5000
+  // Verificar contribución semanal ≥ 8000 (CAMBIADO DE 5000 A 8000)
   const semanal = memberData.semanal ?? 0;
-  if (semanal < 5000) return false;
+  if (semanal < 8000) return false;
   
   // Verificar control completo
   const completo = await controlCompleto(memberId);
