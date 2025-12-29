@@ -1953,28 +1953,37 @@ function parsearHoraConfigurada(horaStr) {
 
 async function verificarYEnviarNotificaciones() {
   try {
-    if (!CONFIG.discordWebhook) return;
+    if (!CONFIG.discordWebhook) {
+      console.log('❌ No hay webhook configurado');
+      return;
+    }
     
     const { diaSemana, hora, minutos } = obtenerDiaYHoraServidor();
     const horaApertura = parsearHoraConfigurada(CONFIG.horaApertura);
     const horaCierre = parsearHoraConfigurada(CONFIG.horaCierre);
     
-    // Verificar APERTURA
+    console.log(`⏰ Verificando notificaciones: Día ${diaSemana}, Hora ${hora}:${minutos}`);
+    console.log(`📅 Configuración: Apertura día ${CONFIG.diaApertura} a las ${CONFIG.horaApertura}`);
+    console.log(`📅 Configuración: Cierre día ${CONFIG.diaCierre} a las ${CONFIG.horaCierre}`);
+    
+    // Verificar APERTURA usando el día configurado
     if (diaSemana === CONFIG.diaApertura && 
         hora === horaApertura.horas && 
         minutos === horaApertura.minutos) {
+      console.log('🚨 CONDICIÓN DE APERTURA DETECTADA');
       await enviarNotificacionApertura(false);
     }
     
-    // Verificar CIERRE
+    // Verificar CIERRE usando el día configurado
     if (diaSemana === CONFIG.diaCierre && 
         hora === horaCierre.horas && 
         minutos === horaCierre.minutos) {
+      console.log('🚨 CONDICIÓN DE CIERRE DETECTADA');
       await enviarNotificacionCierre(false);
     }
     
   } catch (error) {
-    console.error('Error en verificación de notificaciones:', error);
+    console.error('❌ Error en verificación de notificaciones:', error);
   }
 }
 
