@@ -1284,29 +1284,12 @@
           </div>
         </div>
       </div>
-      
-      <!-- Diferencia Horaria -->
-      <div class="config-input-group" style="margin-top: 20px;">
-        <label for="horaDiferencia">Diferencia horaria del servidor (UTC):</label>
-        <input type="number" id="horaDiferencia" min="-12" max="14" step="1" value="-4">
-        <div class="config-help-text">
-          Ej: -4 para Venezuela, -5 para Colombia/Perú, -6 para México, +1 para España
-        </div>
-      </div>
     </div>
     
     <!-- Sección 3: Configuración Discord -->
     <div class="config-section">
       <h3><span>🤖</span> Configuración de Discord</h3>
-      
-      <div class="config-input-group">
-        <label for="discordWebhook">Webhook URL de Discord:</label>
-        <input type="url" id="discordWebhook" placeholder="https://discord.com/api/webhooks/...">
-        <div class="config-help-text">
-          📌 Obtén el webhook en: Configuración del canal → Integraciones → Webhooks
-        </div>
-      </div>
-      
+     
       <div class="config-row">
         <div class="config-input-group">
           <label for="discordMencion">Menciones para notificaciones:</label>
@@ -1485,15 +1468,14 @@ let capturasTemporales = {};
 /* === CONFIGURACIÓN GLOBAL COMPLETA === */
 let CONFIG = {
   // Días de capturas
-  diasCapturas: [4, 5, 6], // Por defecto: Jueves(4), Viernes(5), Sábado(6)
+  diasCapturas: [4, 5, 6],
   
   // Apertura y cierre
-  diaApertura: 4, // Por defecto: Jueves (4)
+  diaApertura: 4,
   horaApertura: "00:01",
-  diaCierre: 6, // Por defecto: Sábado (6)
-  horaCierre: "00:00",
-  diferenciaHoraria: -4, // Por defecto: -4 horas (UTC-4)
-  
+  diaCierre: 6,
+  horaCierre: "00:01",
+
   // Discord
   discordWebhook: 'https://discord.com/api/webhooks/1454543720627179835/MLCNGtb7fOQrb3d9OfeIWdZlGa9_IZ1hlnhE1JmGDnQClb1wDwR3EdwcFsIxY_ZIf-k8',
   discordMencion: "@everyone",
@@ -1934,290 +1916,6 @@ window.enviarNotificacionManual = async function() {
   }
 };
 
-/* === FUNCIONES PARA NOTIFICACIONES AUTOMÁTICAS === */
-function obtenerDiaYHoraServidor() {
-  const ahora = new Date();
-  const horaServidor = new Date(ahora.getTime() + (CONFIG.diferenciaHoraria * 3600 * 1000));
-  
-  return {
-    diaSemana: horaServidor.getDay(),
-    hora: horaServidor.getHours(),
-    minutos: horaServidor.getMinutes()
-  };
-}
-
-function parsearHoraConfigurada(horaStr) {
-  const [horas, minutos] = horaStr.split(':').map(Number);
-  return { horas, minutos };
-}
-
-async function verificarYEnviarNotificaciones() {
-  try {
-    if (!CONFIG.discordWebhook) {
-      console.log('❌ No hay webhook configurado');
-      return;
-    }
-    
-    const { diaSemana, hora, minutos } = obtenerDiaYHoraServidor();
-    const horaApertura = parsearHoraConfigurada(CONFIG.horaApertura);
-    const horaCierre = parsearHoraConfigurada(CONFIG.horaCierre);
-    
-    console.log(`⏰ Verificando notificaciones: Día ${diaSemana}, Hora ${hora}:${minutos}`);
-    console.log(`📅 Configuración: Apertura día ${CONFIG.diaApertura} a las ${CONFIG.horaApertura}`);
-    console.log(`📅 Configuración: Cierre día ${CONFIG.diaCierre} a las ${CONFIG.horaCierre}`);
-    
-    // Verificar APERTURA usando el día configurado
-    if (diaSemana === CONFIG.diaApertura && 
-        hora === horaApertura.horas && 
-        minutos === horaApertura.minutos) {
-      console.log('🚨 CONDICIÓN DE APERTURA DETECTADA');
-      await enviarNotificacionApertura(false);
-    }
-    
-    // Verificar CIERRE usando el día configurado
-    if (diaSemana === CONFIG.diaCierre && 
-        hora === horaCierre.horas && 
-        minutos === horaCierre.minutos) {
-      console.log('🚨 CONDICIÓN DE CIERRE DETECTADA');
-      await enviarNotificacionCierre(false);
-    }
-    
-  } catch (error) {
-    console.error('❌ Error en verificación de notificaciones:', error);
-  }
-}
-
-/* === FUNCIONES DE NOTIFICACIÓN === */
-function formatearTextoAnsi(esPrueba = false) {
-  const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
-  const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
-  const sufijoUTC = CONFIG.diferenciaHoraria >= 0 ? '+' : '';
-  
-  let texto = CONFIG.textoAnsi;
-  
-  // Reemplazar variables %s en el texto ANSI
-  texto = texto.replace(/%s/g, (match, offset) => {
-    const occurrences = texto.substring(0, offset).match(/%s/g) || [];
-    switch(occurrences.length) {
-      case 0: return diaAperturaNombre;
-      case 1: return CONFIG.horaApertura;
-      case 2: return `${sufijoUTC}${CONFIG.diferenciaHoraria}`;
-      case 3: return diaCierreNombre;
-      case 4: return CONFIG.horaCierre;
-      case 5: return `${sufijoUTC}${CONFIG.diferenciaHoraria}`;
-      default: return match;
-    }
-  });
-  
-  if (esPrueba) {
-    texto += "\n\n**🧪 ESTA ES UNA PRUEBA MANUAL**";
-  }
-  
-  return texto;
-}
-
-async function enviarNotificacionApertura(esPrueba = false) {
-  try {
-    if (!CONFIG.discordWebhook) {
-      throw new Error("No hay webhook de Discord configurado.");
-    }
-    
-    const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
-    const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
-    const sufijoUTC = CONFIG.diferenciaHoraria >= 0 ? '+' : '';
-    const textoAnsiFormateado = formatearTextoAnsi(esPrueba);
-    const mensajeSufijo = esPrueba ? " (PRUEBA MANUAL)" : "";
-    
-    const mensajeBanner = {
-      content: `${CONFIG.discordMencion} 📢 **¡CONTROL SEMANAL ABIERTO${mensajeSufijo}!** 📢\n\n${textoAnsiFormateado}\n\n🔗 **Acceso rápido:** ${CONFIG.urlControl}`,
-      username: `🏆 YMIR Control${mensajeSufijo}`,
-      avatar_url: CONFIG.urlLogoGuild,
-      embeds: [
-        {
-          title: `🏆 ¡HA COMENZADO EL CONTROL SEMANAL${mensajeSufijo}!`,
-          description: `**Período activo para registrar stats y subir capturas**\n\n**Horario:** ${diaAperturaNombre} ${CONFIG.horaApertura} - ${diaCierreNombre} ${CONFIG.horaCierre} (UTC${sufijoUTC}${CONFIG.diferenciaHoraria})`,
-          color: 0x00FF7F,
-          image: { url: CONFIG.urlImagenApertura },
-          thumbnail: { url: CONFIG.urlLogoGuild },
-          fields: [
-            { name: "📸 Capturas", value: "4 REQUERIDAS", inline: true },
-            { name: "🔗 Enlace web", value: `[👉 HAZ CLIC AQUÍ 👈](${CONFIG.urlControl})`, inline: false }
-          ],
-          footer: { text: `Guild YMIR • Control Semanal${mensajeSufijo}`, icon_url: CONFIG.urlLogoGuild },
-          timestamp: new Date().toISOString()
-        }
-      ]
-    };
-    
-    const response = await fetch(CONFIG.discordWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(mensajeBanner)
-    });
-    
-    if (!response.ok) throw new Error(`Error al enviar: ${response.status}`);
-    
-    if (!esPrueba) {
-      await addDoc(collection(db, "historial"), {
-        usuario: MI_UID,
-        rol: MI_ROL,
-        accion: "Notificación automática de apertura",
-        cambio: `Control semanal abierto - ${diaAperturaNombre} ${CONFIG.horaApertura}`,
-        fecha: Date.now()
-      });
-    }
-    
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Error en notificación apertura:', error);
-    if (esPrueba) throw error;
-    return false;
-  }
-}
-
-async function enviarNotificacionCierre(esPrueba = false) {
-  try {
-    if (!CONFIG.discordWebhook) {
-      throw new Error("No hay webhook de Discord configurado.");
-    }
-    
-    const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
-    const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
-    const sufijoUTC = CONFIG.diferenciaHoraria >= 0 ? '+' : '';
-    const mensajeSufijo = esPrueba ? " (PRUEBA MANUAL)" : "";
-    
-    const mensajeCierre = {
-      content: `${CONFIG.discordMencion} 📢 **¡CONTROL SEMANAL CERRADO${mensajeSufijo}!** 📢\n\n⚠️ **YA NO se pueden modificar stats ni subir capturas**\n\n🔗 **Enlace:** ${CONFIG.urlControl}`,
-      username: `🏆 YMIR Control${mensajeSufijo}`,
-      avatar_url: CONFIG.urlLogoGuild,
-      embeds: [
-        {
-          title: `🏆 CONTROL SEMANAL FINALIZADO${mensajeSufijo}`,
-          description: `**Período cerrado:** ${diaCierreNombre} ${CONFIG.horaCierre} (UTC${sufijoUTC}${CONFIG.diferenciaHoraria})`,
-          color: 0xFF4444,
-          image: { url: CONFIG.urlImagenCierre },
-          thumbnail: { url: CONFIG.urlLogoGuild },
-          fields: [
-            { name: "⏳ Siguiente apertura", value: `Próximo ${diaAperturaNombre} ${CONFIG.horaApertura}`, inline: true },
-            { name: "🔗 Enlace web", value: `[👉 VER RESULTADOS 👈](${CONFIG.urlControl})`, inline: false }
-          ],
-          footer: { text: `Guild YMIR • Control Semanal Cerrado${mensajeSufijo}`, icon_url: CONFIG.urlLogoGuild },
-          timestamp: new Date().toISOString()
-        }
-      ]
-    };
-    
-    const response = await fetch(CONFIG.discordWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(mensajeCierre)
-    });
-    
-    if (!response.ok) throw new Error(`Error al enviar: ${response.status}`);
-    
-    if (!esPrueba) {
-      await addDoc(collection(db, "historial"), {
-        usuario: MI_UID,
-        rol: MI_ROL,
-        accion: "Notificación automática de cierre",
-        cambio: `Control semanal cerrado - ${diaCierreNombre} ${CONFIG.horaCierre}`,
-        fecha: Date.now()
-      });
-    }
-    
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Error en notificación cierre:', error);
-    if (esPrueba) throw error;
-    return false;
-  }
-}
-
-async function enviarNotificacionRecordatorio() {
-  try {
-    if (!CONFIG.discordWebhook) {
-      throw new Error("No hay webhook de Discord configurado.");
-    }
-    
-    const mensajeRecordatorio = {
-      content: `${CONFIG.discordMencion} ⏰ **¡RECORDATORIO!** ⏰\n\n📊 No olvides actualizar tus stats.\n\n🔗 **Enlace:** ${CONFIG.urlControl}`,
-      username: '🏆 YMIR Recordatorio',
-      avatar_url: CONFIG.urlLogoGuild,
-      embeds: [
-        {
-          title: "📊 Recordatorio Control Semanal",
-          description: "Queda poco tiempo para actualizar tus estadísticas.",
-          color: 0xFF9800,
-          thumbnail: { url: CONFIG.urlLogoGuild },
-          fields: [
-            { name: "🔗 Enlace rápido", value: `[👉 IR AL CONTROL 👈](${CONFIG.urlControl})`, inline: false },
-            { name: "📸 Requisitos", value: "4 capturas obligatorias", inline: false }
-          ],
-          footer: { text: "Guild YMIR • Control Semanal", icon_url: CONFIG.urlLogoGuild },
-          timestamp: new Date().toISOString()
-        }
-      ]
-    };
-    
-    const response = await fetch(CONFIG.discordWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(mensajeRecordatorio)
-    });
-    
-    if (!response.ok) throw new Error(`Error al enviar: ${response.status}`);
-    
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Error en notificación recordatorio:', error);
-    return false;
-  }
-}
-
-async function enviarNotificacionUrgente() {
-  try {
-    if (!CONFIG.discordWebhook) {
-      throw new Error("No hay webhook de Discord configurado.");
-    }
-    
-    const mensajeUrgente = {
-      content: `${CONFIG.discordMencion} ⚠️ **¡AVISO URGENTE!** ⚠️\n\nSe cerrará el Control Semanal en breve.\n\n🔗 **Enlace urgente:** ${CONFIG.urlControl}`,
-      username: '🏆 YMIR Aviso Urgente',
-      avatar_url: CONFIG.urlLogoGuild,
-      embeds: [
-        {
-          title: "⚠️ CIERRE INMINENTE DEL CONTROL",
-          description: "Última oportunidad para subir tus estadísticas.",
-          color: 0xFF0000,
-          thumbnail: { url: CONFIG.urlLogoGuild },
-          fields: [
-            { name: "🔗 Enlace de emergencia", value: `[👉 ACCESO DIRECTO 👈](${CONFIG.urlControl})`, inline: false }
-          ],
-          footer: { text: "Guild YMIR • Aviso Urgente", icon_url: CONFIG.urlLogoGuild },
-          timestamp: new Date().toISOString()
-        }
-      ]
-    };
-    
-    const response = await fetch(CONFIG.discordWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(mensajeUrgente)
-    });
-    
-    if (!response.ok) throw new Error(`Error al enviar: ${response.status}`);
-    
-    return true;
-    
-  } catch (error) {
-    console.error('❌ Error en notificación urgente:', error);
-    return false;
-  }
-}
-
 /* === FUNCIONES PARA VERIFICAR DÍAS DE CAPTURAS === */
 function obtenerDiaSemana() {
   const ahora = new Date();
@@ -2261,15 +1959,71 @@ function actualizarIndicadorDias() {
   }
 }
 
-/* === Actualizar relojes superiores === */
-function updateTopClocks() {
-  const now = new Date();
+/* === FUNCIONES CORREGIDAS PARA EL CÁLCULO DE HORAS === */
+
+// Función para determinar si España está en horario de verano
+function esHorarioVeranoEspana() {
+  const ahora = new Date();
+  const año = ahora.getFullYear();
   
-  const localTime = now.toLocaleTimeString('es-ES', { hour12: false });
+  // Horario de verano en España: último domingo de marzo a último domingo de octubre
+  // UTC+2 (CEST) en verano, UTC+1 (CET) en invierno
+  
+  // Calcular último domingo de marzo
+  const ultimoDomingoMarzo = new Date(año, 2, 31); // Marzo es 2
+  ultimoDomingoMarzo.setDate(31 - ultimoDomingoMarzo.getDay());
+  
+  // Calcular último domingo de octubre
+  const ultimoDomingoOctubre = new Date(año, 9, 31); // Octubre es 9
+  ultimoDomingoOctubre.setDate(31 - ultimoDomingoOctubre.getDay());
+  
+  // El horario de verano comienza a las 1:00 UTC (2:00 CEST) y termina a las 1:00 UTC (3:00 CEST)
+  return ahora >= ultimoDomingoMarzo && ahora < ultimoDomingoOctubre;
+}
+
+// Función para obtener la diferencia horaria actual de España respecto a UTC
+function obtenerDiferenciaHorariaEspana() {
+  // España: UTC+1 en invierno (CET), UTC+2 en verano (CEST)
+  return esHorarioVeranoEspana() ? 2 : 1;
+}
+
+// Función para calcular UTC-4 dinámico basado en la hora de España
+function calcularUTC4DesdeEspana() {
+  const ahora = new Date();
+  const diferenciaEspana = obtenerDiferenciaHorariaEspana();
+  
+  // Convertir hora España a UTC
+  const horaUTC = ahora.getTime() - (diferenciaEspana * 3600000);
+  
+  // Convertir UTC a UTC-4
+  const horaUTC4 = new Date(horaUTC - (4 * 3600000));
+  
+  return horaUTC4;
+}
+
+// Función para obtener hora local de España
+function obtenerHoraEspana() {
+  const ahora = new Date();
+  const diferenciaEspana = obtenerDiferenciaHorariaEspana();
+  
+  // Crear hora España
+  const horaEspana = new Date(ahora.getTime() + (diferenciaEspana * 3600000));
+  
+  return horaEspana;
+}
+
+/* === Actualizar relojes superiores - CORREGIDO === */
+function updateTopClocks() {
+  const ahora = new Date();
+  
+  // Hora local España - CORREGIDA
+  const horaEspana = obtenerHoraEspana();
+  const localTime = horaEspana.toISOString().substr(11, 8);
   document.getElementById('localTime').textContent = localTime;
   
-  const serverTime = new Date(now.getTime() + (CONFIG.diferenciaHoraria * 3600 * 1000));
-  const serverTimeStr = serverTime.toISOString().substr(11, 8);
+  // Hora UTC-4 dinámica basada en España - CORREGIDA
+  const horaUTC4 = calcularUTC4DesdeEspana();
+  const serverTimeStr = horaUTC4.toISOString().substr(11, 8);
   document.getElementById('serverTime').textContent = serverTimeStr;
   
   actualizarIndicadorDias();
@@ -2352,8 +2106,8 @@ onAuthStateChanged(auth, async user => {
   // Actualizar relojes con la configuración cargada
   updateTopClocks();
   
-  // VERIFICAR NOTIFICACIONES AUTOMÁTICAS CADA MINUTO
-  setInterval(verificarYEnviarNotificaciones, 60 * 1000);
+  // VERIFICAR NOTIFICACIONES AUTOMÁTICAS CADA 30 SEGUNDOS (para mejor precisión)
+  setInterval(verificarYEnviarNotificaciones, 30 * 1000);
   
   cargarControl();
   escucharSolicitudesBadge();
@@ -2377,6 +2131,311 @@ onAuthStateChanged(auth, async user => {
     if (exportarFloatingBtn) exportarFloatingBtn.style.display = "block";
   }
 });
+
+/* === FUNCIONES CORREGIDAS PARA NOTIFICACIONES AUTOMÁTICAS === */
+function obtenerDiaYHoraServidor() {
+  const ahora = new Date();
+  
+  // USAR LA FUNCIÓN CORREGIDA PARA CALCULAR UTC-4 DESDE ESPAÑA
+  const horaServidorUTC4 = calcularUTC4DesdeEspana();
+  
+  console.log(`🕐 CONVERSIÓN A UTC-4 CORREGIDA:`);
+  console.log(`   Hora local España (calculada): ${obtenerHoraEspana().toISOString().substr(11, 8)}`);
+  console.log(`   Hora UTC-4 (servidor corregida): ${horaServidorUTC4.toISOString().substr(11, 8)}`);
+  console.log(`   Día servidor: ${horaServidorUTC4.getDay()} (${obtenerNombreDiaPorNumero(horaServidorUTC4.getDay())})`);
+  
+  return {
+    diaSemana: horaServidorUTC4.getDay(),
+    hora: horaServidorUTC4.getHours(),
+    minutos: horaServidorUTC4.getMinutes(),
+    segundos: horaServidorUTC4.getSeconds(),
+    fechaCompleta: horaServidorUTC4.toISOString()
+  };
+}
+
+function parsearHoraConfigurada(horaStr) {
+  const [horas, minutos] = horaStr.split(':').map(Number);
+  return { horas: horas || 0, minutos: minutos || 0 };
+}
+
+async function verificarYEnviarNotificaciones() {
+  try {
+    if (!CONFIG.discordWebhook) {
+      console.log('❌ No hay webhook configurado');
+      return;
+    }
+    
+    const { diaSemana, hora, minutos } = obtenerDiaYHoraServidor();
+    const horaApertura = parsearHoraConfigurada(CONFIG.horaApertura);
+    const horaCierre = parsearHoraConfigurada(CONFIG.horaCierre);
+    
+    console.log(`⏰ Verificando notificaciones (Hora UTC-4 corregida):`);
+    console.log(`   📅 Día actual: ${diaSemana} (${obtenerNombreDiaPorNumero(diaSemana)})`);
+    console.log(`   🕐 Hora actual: ${hora}:${minutos.toString().padStart(2, '0')}`);
+    console.log(`   ⚙️ Config apertura: ${obtenerNombreDiaPorNumero(CONFIG.diaApertura)} ${CONFIG.horaApertura}`);
+    console.log(`   ⚙️ Config cierre: ${obtenerNombreDiaPorNumero(CONFIG.diaCierre)} ${CONFIG.horaCierre}`);
+    
+    // Verificar APERTURA
+    if (diaSemana === CONFIG.diaApertura && 
+        hora === horaApertura.horas && 
+        minutos === horaApertura.minutos) {
+      console.log('🚨🚨🚨 CONDICIÓN DE APERTURA DETECTADA - ENVIANDO NOTIFICACIÓN 🚨🚨🚨');
+      await enviarNotificacionApertura(false);
+    }
+    
+    // Verificar CIERRE
+    if (diaSemana === CONFIG.diaCierre && 
+        hora === horaCierre.horas && 
+        minutos === horaCierre.minutos) {
+      console.log('🚨🚨🚨 CONDICIÓN DE CIERRE DETECTADA - ENVIANDO NOTIFICACIÓN 🚨🚨🚨');
+      await enviarNotificacionCierre(false);
+    }
+    
+  } catch (error) {
+    console.error('❌ Error en verificación de notificaciones:', error);
+  }
+}
+
+/* === FUNCIONES DE NOTIFICACIÓN - CORREGIDAS PARA USAR HORA ESPAÑA === */
+function formatearTextoAnsi(esPrueba = false) {
+  const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
+  const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
+  
+  let texto = CONFIG.textoAnsi;
+  
+  texto = texto.replace(/%s/g, (match, offset) => {
+    const occurrences = texto.substring(0, offset).match(/%s/g) || [];
+    switch(occurrences.length) {
+      case 0: return diaAperturaNombre;
+      case 1: return CONFIG.horaApertura;
+      case 2: "UTC-4"; // Mantener UTC-4 como zona horaria del servidor
+      case 3: return diaCierreNombre;
+      case 4: return CONFIG.horaCierre;
+      case 5: "UTC-4"; // Mantener UTC-4 como zona horaria del servidor
+      default: return match;
+    }
+  });
+  
+  if (esPrueba) {
+    texto += "\n\n**🧪 ESTA ES UNA PRUEBA MANUAL**";
+  }
+  
+  return texto;
+}
+
+async function enviarNotificacionApertura(esPrueba = false) {
+  try {
+    if (!CONFIG.discordWebhook) {
+      throw new Error("No hay webhook de Discord configurado.");
+    }
+    
+    const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
+    const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
+    const textoAnsiFormateado = formatearTextoAnsi(esPrueba);
+    const mensajeSufijo = esPrueba ? " (PRUEBA MANUAL)" : "";
+    
+    // Obtener la hora actual de España para el timestamp
+    const horaEspanaActual = obtenerHoraEspana().toISOString();
+    
+    const mensajeBanner = {
+      content: `${CONFIG.discordMencion} 📢 **¡CONTROL SEMANAL ABIERTO${mensajeSufijo}!** 📢\n\n${textoAnsiFormateado}\n\n🔗 **Acceso rápido:** ${CONFIG.urlControl}`,
+      username: `🏆 YMIR Control${mensajeSufijo}`,
+      avatar_url: CONFIG.urlLogoGuild,
+      embeds: [
+        {
+          title: `🏆 ¡HA COMENZADO EL CONTROL SEMANAL${mensajeSufijo}!`,
+          description: `**Período activo para registrar stats y subir capturas**\n\n**Horario:** ${diaAperturaNombre} ${CONFIG.horaApertura} - ${diaCierreNombre} ${CONFIG.horaCierre} (UTC-4)`,
+          color: 0x00FF7F,
+          image: { url: CONFIG.urlImagenApertura },
+          thumbnail: { url: CONFIG.urlLogoGuild },
+          fields: [
+            { name: "📸 Capturas", value: "4 REQUERIDAS", inline: true },
+            { name: "🔗 Enlace web", value: `[👉 HAZ CLIC AQUÍ 👈](${CONFIG.urlControl})`, inline: false }
+          ],
+          footer: { text: `Guild YMIR • Control Semanal${mensajeSufijo}`, icon_url: CONFIG.urlLogoGuild },
+          timestamp: horaEspanaActual // Usar hora de España
+        }
+      ]
+    };
+    
+    const response = await fetch(CONFIG.discordWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mensajeBanner)
+    });
+    
+    if (!response.ok) throw new Error(`Error al enviar: ${response.status}`);
+    
+    if (!esPrueba) {
+      await addDoc(collection(db, "historial"), {
+        usuario: MI_UID,
+        rol: MI_ROL,
+        accion: "Notificación automática de apertura",
+        cambio: `Control semanal abierto - ${diaAperturaNombre} ${CONFIG.horaApertura} (UTC-4)`,
+        fecha: Date.now(),
+        horaEspana: horaEspanaActual
+      });
+    }
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Error en notificación apertura:', error);
+    if (esPrueba) throw error;
+    return false;
+  }
+}
+
+async function enviarNotificacionCierre(esPrueba = false) {
+  try {
+    if (!CONFIG.discordWebhook) {
+      throw new Error("No hay webhook de Discord configurado.");
+    }
+    
+    const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
+    const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
+    const mensajeSufijo = esPrueba ? " (PRUEBA MANUAL)" : "";
+    
+    // Obtener la hora actual de España para el timestamp
+    const horaEspanaActual = obtenerHoraEspana().toISOString();
+    
+    const mensajeCierre = {
+      content: `${CONFIG.discordMencion} 📢 **¡CONTROL SEMANAL CERRADO${mensajeSufijo}!** 📢\n\n⚠️ **YA NO se pueden modificar stats ni subir capturas**\n\n🔗 **Enlace:** ${CONFIG.urlControl}`,
+      username: `🏆 YMIR Control${mensajeSufijo}`,
+      avatar_url: CONFIG.urlLogoGuild,
+      embeds: [
+        {
+          title: `🏆 CONTROL SEMANAL FINALIZADO${mensajeSufijo}`,
+          description: `**Período cerrado:** ${diaCierreNombre} ${CONFIG.horaCierre} (UTC-4)`,
+          color: 0xFF4444,
+          image: { url: CONFIG.urlImagenCierre },
+          thumbnail: { url: CONFIG.urlLogoGuild },
+          fields: [
+            { name: "⏳ Siguiente apertura", value: `Próximo ${diaAperturaNombre} ${CONFIG.horaApertura}`, inline: true },
+            { name: "🔗 Enlace web", value: `[👉 VER RESULTADOS 👈](${CONFIG.urlControl})`, inline: false }
+          ],
+          footer: { text: `Guild YMIR • Control Semanal Cerrado${mensajeSufijo}`, icon_url: CONFIG.urlLogoGuild },
+          timestamp: horaEspanaActual // Usar hora de España
+        }
+      ]
+    };
+    
+    const response = await fetch(CONFIG.discordWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mensajeCierre)
+    });
+    
+    if (!response.ok) throw new Error(`Error al enviar: ${response.status}`);
+    
+    if (!esPrueba) {
+      await addDoc(collection(db, "historial"), {
+        usuario: MI_UID,
+        rol: MI_ROL,
+        accion: "Notificación automática de cierre",
+        cambio: `Control semanal cerrado - ${diaCierreNombre} ${CONFIG.horaCierre} (UTC-4)`,
+        fecha: Date.now(),
+        horaEspana: horaEspanaActual
+      });
+    }
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Error en notificación cierre:', error);
+    if (esPrueba) throw error;
+    return false;
+  }
+}
+
+async function enviarNotificacionRecordatorio() {
+  try {
+    if (!CONFIG.discordWebhook) {
+      throw new Error("No hay webhook de Discord configurado.");
+    }
+    
+    // Obtener la hora actual de España para el timestamp
+    const horaEspanaActual = obtenerHoraEspana().toISOString();
+    
+    const mensajeRecordatorio = {
+      content: `${CONFIG.discordMencion} ⏰ **¡RECORDATORIO!** ⏰\n\n📊 No olvides actualizar tus stats.\n\n🔗 **Enlace:** ${CONFIG.urlControl}`,
+      username: '🏆 YMIR Recordatorio',
+      avatar_url: CONFIG.urlLogoGuild,
+      embeds: [
+        {
+          title: "📊 Recordatorio Control Semanal",
+          description: "Queda poco tiempo para actualizar tus estadísticas.",
+          color: 0xFF9800,
+          thumbnail: { url: CONFIG.urlLogoGuild },
+          fields: [
+            { name: "🔗 Enlace rápido", value: `[👉 IR AL CONTROL 👈](${CONFIG.urlControl})`, inline: false },
+            { name: "📸 Requisitos", value: "4 capturas obligatorias", inline: false }
+          ],
+          footer: { text: "Guild YMIR • Control Semanal", icon_url: CONFIG.urlLogoGuild },
+          timestamp: horaEspanaActual // Usar hora de España
+        }
+      ]
+    };
+    
+    const response = await fetch(CONFIG.discordWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mensajeRecordatorio)
+    });
+    
+    if (!response.ok) throw new Error(`Error al enviar: ${response.status}`);
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Error en notificación recordatorio:', error);
+    return false;
+  }
+}
+
+async function enviarNotificacionUrgente() {
+  try {
+    if (!CONFIG.discordWebhook) {
+      throw new Error("No hay webhook de Discord configurado.");
+    }
+    
+    // Obtener la hora actual de España para el timestamp
+    const horaEspanaActual = obtenerHoraEspana().toISOString();
+    
+    const mensajeUrgente = {
+      content: `${CONFIG.discordMencion} ⚠️ **¡AVISO URGENTE!** ⚠️\n\nSe cerrará el Control Semanal en breve.\n\n🔗 **Enlace urgente:** ${CONFIG.urlControl}`,
+      username: '🏆 YMIR Aviso Urgente',
+      avatar_url: CONFIG.urlLogoGuild,
+      embeds: [
+        {
+          title: "⚠️ CIERRE INMINENTE DEL CONTROL",
+          description: "Última oportunidad para subir tus estadísticas.",
+          color: 0xFF0000,
+          thumbnail: { url: CONFIG.urlLogoGuild },
+          fields: [
+            { name: "🔗 Enlace de emergencia", value: `[👉 ACCESO DIRECTO 👈](${CONFIG.urlControl})`, inline: false }
+          ],
+          footer: { text: "Guild YMIR • Aviso Urgente", icon_url: CONFIG.urlLogoGuild },
+          timestamp: horaEspanaActual // Usar hora de España
+        }
+      ]
+    };
+    
+    const response = await fetch(CONFIG.discordWebhook, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mensajeUrgente)
+    });
+    
+    if (!response.ok) throw new Error(`Error al enviar: ${response.status}`);
+    
+    return true;
+    
+  } catch (error) {
+    console.error('❌ Error en notificación urgente:', error);
+    return false;
+  }
+}
 
 /* === Utilidad para mostrar "-" si vacío o 0 === */
 function mostrarValorNum(v){
@@ -2592,7 +2651,6 @@ function cargarControl(){
                 <div class="ranking-icon">${rankInfo.icon}</div>
                 <div class="ranking-position">${rankInfo.positionDisplay}</div>
                 ${rankInfo.tieneStatsCompletos ? `<div class="ranking-value">${rankInfo.score.toFixed(1)} pts</div>` : '<div class="ranking-value" style="color:#ff6b6b;">Stats incompletos</div>'}
-              </div>
             </td>
             <td id="nombre_${d.id}">
               <div class="nombre-container">
@@ -3180,12 +3238,16 @@ window.enviarCapturasADiscord = async function(memberId) {
     const memberNivel = memberData.nivel || '?';
     const memberPoder = memberData.poder || '?';
     
+    // Obtener la hora actual de España
+    const horaEspana = obtenerHoraEspana();
+    const fechaHoraEspana = horaEspana.toLocaleString('es-ES');
+    
     // Crear FormData para enviar múltiples archivos
     const discordFormData = new FormData();
     
     // Crear payload del mensaje con información detallada
     const payload = {
-      content: `📸 **PACK DE 4 CAPTURAS**\n👤 **${memberName}** (${memberClase})\n📊 Nivel: ${memberNivel} | Poder: ${memberPoder}\n📅 ${new Date().toLocaleString('es-ES')}\n🔍 Stats verificados en Control Semanal\n━━━━━━━━━━━━━━━━━━━━━━`,
+      content: `📸 **PACK DE 4 CAPTURAS**\n👤 **${memberName}** (${memberClase})\n📊 Nivel: ${memberNivel} | Poder: ${memberPoder}\n📅 ${fechaHoraEspana}\n🔍 Stats verificados en Control Semanal\n━━━━━━━━━━━━━━━━━━━━━━`,
       username: 'YMIR Guild Bot',
       avatar_url: CONFIG.urlLogoGuild
     };
@@ -3210,7 +3272,8 @@ window.enviarCapturasADiscord = async function(memberId) {
         rol: MI_ROL,
         accion: "Envío de pack de 4 capturas a Discord",
         cambio: `4 capturas enviadas por ${memberName} (${memberClase})`,
-        fecha: Date.now()
+        fecha: Date.now(),
+        horaEspana: fechaHoraEspana
       });
       
       // Limpiar capturas temporales
@@ -3228,7 +3291,7 @@ window.enviarCapturasADiscord = async function(memberId) {
         container.remove();
       }
       
-      alert(`✅ Pack de 4 capturas enviado a Discord correctamente`);
+      alert(`✅ Pack de 4 capturas enviado a Discord correctamente\n\n📅 Hora de envío: ${fechaHoraEspana}`);
     } else {
       const errorText = await response.text();
       throw new Error(`Discord respondió con ${response.status}: ${errorText}`);
@@ -3296,7 +3359,7 @@ async function crearBackupAutomatico() {
     
     const rows = [headers];
     
-    const fechaBackup = new Date().toLocaleString('es-ES');
+    const fechaBackup = obtenerHoraEspana().toLocaleString('es-ES'); // Usar hora España
     
     membersSnap.forEach(doc => {
       const m = doc.data();
@@ -3344,7 +3407,7 @@ async function crearBackupAutomatico() {
     ).join('\n');
     
     const fecha = new Date().toISOString().split('T')[0];
-    const hora = new Date().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
+    const hora = obtenerHoraEspana().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
     const nombreArchivo = `BACKUP_YMIR_Stats_${fecha}_${hora}.csv`;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -3362,7 +3425,8 @@ async function crearBackupAutomatico() {
       rol: MI_ROL,
       accion: "Backup automático antes de reinicio",
       cambio: `Backup creado: ${nombreArchivo} (${rows.length - 1} miembros)`,
-      fecha: Date.now()
+      fecha: Date.now(),
+      horaEspana: fechaBackup
     });
     
     return true;
@@ -3410,15 +3474,19 @@ async function reinicioStats() {
       count++;
     }
 
+    // Obtener hora España para el registro
+    const horaEspana = obtenerHoraEspana().toLocaleString('es-ES');
+    
     await addDoc(collection(db,"historial"),{
       usuario: "Sistema",
       rol: MI_ROL,
       accion: "Reinicio de stats (Control)",
       cambio: `Se reiniciaron SOLO stats de ${count} miembros (sin tocar contribución/bosses)`,
-      fecha: Date.now()
+      fecha: Date.now(),
+      horaEspana: horaEspana
     });
 
-    alert(`✅ Reinicio de stats completado.\n\n📊 ${count} miembros actualizados\n✓ Stats reseteados: ATK, DEF, DMG, etc.\n✓ Mantenidos: Nombre, Clase, Nivel, Poder\n✓ No afectado: Contribución y Bosses (se reinician en Panel)\n\n📁 Backup descargado automáticamente.`);
+    alert(`✅ Reinicio de stats completado.\n\n📊 ${count} miembros actualizados\n✓ Stats reseteados: ATK, DEF, DMG, etc.\n✓ Mantenidos: Nombre, Clase, Nivel, Poder\n✓ No afectado: Contribución y Bosses (se reinician en Panel)\n\n📁 Backup descargado automáticamente.\n📅 Hora del reinicio: ${horaEspana}`);
     
   } catch(error) {
     alert(`❌ Error al reiniciar stats: ${error.message}`);
@@ -3508,7 +3576,7 @@ window.exportarAExcel = async () => {
     ).join('\n');
     
     const fecha = new Date().toISOString().split('T')[0];
-    const hora = new Date().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
+    const hora = obtenerHoraEspana().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
     const nombreArchivo = `YMIR_Control_Backup_${fecha}_${hora}.csv`;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -3521,7 +3589,7 @@ window.exportarAExcel = async () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    alert(`✅ Exportación completada!\n\n📊 ${rows.length - 1} miembros exportados\n📂 Archivo: ${nombreArchivo}`);
+    alert(`✅ Exportación completada!\n\n📊 ${rows.length - 1} miembros exportados\n📂 Archivo: ${nombreArchivo}\n📅 Hora de exportación: ${obtenerHoraEspana().toLocaleString('es-ES')}`);
     
   } catch (error) {
     console.error('Error al exportar:', error);
