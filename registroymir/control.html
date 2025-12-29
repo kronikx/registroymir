@@ -1961,68 +1961,31 @@ function actualizarIndicadorDias() {
 
 /* === FUNCIONES CORREGIDAS PARA EL CÁLCULO DE HORAS === */
 
-// Función para determinar si España está en horario de verano
-function esHorarioVeranoEspana() {
+// Función simplificada para obtener hora UTC-4 (sin conversiones complejas)
+function obtenerHoraUTC4() {
   const ahora = new Date();
-  const año = ahora.getFullYear();
-  
-  // Horario de verano en España: último domingo de marzo a último domingo de octubre
-  // UTC+2 (CEST) en verano, UTC+1 (CET) en invierno
-  
-  // Calcular último domingo de marzo
-  const ultimoDomingoMarzo = new Date(año, 2, 31); // Marzo es 2
-  ultimoDomingoMarzo.setDate(31 - ultimoDomingoMarzo.getDay());
-  
-  // Calcular último domingo de octubre
-  const ultimoDomingoOctubre = new Date(año, 9, 31); // Octubre es 9
-  ultimoDomingoOctubre.setDate(31 - ultimoDomingoOctubre.getDay());
-  
-  // El horario de verano comienza a las 1:00 UTC (2:00 CEST) y termina a las 1:00 UTC (3:00 CEST)
-  return ahora >= ultimoDomingoMarzo && ahora < ultimoDomingoOctubre;
-}
-
-// Función para obtener la diferencia horaria actual de España respecto a UTC
-function obtenerDiferenciaHorariaEspana() {
-  // España: UTC+1 en invierno (CET), UTC+2 en verano (CEST)
-  return esHorarioVeranoEspana() ? 2 : 1;
-}
-
-// Función para calcular UTC-4 dinámico basado en la hora de España
-function calcularUTC4DesdeEspana() {
-  const ahora = new Date();
-  const diferenciaEspana = obtenerDiferenciaHorariaEspana();
-  
-  // Convertir hora España a UTC
-  const horaUTC = ahora.getTime() - (diferenciaEspana * 3600000);
-  
-  // Convertir UTC a UTC-4
-  const horaUTC4 = new Date(horaUTC - (4 * 3600000));
-  
+  // UTC-4 significa: restar 4 horas al UTC
+  const horaUTC4 = new Date(ahora.getTime() - (4 * 3600000));
   return horaUTC4;
 }
 
-// Función para obtener hora local de España
-function obtenerHoraEspana() {
+// Función simplificada para obtener hora local (España)
+function obtenerHoraLocal() {
   const ahora = new Date();
-  const diferenciaEspana = obtenerDiferenciaHorariaEspana();
-  
-  // Crear hora España
-  const horaEspana = new Date(ahora.getTime() + (diferenciaEspana * 3600000));
-  
-  return horaEspana;
+  // España está en UTC+1 (invierno) o UTC+2 (verano)
+  // Usaremos el método toLocaleString para obtener la hora local correcta
+  return new Date(ahora.toLocaleString("en-US", {timeZone: "Europe/Madrid"}));
 }
 
 /* === Actualizar relojes superiores - CORREGIDO === */
 function updateTopClocks() {
-  const ahora = new Date();
-  
   // Hora local España - CORREGIDA
-  const horaEspana = obtenerHoraEspana();
-  const localTime = horaEspana.toISOString().substr(11, 8);
-  document.getElementById('localTime').textContent = localTime;
+  const horaLocal = obtenerHoraLocal();
+  const localTimeStr = horaLocal.toISOString().substr(11, 8);
+  document.getElementById('localTime').textContent = localTimeStr;
   
-  // Hora UTC-4 dinámica basada en España - CORREGIDA
-  const horaUTC4 = calcularUTC4DesdeEspana();
+  // Hora UTC-4 - CORREGIDA (simple y directa)
+  const horaUTC4 = obtenerHoraUTC4();
   const serverTimeStr = horaUTC4.toISOString().substr(11, 8);
   document.getElementById('serverTime').textContent = serverTimeStr;
   
@@ -2134,14 +2097,11 @@ onAuthStateChanged(auth, async user => {
 
 /* === FUNCIONES CORREGIDAS PARA NOTIFICACIONES AUTOMÁTICAS === */
 function obtenerDiaYHoraServidor() {
-  const ahora = new Date();
+  // Usar hora UTC-4 simple y directa
+  const horaServidorUTC4 = obtenerHoraUTC4();
   
-  // USAR LA FUNCIÓN CORREGIDA PARA CALCULAR UTC-4 DESDE ESPAÑA
-  const horaServidorUTC4 = calcularUTC4DesdeEspana();
-  
-  console.log(`🕐 CONVERSIÓN A UTC-4 CORREGIDA:`);
-  console.log(`   Hora local España (calculada): ${obtenerHoraEspana().toISOString().substr(11, 8)}`);
-  console.log(`   Hora UTC-4 (servidor corregida): ${horaServidorUTC4.toISOString().substr(11, 8)}`);
+  console.log(`🕐 CONVERSIÓN A UTC-4 SIMPLIFICADA:`);
+  console.log(`   Hora UTC-4 (servidor): ${horaServidorUTC4.toISOString().substr(11, 8)}`);
   console.log(`   Día servidor: ${horaServidorUTC4.getDay()} (${obtenerNombreDiaPorNumero(horaServidorUTC4.getDay())})`);
   
   return {
@@ -2169,13 +2129,13 @@ async function verificarYEnviarNotificaciones() {
     const horaApertura = parsearHoraConfigurada(CONFIG.horaApertura);
     const horaCierre = parsearHoraConfigurada(CONFIG.horaCierre);
     
-    console.log(`⏰ Verificando notificaciones (Hora UTC-4 corregida):`);
+    console.log(`⏰ Verificando notificaciones (Hora UTC-4):`);
     console.log(`   📅 Día actual: ${diaSemana} (${obtenerNombreDiaPorNumero(diaSemana)})`);
     console.log(`   🕐 Hora actual: ${hora}:${minutos.toString().padStart(2, '0')}`);
     console.log(`   ⚙️ Config apertura: ${obtenerNombreDiaPorNumero(CONFIG.diaApertura)} ${CONFIG.horaApertura}`);
     console.log(`   ⚙️ Config cierre: ${obtenerNombreDiaPorNumero(CONFIG.diaCierre)} ${CONFIG.horaCierre}`);
     
-    // Verificar APERTURA
+    // Verificar APERTURA - CORREGIDO: Verificar en el minuto exacto
     if (diaSemana === CONFIG.diaApertura && 
         hora === horaApertura.horas && 
         minutos === horaApertura.minutos) {
@@ -2183,7 +2143,7 @@ async function verificarYEnviarNotificaciones() {
       await enviarNotificacionApertura(false);
     }
     
-    // Verificar CIERRE
+    // Verificar CIERRE - CORREGIDO: Verificar en el minuto exacto
     if (diaSemana === CONFIG.diaCierre && 
         hora === horaCierre.horas && 
         minutos === horaCierre.minutos) {
@@ -2196,7 +2156,7 @@ async function verificarYEnviarNotificaciones() {
   }
 }
 
-/* === FUNCIONES DE NOTIFICACIÓN - CORREGIDAS PARA USAR HORA ESPAÑA === */
+/* === FUNCIONES DE NOTIFICACIÓN - CORREGIDAS === */
 function formatearTextoAnsi(esPrueba = false) {
   const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
   const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
@@ -2208,10 +2168,10 @@ function formatearTextoAnsi(esPrueba = false) {
     switch(occurrences.length) {
       case 0: return diaAperturaNombre;
       case 1: return CONFIG.horaApertura;
-      case 2: "UTC-4"; // Mantener UTC-4 como zona horaria del servidor
+      case 2: return "UTC-4";
       case 3: return diaCierreNombre;
       case 4: return CONFIG.horaCierre;
-      case 5: "UTC-4"; // Mantener UTC-4 como zona horaria del servidor
+      case 5: return "UTC-4";
       default: return match;
     }
   });
@@ -2234,9 +2194,6 @@ async function enviarNotificacionApertura(esPrueba = false) {
     const textoAnsiFormateado = formatearTextoAnsi(esPrueba);
     const mensajeSufijo = esPrueba ? " (PRUEBA MANUAL)" : "";
     
-    // Obtener la hora actual de España para el timestamp
-    const horaEspanaActual = obtenerHoraEspana().toISOString();
-    
     const mensajeBanner = {
       content: `${CONFIG.discordMencion} 📢 **¡CONTROL SEMANAL ABIERTO${mensajeSufijo}!** 📢\n\n${textoAnsiFormateado}\n\n🔗 **Acceso rápido:** ${CONFIG.urlControl}`,
       username: `🏆 YMIR Control${mensajeSufijo}`,
@@ -2253,7 +2210,7 @@ async function enviarNotificacionApertura(esPrueba = false) {
             { name: "🔗 Enlace web", value: `[👉 HAZ CLIC AQUÍ 👈](${CONFIG.urlControl})`, inline: false }
           ],
           footer: { text: `Guild YMIR • Control Semanal${mensajeSufijo}`, icon_url: CONFIG.urlLogoGuild },
-          timestamp: horaEspanaActual // Usar hora de España
+          timestamp: new Date().toISOString()
         }
       ]
     };
@@ -2273,7 +2230,7 @@ async function enviarNotificacionApertura(esPrueba = false) {
         accion: "Notificación automática de apertura",
         cambio: `Control semanal abierto - ${diaAperturaNombre} ${CONFIG.horaApertura} (UTC-4)`,
         fecha: Date.now(),
-        horaEspana: horaEspanaActual
+        horaEspana: new Date().toISOString()
       });
     }
     
@@ -2296,9 +2253,6 @@ async function enviarNotificacionCierre(esPrueba = false) {
     const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
     const mensajeSufijo = esPrueba ? " (PRUEBA MANUAL)" : "";
     
-    // Obtener la hora actual de España para el timestamp
-    const horaEspanaActual = obtenerHoraEspana().toISOString();
-    
     const mensajeCierre = {
       content: `${CONFIG.discordMencion} 📢 **¡CONTROL SEMANAL CERRADO${mensajeSufijo}!** 📢\n\n⚠️ **YA NO se pueden modificar stats ni subir capturas**\n\n🔗 **Enlace:** ${CONFIG.urlControl}`,
       username: `🏆 YMIR Control${mensajeSufijo}`,
@@ -2315,7 +2269,7 @@ async function enviarNotificacionCierre(esPrueba = false) {
             { name: "🔗 Enlace web", value: `[👉 VER RESULTADOS 👈](${CONFIG.urlControl})`, inline: false }
           ],
           footer: { text: `Guild YMIR • Control Semanal Cerrado${mensajeSufijo}`, icon_url: CONFIG.urlLogoGuild },
-          timestamp: horaEspanaActual // Usar hora de España
+          timestamp: new Date().toISOString()
         }
       ]
     };
@@ -2335,7 +2289,7 @@ async function enviarNotificacionCierre(esPrueba = false) {
         accion: "Notificación automática de cierre",
         cambio: `Control semanal cerrado - ${diaCierreNombre} ${CONFIG.horaCierre} (UTC-4)`,
         fecha: Date.now(),
-        horaEspana: horaEspanaActual
+        horaEspana: new Date().toISOString()
       });
     }
     
@@ -2354,9 +2308,6 @@ async function enviarNotificacionRecordatorio() {
       throw new Error("No hay webhook de Discord configurado.");
     }
     
-    // Obtener la hora actual de España para el timestamp
-    const horaEspanaActual = obtenerHoraEspana().toISOString();
-    
     const mensajeRecordatorio = {
       content: `${CONFIG.discordMencion} ⏰ **¡RECORDATORIO!** ⏰\n\n📊 No olvides actualizar tus stats.\n\n🔗 **Enlace:** ${CONFIG.urlControl}`,
       username: '🏆 YMIR Recordatorio',
@@ -2372,7 +2323,7 @@ async function enviarNotificacionRecordatorio() {
             { name: "📸 Requisitos", value: "4 capturas obligatorias", inline: false }
           ],
           footer: { text: "Guild YMIR • Control Semanal", icon_url: CONFIG.urlLogoGuild },
-          timestamp: horaEspanaActual // Usar hora de España
+          timestamp: new Date().toISOString()
         }
       ]
     };
@@ -2399,9 +2350,6 @@ async function enviarNotificacionUrgente() {
       throw new Error("No hay webhook de Discord configurado.");
     }
     
-    // Obtener la hora actual de España para el timestamp
-    const horaEspanaActual = obtenerHoraEspana().toISOString();
-    
     const mensajeUrgente = {
       content: `${CONFIG.discordMencion} ⚠️ **¡AVISO URGENTE!** ⚠️\n\nSe cerrará el Control Semanal en breve.\n\n🔗 **Enlace urgente:** ${CONFIG.urlControl}`,
       username: '🏆 YMIR Aviso Urgente',
@@ -2416,7 +2364,7 @@ async function enviarNotificacionUrgente() {
             { name: "🔗 Enlace de emergencia", value: `[👉 ACCESO DIRECTO 👈](${CONFIG.urlControl})`, inline: false }
           ],
           footer: { text: "Guild YMIR • Aviso Urgente", icon_url: CONFIG.urlLogoGuild },
-          timestamp: horaEspanaActual // Usar hora de España
+          timestamp: new Date().toISOString()
         }
       ]
     };
@@ -3239,7 +3187,7 @@ window.enviarCapturasADiscord = async function(memberId) {
     const memberPoder = memberData.poder || '?';
     
     // Obtener la hora actual de España
-    const horaEspana = obtenerHoraEspana();
+    const horaEspana = obtenerHoraLocal();
     const fechaHoraEspana = horaEspana.toLocaleString('es-ES');
     
     // Crear FormData para enviar múltiples archivos
@@ -3359,7 +3307,7 @@ async function crearBackupAutomatico() {
     
     const rows = [headers];
     
-    const fechaBackup = obtenerHoraEspana().toLocaleString('es-ES'); // Usar hora España
+    const fechaBackup = obtenerHoraLocal().toLocaleString('es-ES');
     
     membersSnap.forEach(doc => {
       const m = doc.data();
@@ -3407,7 +3355,7 @@ async function crearBackupAutomatico() {
     ).join('\n');
     
     const fecha = new Date().toISOString().split('T')[0];
-    const hora = obtenerHoraEspana().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
+    const hora = obtenerHoraLocal().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
     const nombreArchivo = `BACKUP_YMIR_Stats_${fecha}_${hora}.csv`;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -3475,7 +3423,7 @@ async function reinicioStats() {
     }
 
     // Obtener hora España para el registro
-    const horaEspana = obtenerHoraEspana().toLocaleString('es-ES');
+    const horaEspana = obtenerHoraLocal().toLocaleString('es-ES');
     
     await addDoc(collection(db,"historial"),{
       usuario: "Sistema",
@@ -3576,7 +3524,7 @@ window.exportarAExcel = async () => {
     ).join('\n');
     
     const fecha = new Date().toISOString().split('T')[0];
-    const hora = obtenerHoraEspana().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
+    const hora = obtenerHoraLocal().toLocaleTimeString('es-ES', { hour12: false }).replace(/:/g, '-');
     const nombreArchivo = `YMIR_Control_Backup_${fecha}_${hora}.csv`;
     
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -3589,7 +3537,7 @@ window.exportarAExcel = async () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     
-    alert(`✅ Exportación completada!\n\n📊 ${rows.length - 1} miembros exportados\n📂 Archivo: ${nombreArchivo}\n📅 Hora de exportación: ${obtenerHoraEspana().toLocaleString('es-ES')}`);
+    alert(`✅ Exportación completada!\n\n📊 ${rows.length - 1} miembros exportados\n📂 Archivo: ${nombreArchivo}\n📅 Hora de exportación: ${obtenerHoraLocal().toLocaleString('es-ES')}`);
     
   } catch (error) {
     console.error('Error al exportar:', error);
