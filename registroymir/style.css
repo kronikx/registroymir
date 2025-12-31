@@ -838,3 +838,55 @@ select {
 .table-scroll {
   -webkit-overflow-scrolling: touch;
 }
+
+/* === Estilos para el botón de Bosses y Eventos === */
+.bosses-btn-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bosses-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.bosses-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(139, 92, 246, 0.4);
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+}
+
+.bosses-btn:active {
+  transform: translateY(-1px);
+}
+
+.bosses-btn i {
+  font-size: 1.2rem;
+}
+
+/* Responsive para el botón de bosses */
+@media (max-width: 768px) {
+  .time-section {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .bosses-btn {
+    padding: 8px 16px;
+    font-size: 1rem;
+  }
+}

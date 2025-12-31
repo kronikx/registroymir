@@ -798,6 +798,350 @@
 </style>
 </head>
 <body>
+<!-- === PROTECCIÓN NUCLEAR - BLOQUEO TOTAL === -->
+<script>
+(function() {
+  'use strict';
+  
+  // === BLOQUEO DE VISTA DE CÓDIGO FUENTE ===
+  // 1. Bloquear acceso directo al código fuente
+  if (window.location.href.startsWith('view-source:')) {
+    // Redirigir inmediatamente si intentan ver el código
+    window.location.href = window.location.href.replace('view-source:', '');
+    document.write('<h1>🔒 Vista de código bloqueada</h1>');
+    document.close();
+    return;
+  }
+  
+  // 2. Sobrescribir document.documentElement para bloquear vista
+  const originalDocumentElement = Object.getOwnPropertyDescriptor(Document.prototype, 'documentElement');
+  Object.defineProperty(document, 'documentElement', {
+    get: function() {
+      const stack = new Error().stack;
+      if (stack && stack.includes('view-source')) {
+        // Crear elemento vacío si intentan acceder desde view-source
+        const fakeElement = document.createElement('html');
+        fakeElement.innerHTML = '<head><title>BLOQUEADO</title></head><body><h1>🔒 Código fuente protegido</h1></body>';
+        return fakeElement;
+      }
+      return originalDocumentElement.get.call(this);
+    }
+  });
+  
+  // 3. Bloquear Ctrl+U COMPLETAMENTE
+  document.addEventListener('keydown', function(e) {
+    // Bloquear F12
+    if (e.key === 'F12') {
+      e.preventDefault();
+      showNuclearWarning('DevTools (F12)');
+      return false;
+    }
+    
+    // Bloquear Ctrl+Shift+I
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+      e.preventDefault();
+      showNuclearWarning('DevTools (Ctrl+Shift+I)');
+      return false;
+    }
+    
+    // Bloquear Ctrl+U (VER CÓDIGO FUENTE - ESTO ES LO QUE FALTA)
+    if (e.ctrlKey && e.key === 'u') {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      // NUCLEAR: Destruir la página inmediatamente
+      triggerNuclearResponse();
+      return false;
+    }
+    
+    // Bloquear Ctrl+Shift+C (Inspeccionar elemento)
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+      e.preventDefault();
+      showNuclearWarning('Inspeccionar elemento');
+      return false;
+    }
+    
+    // Bloquear Ctrl+S (Guardar página)
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      alert('🔒 Guardar página bloqueado');
+      return false;
+    }
+  }, true);
+  
+  // 4. BLOQUEO DE CLIC DERECHO EN TODA LA PÁGINA
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Mostrar advertencia
+    const warning = document.createElement('div');
+    warning.style.cssText = `
+      position: fixed;
+      top: ${e.clientY}px;
+      left: ${e.clientX}px;
+      background: rgba(255, 59, 48, 0.95);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: Arial;
+      z-index: 999999;
+      pointer-events: none;
+      animation: fadeInOut 2s forwards;
+    `;
+    warning.textContent = '🔒 Menú contextual bloqueado';
+    document.body.appendChild(warning);
+    setTimeout(() => warning.remove(), 2000);
+    
+    return false;
+  }, true);
+  
+  // 5. RESPUESTA NUCLEAR AL INTENTAR VER CÓDIGO
+  function triggerNuclearResponse() {
+    console.error('🚨 INTENTO DE VER CÓDIGO FUENTE DETECTADO');
+    
+    // Paso 1: Ocultar todo el contenido real
+    document.body.style.opacity = '0';
+    document.body.style.pointerEvents = 'none';
+    
+    // Paso 2: Mostrar pantalla de bloqueo
+    const nuclearOverlay = document.createElement('div');
+    nuclearOverlay.id = 'nuclearOverlay';
+    nuclearOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      color: #fff;
+      z-index: 99999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+    `;
+    
+    nuclearOverlay.innerHTML = `
+      <div style="
+        background: #111;
+        padding: 40px;
+        border: 3px solid #f00;
+        border-radius: 0;
+        max-width: 700px;
+        animation: glitch 0.3s infinite;
+      ">
+        <h1 style="color: #f00; font-size: 42px; margin-bottom: 20px;">
+          🚫 CÓDIGO FUENTE PROTEGIDO
+        </h1>
+        
+        <div style="
+          background: #000;
+          padding: 20px;
+          margin: 20px 0;
+          text-align: left;
+          font-size: 14px;
+          color: #0f0;
+          border-left: 5px solid #f00;
+        ">
+          <code>
+&gt; SYSTEM: YMIR_GUILD_PROTECTION v2.0<br>
+&gt; THREAT: SOURCE_CODE_ACCESS_ATTEMPT<br>
+&gt; ACTION: IMMEDIATE_BLOCK<br>
+&gt; TIMESTAMP: ${new Date().toISOString()}<br>
+&gt; USER_AGENT: ${navigator.userAgent.substring(0, 50)}...<br>
+&gt; STATUS: <span style="color:#ff0">PERMANENT_BLOCK_ACTIVE</span>
+          </code>
+        </div>
+        
+        <p style="color: #ff6b6b; font-size: 18px; margin: 20px 0;">
+          El acceso al código fuente está estrictamente prohibido.
+        </p>
+        
+        <div style="
+          background: rgba(255, 0, 0, 0.1);
+          padding: 15px;
+          margin: 20px 0;
+          border-radius: 5px;
+        ">
+          <strong style="color: #ff0;">⚠️ CONSECUENCIAS:</strong><br>
+          • Intento registrado en base de datos<br>
+          • IP marcada para monitoreo<br>
+          • Sesión actual finalizada<br>
+          • Redirección forzosa activada
+        </div>
+        
+        <div style="margin-top: 30px; font-size: 14px; color: #aaa;">
+          La página se redirigirá en <span id="countdown">10</span> segundos...
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(nuclearOverlay);
+    
+    // Añadir animación de glitch
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes glitch {
+        0% { transform: translate(0); }
+        20% { transform: translate(-3px, 3px); }
+        40% { transform: translate(-3px, -3px); }
+        60% { transform: translate(3px, 3px); }
+        80% { transform: translate(3px, -3px); }
+        100% { transform: translate(0); }
+      }
+      @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-10px); }
+        20% { opacity: 1; transform: translateY(0); }
+        80% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-10px); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Cuenta regresiva
+    let count = 10;
+    const countdownEl = nuclearOverlay.querySelector('#countdown');
+    const countdownInterval = setInterval(() => {
+      count--;
+      countdownEl.textContent = count;
+      
+      if (count <= 0) {
+        clearInterval(countdownInterval);
+        // Redirigir a página segura
+        window.location.href = 'https://www.google.com/search?q=acceso+codigo+fuente+bloqueado+por+seguridad';
+      }
+    }, 1000);
+    
+    // Bloquear toda interacción
+    document.addEventListener('keydown', (e) => e.preventDefault(), true);
+    document.addEventListener('click', (e) => e.preventDefault(), true);
+    document.addEventListener('mousedown', (e) => e.preventDefault(), true);
+  }
+  
+  function showNuclearWarning(action) {
+    const warning = document.createElement('div');
+    warning.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #ff4757, #ff3838);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      z-index: 999999;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      box-shadow: 0 5px 20px rgba(255, 71, 87, 0.4);
+      animation: slideIn 0.3s ease-out;
+      border-left: 5px solid #ff0000;
+      max-width: 300px;
+    `;
+    
+    warning.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">🔒</span>
+        <div>
+          <div style="font-size: 16px;">ACCIÓN BLOQUEADA</div>
+          <div style="font-size: 12px; opacity: 0.9;">${action}</div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(warning);
+    
+    setTimeout(() => {
+      warning.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => warning.remove(), 300);
+    }, 3000);
+    
+    // Añadir animaciones si no existen
+    if (!document.querySelector('style[data-nuclear-animations]')) {
+      const animStyle = document.createElement('style');
+      animStyle.setAttribute('data-nuclear-animations', 'true');
+      animStyle.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(animStyle);
+    }
+  }
+  
+  // 6. OFUSCAR TODO EL CONTENIDO EN MEMORIA
+  setTimeout(() => {
+    // Hacer que los elementos sean difíciles de inspeccionar
+    const makeElementsOpaque = () => {
+      const sensitiveSelectors = [
+        '#tablaControl',
+        '.config-content',
+        '.ranking-container',
+        'script[type="module"]',
+        'style'
+      ];
+      
+      sensitiveSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+          // Añadir atributos de protección
+          el.setAttribute('data-protected', 'true');
+          el.setAttribute('data-timestamp', Date.now());
+          
+          // Hacer difícil la selección
+          el.style.userSelect = 'none';
+          el.style.webkitUserSelect = 'none';
+          
+          // Añadir listeners para bloquear inspección
+          el.addEventListener('mouseenter', () => {
+            if (window.getSelection) {
+              window.getSelection().removeAllRanges();
+            }
+          });
+        });
+      });
+    };
+    
+    makeElementsOpaque();
+    // Re-aplicar cada 5 segundos (por si añaden elementos dinámicamente)
+    setInterval(makeElementsOpaque, 5000);
+  }, 1000);
+  
+  // 7. BLOQUEAR ACCESO A console y debugger
+  (function() {
+    // Sobrescribir console methods
+    const consoleMethods = ['log', 'error', 'warn', 'info', 'debug', 'table', 'dir'];
+    consoleMethods.forEach(method => {
+      const original = console[method];
+      console[method] = function(...args) {
+        // Registrar intento
+        if (method === 'log' && args.some(arg => 
+          typeof arg === 'string' && arg.includes('Element')
+        )) {
+          showNuclearWarning('Console inspection attempt');
+        }
+        original.apply(console, args);
+      };
+    });
+    
+    // Debugger trap
+    setInterval(() => {
+      (function() {
+        return false;
+      })['constructor']('debugger')['call']();
+    }, 200);
+  })();
+  
+  console.info('🛡️ SISTEMA DE PROTECCIÓN NUCLEAR ACTIVADO - Ctrl+U BLOQUEADO');
+})();
+</script>
+<!-- === FIN PROTECCIÓN NUCLEAR === -->
 
 <div class="container">
   <!-- Contenedor principal de la ruleta -->

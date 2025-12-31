@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legend of Ymir - Horario de Bosses y Eventos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary: #8b5cf6;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #475569;
+            --light: #f8fafc;
+            --glass: rgba(30, 41, 59, 0.7);
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: var(--light);
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header y reloj */
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .logo-icon {
+            color: var(--secondary);
+            font-size: 2.5rem;
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+        }
+
+        /* Sección del reloj principal */
+        .time-section {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 40px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .server-time-container {
+            text-align: center;
+        }
+
+        .server-time-label {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .server-time-display {
+            font-family: 'Courier New', monospace;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--success);
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            background: rgba(15, 23, 42, 0.8);
+            padding: 15px 30px;
+            border-radius: 15px;
+            border: 2px solid rgba(16, 185, 129, 0.3);
+            display: inline-block;
+        }
+
+        .timezone {
+            font-size: 1rem;
+            color: #94a3b8;
+            margin-top: 5px;
+        }
+
+        /* Contador de próximo evento */
+        .next-event {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            min-width: 300px;
+        }
+
+        .next-event-label {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .next-event-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .next-event-countdown {
+            font-family: 'Courier New', monospace;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        /* Secciones de contenido */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .section-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px -5px rgba(0, 0, 0, 0.4);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--gray);
+        }
+
+        .section-icon {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--light);
+            font-weight: 700;
+        }
+
+        /* Tarjetas de boss */
+        .boss-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 5px solid var(--primary);
+            transition: all 0.3s ease;
+        }
+
+        .boss-card:hover {
+            background: rgba(30, 41, 59, 1);
+            border-left-color: var(--warning);
+        }
+
+        .boss-card.pvp {
+            border-left-color: var(--danger);
+        }
+
+        .boss-card.world {
+            border-left-color: var(--success);
+        }
+
+        .boss-card.other {
+            border-left-color: var(--secondary);
+        }
+
+        .boss-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--light);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .boss-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-weight: 600;
+            color: var(--light);
+        }
+
+        .countdown-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--gray);
+        }
+
+        .next-spawn {
+            font-weight: 600;
+            color: var(--warning);
+        }
+
+        .countdown {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: var(--warning);
+            padding: 8px 15px;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 10px;
+        }
+
+        /* Tabla de eventos semanales */
+        .events-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .events-table th {
+            background: var(--primary);
+            color: white;
+            text-align: left;
+            padding: 15px;
+            font-weight: 600;
+        }
+
+        .events-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--gray);
+        }
+
+        .events-table tr:hover {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Reset cards */
+        .reset-card {
+            background: rgba(30, 41, 59, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .reset-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reset-list {
+            list-style: none;
+            margin: 15px 0;
+        }
+
+        .reset-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .reset-list li:before {
+            content: "•";
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .time-section {
+                flex-direction: column;
+                gap: 20px;
+            }
+            
+            .server-time-display {
+                font-size: 2.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+
+        /* Animación para el reloj */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Badges para los días */
+        .day-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        .day-badge {
+            background: var(--primary-dark);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        /* === BOTÓN VOLVER === */
+        .back-btn-container {
+            position: fixed;
+            top: 30px;
+            left: 30px;
+            z-index: 100;
+        }
+        
+        .back-btn {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        
+        .back-btn:hover {
+            transform: translateY(-3px) translateX(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.6);
+            background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+        }
+        
+        .back-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .back-btn i {
+            font-size: 1.3rem;
+        }
+        
+        /* Ajustar header para el botón volver */
+        header {
+            margin-top: 50px;
+            position: relative;
+        }
+        
+        /* Responsive para el botón volver */
+        @media (max-width: 768px) {
+            .back-btn-container {
+                top: 20px;
+                left: 20px;
+            }
+            
+            .back-btn {
+                padding: 12px 20px;
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .back-btn-container {
+                top: 15px;
+                left: 15px;
+            }
+            
+            .back-btn {
+                padding: 10px 16px;
+                font-size: 0.9rem;
+                gap: 8px;
+            }
+            
+            .back-btn span {
+                display: none;
+            }
+            
+            .back-btn i {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- === PROTECCIÓN NUCLEAR - BLOQUEO TOTAL === -->
+<script>
+(function() {
+  'use strict';
+  
+  // === BLOQUEO DE VISTA DE CÓDIGO FUENTE ===
+  // 1. Bloquear acceso directo al código fuente
+  if (window.location.href.startsWith('view-source:')) {
+    // Redirigir inmediatamente si intentan ver el código
+    window.location.href = window.location.href.replace('view-source:', '');
+    document.write('<h1>🔒 Vista de código bloqueada</h1>');
+    document.close();
+    return;
+  }
+  
+  // 2. Sobrescribir document.documentElement para bloquear vista
+  const originalDocumentElement = Object.getOwnPropertyDescriptor(Document.prototype, 'documentElement');
+  Object.defineProperty(document, 'documentElement', {
+    get: function() {
+      const stack = new Error().stack;
+      if (stack && stack.includes('view-source')) {
+        // Crear elemento vacío si intentan acceder desde view-source
+        const fakeElement = document.createElement('html');
+        fakeElement.innerHTML = '<head><title>BLOQUEADO</title></head><body><h1>🔒 Código fuente protegido</h1></body>';
+        return fakeElement;
+      }
+      return originalDocumentElement.get.call(this);
+    }
+  });
+  
+  // 3. Bloquear Ctrl+U COMPLETAMENTE
+  document.addEventListener('keydown', function(e) {
+    // Bloquear F12
+    if (e.key === 'F12') {
+      e.preventDefault();
+      showNuclearWarning('DevTools (F12)');
+      return false;
+    }
+    
+    // Bloquear Ctrl+Shift+I
+    if (e.ctrlKey && e.shiftKey && e.key === 'I') {
+      e.preventDefault();
+      showNuclearWarning('DevTools (Ctrl+Shift+I)');
+      return false;
+    }
+    
+    // Bloquear Ctrl+U (VER CÓDIGO FUENTE - ESTO ES LO QUE FALTA)
+    if (e.ctrlKey && e.key === 'u') {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      // NUCLEAR: Destruir la página inmediatamente
+      triggerNuclearResponse();
+      return false;
+    }
+    
+    // Bloquear Ctrl+Shift+C (Inspeccionar elemento)
+    if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+      e.preventDefault();
+      showNuclearWarning('Inspeccionar elemento');
+      return false;
+    }
+    
+    // Bloquear Ctrl+S (Guardar página)
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault();
+      alert('🔒 Guardar página bloqueado');
+      return false;
+    }
+  }, true);
+  
+  // 4. BLOQUEO DE CLIC DERECHO EN TODA LA PÁGINA
+  document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Mostrar advertencia
+    const warning = document.createElement('div');
+    warning.style.cssText = `
+      position: fixed;
+      top: ${e.clientY}px;
+      left: ${e.clientX}px;
+      background: rgba(255, 59, 48, 0.95);
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: Arial;
+      z-index: 999999;
+      pointer-events: none;
+      animation: fadeInOut 2s forwards;
+    `;
+    warning.textContent = '🔒 Menú contextual bloqueado';
+    document.body.appendChild(warning);
+    setTimeout(() => warning.remove(), 2000);
+    
+    return false;
+  }, true);
+  
+  // 5. RESPUESTA NUCLEAR AL INTENTAR VER CÓDIGO
+  function triggerNuclearResponse() {
+    console.error('🚨 INTENTO DE VER CÓDIGO FUENTE DETECTADO');
+    
+    // Paso 1: Ocultar todo el contenido real
+    document.body.style.opacity = '0';
+    document.body.style.pointerEvents = 'none';
+    
+    // Paso 2: Mostrar pantalla de bloqueo
+    const nuclearOverlay = document.createElement('div');
+    nuclearOverlay.id = 'nuclearOverlay';
+    nuclearOverlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #000;
+      color: #fff;
+      z-index: 99999999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+    `;
+    
+    nuclearOverlay.innerHTML = `
+      <div style="
+        background: #111;
+        padding: 40px;
+        border: 3px solid #f00;
+        border-radius: 0;
+        max-width: 700px;
+        animation: glitch 0.3s infinite;
+      ">
+        <h1 style="color: #f00; font-size: 42px; margin-bottom: 20px;">
+          🚫 CÓDIGO FUENTE PROTEGIDO
+        </h1>
+        
+        <div style="
+          background: #000;
+          padding: 20px;
+          margin: 20px 0;
+          text-align: left;
+          font-size: 14px;
+          color: #0f0;
+          border-left: 5px solid #f00;
+        ">
+          <code>
+&gt; SYSTEM: YMIR_GUILD_PROTECTION v2.0<br>
+&gt; THREAT: SOURCE_CODE_ACCESS_ATTEMPT<br>
+&gt; ACTION: IMMEDIATE_BLOCK<br>
+&gt; TIMESTAMP: ${new Date().toISOString()}<br>
+&gt; USER_AGENT: ${navigator.userAgent.substring(0, 50)}...<br>
+&gt; STATUS: <span style="color:#ff0">PERMANENT_BLOCK_ACTIVE</span>
+          </code>
+        </div>
+        
+        <p style="color: #ff6b6b; font-size: 18px; margin: 20px 0;">
+          El acceso al código fuente está estrictamente prohibido.
+        </p>
+        
+        <div style="
+          background: rgba(255, 0, 0, 0.1);
+          padding: 15px;
+          margin: 20px 0;
+          border-radius: 5px;
+        ">
+          <strong style="color: #ff0;">⚠️ CONSECUENCIAS:</strong><br>
+          • Intento registrado en base de datos<br>
+          • IP marcada para monitoreo<br>
+          • Sesión actual finalizada<br>
+          • Redirección forzosa activada
+        </div>
+        
+        <div style="margin-top: 30px; font-size: 14px; color: #aaa;">
+          La página se redirigirá en <span id="countdown">10</span> segundos...
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(nuclearOverlay);
+    
+    // Añadir animación de glitch
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes glitch {
+        0% { transform: translate(0); }
+        20% { transform: translate(-3px, 3px); }
+        40% { transform: translate(-3px, -3px); }
+        60% { transform: translate(3px, 3px); }
+        80% { transform: translate(3px, -3px); }
+        100% { transform: translate(0); }
+      }
+      @keyframes fadeInOut {
+        0% { opacity: 0; transform: translateY(-10px); }
+        20% { opacity: 1; transform: translateY(0); }
+        80% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-10px); }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Cuenta regresiva
+    let count = 10;
+    const countdownEl = nuclearOverlay.querySelector('#countdown');
+    const countdownInterval = setInterval(() => {
+      count--;
+      countdownEl.textContent = count;
+      
+      if (count <= 0) {
+        clearInterval(countdownInterval);
+        // Redirigir a página segura
+        window.location.href = 'https://www.google.com/search?q=acceso+codigo+fuente+bloqueado+por+seguridad';
+      }
+    }, 1000);
+    
+    // Bloquear toda interacción
+    document.addEventListener('keydown', (e) => e.preventDefault(), true);
+    document.addEventListener('click', (e) => e.preventDefault(), true);
+    document.addEventListener('mousedown', (e) => e.preventDefault(), true);
+  }
+  
+  function showNuclearWarning(action) {
+    const warning = document.createElement('div');
+    warning.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #ff4757, #ff3838);
+      color: white;
+      padding: 15px 20px;
+      border-radius: 10px;
+      z-index: 999999;
+      font-family: Arial, sans-serif;
+      font-weight: bold;
+      box-shadow: 0 5px 20px rgba(255, 71, 87, 0.4);
+      animation: slideIn 0.3s ease-out;
+      border-left: 5px solid #ff0000;
+      max-width: 300px;
+    `;
+    
+    warning.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 24px;">🔒</span>
+        <div>
+          <div style="font-size: 16px;">ACCIÓN BLOQUEADA</div>
+          <div style="font-size: 12px; opacity: 0.9;">${action}</div>
+        </div>
+      </div>
+    `;
+    
+    document.body.appendChild(warning);
+    
+    setTimeout(() => {
+      warning.style.animation = 'slideOut 0.3s ease-in';
+      setTimeout(() => warning.remove(), 300);
+    }, 3000);
+    
+    // Añadir animaciones si no existen
+    if (!document.querySelector('style[data-nuclear-animations]')) {
+      const animStyle = document.createElement('style');
+      animStyle.setAttribute('data-nuclear-animations', 'true');
+      animStyle.textContent = `
+        @keyframes slideIn {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOut {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      `;
+      document.head.appendChild(animStyle);
+    }
+  }
+  
+  // 6. OFUSCAR TODO EL CONTENIDO EN MEMORIA
+  setTimeout(() => {
+    // Hacer que los elementos sean difíciles de inspeccionar
+    const makeElementsOpaque = () => {
+      const sensitiveSelectors = [
+        '#tablaControl',
+        '.config-content',
+        '.ranking-container',
+        'script[type="module"]',
+        'style'
+      ];
+      
+      sensitiveSelectors.forEach(selector => {
+        document.querySelectorAll(selector).forEach(el => {
+          // Añadir atributos de protección
+          el.setAttribute('data-protected', 'true');
+          el.setAttribute('data-timestamp', Date.now());
+          
+          // Hacer difícil la selección
+          el.style.userSelect = 'none';
+          el.style.webkitUserSelect = 'none';
+          
+          // Añadir listeners para bloquear inspección
+          el.addEventListener('mouseenter', () => {
+            if (window.getSelection) {
+              window.getSelection().removeAllRanges();
+            }
+          });
+        });
+      });
+    };
+    
+    makeElementsOpaque();
+    // Re-aplicar cada 5 segundos (por si añaden elementos dinámicamente)
+    setInterval(makeElementsOpaque, 5000);
+  }, 1000);
+  
+  // 7. BLOQUEAR ACCESO A console y debugger
+  (function() {
+    // Sobrescribir console methods
+    const consoleMethods = ['log', 'error', 'warn', 'info', 'debug', 'table', 'dir'];
+    consoleMethods.forEach(method => {
+      const original = console[method];
+      console[method] = function(...args) {
+        // Registrar intento
+        if (method === 'log' && args.some(arg => 
+          typeof arg === 'string' && arg.includes('Element')
+        )) {
+          showNuclearWarning('Console inspection attempt');
+        }
+        original.apply(console, args);
+      };
+    });
+    
+    // Debugger trap
+    setInterval(() => {
+      (function() {
+        return false;
+      })['constructor']('debugger')['call']();
+    }, 200);
+  })();
+  
+  console.info('🛡️ SISTEMA DE PROTECCIÓN NUCLEAR ACTIVADO - Ctrl+U BLOQUEADO');
+})();
+</script>
+<!-- === FIN PROTECCIÓN NUCLEAR === -->
+
+    <!-- === BOTÓN VOLVER (Fijo en la izquierda) === -->
+    <div class="back-btn-container">
+        <button id="backBtn" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Volver Atrás</span>
+        </button>
+
+    </div>
+    <div class="container">
+        <!-- Header con reloj -->
+        <header>
+            <div class="logo">
+                <i class="fas fa-dragon logo-icon"></i>
+                <h1>LEGEND OF YMIR</h1>
+            </div>
+            <p class="subtitle">Horario de Bosses y Eventos - TheOrigin</p>
+            
+            <div class="time-section">
+                <div class="server-time-container">
+                    <div class="server-time-label">
+                        <i class="fas fa-clock"></i> HORA DEL SERVIDOR
+                    </div>
+                    <div id="serverTime" class="server-time-display pulse">19:13:01</div>
+                    <div class="timezone">UTC-4</div>
+                </div>
+                
+                <div class="next-event">
+                    <div class="next-event-label">
+                        <i class="fas fa-calendar-alt"></i> PRÓXIMO EVENTO
+                    </div>
+                    <div class="next-event-title">Server Battle (Nivel 40+ & Top 500 Poder Inter-Servidor)</div>
+                    <div id="nextEventCountdown" class="next-event-countdown">00:46:58</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Grid principal de contenido -->
+        <div class="content-grid">
+            <!-- World Bosses -->
+            <section class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-globe-americas section-icon"></i>
+                    <h2>World Bosses</h2>
+                </div>
+                
+                <div class="boss-card world">
+                    <div class="boss-name">
+                        <i class="fas fa-ghost"></i> PHANTOM OF LOKI
+                    </div>
+                    <div class="boss-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Ubicación</span>
+                            <span class="detail-value">Asgard / Hill of Bifrost</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nivel Mínimo</span>
+                            <span class="detail-value">35+</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Horarios (UTC-4)</span>
+                            <span class="detail-value">12:00 (Mediodía)<br>22:00 (Noche)</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Días</span>
+                        <div class="day-badges">
+                            <span class="day-badge">Martes</span>
+                            <span class="day-badge">Jueves</span>
+                            <span class="day-badge">Sábado</span>
+                        </div>
+                    </div>
+                    <div class="countdown-container">
+                        <div>
+                            <span class="detail-label">Próximo Spawn</span>
+                            <div class="next-spawn">Martes 22:00</div>
+                        </div>
+                        <div>
+                            <span class="detail-label">Tiempo Restante</span>
+                            <div class="countdown">2h 46m 58s</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PVP Bosses -->
+            <section class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-crosshairs section-icon"></i>
+                    <h2>PVP Bosses</h2>
+                </div>
+                
+                <div class="boss-card pvp">
+                    <div class="boss-name">
+                        <i class="fas fa-fire"></i> TWILIGHT DISASTER NIRVA
+                    </div>
+                    <div class="boss-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Ubicación</span>
+                            <span class="detail-value">Crossroads of Ragnarok (Inter)</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nivel Mínimo</span>
+                            <span class="detail-value">45+</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Horario (UTC-4)</span>
+                            <span class="detail-value">19:00 (Noche)</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Días</span>
+                        <div class="day-badges">
+                            <span class="day-badge">Miércoles</span>
+                            <span class="day-badge">Sábado</span>
+                        </div>
+                    </div>
+                    <div class="countdown-container">
+                        <div>
+                            <span class="detail-label">Próximo Spawn</span>
+                            <div class="next-spawn">Miércoles 19:00</div>
+                        </div>
+                        <div>
+                            <span class="detail-label">Tiempo Restante</span>
+                            <div class="countdown">23h 46m 58s</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="boss-card pvp">
+                    <div class="boss-name">
+                        <i class="fas fa-crown"></i> TWILIGHT OVERLORD ROGVALT
+                    </div>
+                    <div class="boss-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Ubicación</span>
+                            <span class="detail-value">Vale of Ragnarok (Inter)</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nivel Mínimo</span>
+                            <span class="detail-value">40+</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Horario (UTC-4)</span>
+                            <span class="detail-value">19:00 (Noche)</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Días</span>
+                        <div class="day-badges">
+                            <span class="day-badge">Miércoles</span>
+                            <span class="day-badge">Sábado</span>
+                        </div>
+                    </div>
+                    <div class="countdown-container">
+                        <div>
+                            <span class="detail-label">Próximo Spawn</span>
+                            <div class="next-spawn">Miércoles 19:00</div>
+                        </div>
+                        <div>
+                            <span class="detail-label">Tiempo Restante</span>
+                            <div class="countdown">23h 46m 58s</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Otros Bosses -->
+            <section class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-dungeon section-icon"></i>
+                    <h2>Otros Bosses</h2>
+                </div>
+                
+                <div class="boss-card other">
+                    <div class="boss-name">
+                        <i class="fas fa-mountain"></i> NARGRIM
+                    </div>
+                    <div class="boss-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Ubicación</span>
+                            <span class="detail-value">Canyon of the World Tree 4F</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Nivel Mínimo</span>
+                            <span class="detail-value">50+</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Horario (UTC-4)</span>
+                            <span class="detail-value">19:00 (Noche)</span>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Días</span>
+                        <div class="day-badges">
+                            <span class="day-badge">Miércoles</span>
+                            <span class="day-badge">Sábado</span>
+                        </div>
+                    </div>
+                    <div class="countdown-container">
+                        <div>
+                            <span class="detail-label">Próximo Spawn</span>
+                            <div class="next-spawn">Miércoles 19:00</div>
+                        </div>
+                        <div>
+                            <span class="detail-label">Tiempo Restante</span>
+                            <div class="countdown">23h 46m 58s</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Resets Diarios y Semanales -->
+            <section class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-redo-alt section-icon"></i>
+                    <h2>Resets Diarios y Semanales</h2>
+                </div>
+                
+                <div class="reset-card">
+                    <div class="reset-title">
+                        <i class="fas fa-sun"></i> Resets Diarios
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Hora (UTC-4)</span>
+                        <span class="detail-value">04:00</span>
+                    </div>
+                    <ul class="reset-list">
+                        <li>Entradas a Bosses</li>
+                        <li>Entradas a Raids</li>
+                        <li>Hall of Valkyrie</li>
+                        <li>Misiones Diarias</li>
+                    </ul>
+                    <div class="countdown-container">
+                        <div>
+                            <span class="detail-label">Próximo Reset</span>
+                            <div class="next-spawn">Miércoles 04:00</div>
+                        </div>
+                        <div>
+                            <span class="detail-label">Tiempo Restante</span>
+                            <div class="countdown">8h 46m 58s</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="reset-card">
+                    <div class="reset-title">
+                        <i class="fas fa-calendar-week"></i> Resets Semanales
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Hora (UTC-4)</span>
+                        <span class="detail-value">Lunes 04:00</span>
+                    </div>
+                    <ul class="reset-list">
+                        <li>Temple of Chaos</li>
+                        <li>Folkvang</li>
+                    </ul>
+                    <div class="countdown-container">
+                        <div>
+                            <span class="detail-label">Próximo Reset</span>
+                            <div class="next-spawn">Lunes 04:00</div>
+                        </div>
+                        <div>
+                            <span class="detail-label">Tiempo Restante</span>
+                            <div class="countdown">128h 46m 58s</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Eventos Semanales -->
+            <section class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-calendar-day section-icon"></i>
+                    <h2>Eventos Semanales</h2>
+                </div>
+                
+                <table class="events-table">
+                    <thead>
+                        <tr>
+                            <th>Actividad</th>
+                            <th>Hora (UTC-4)</th>
+                            <th>Días</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1 Hora 20% Hot Time - Vale of Ragnarok</td>
+                            <td>14:00</td>
+                            <td>Lunes, Jueves</td>
+                        </tr>
+                        <tr>
+                            <td>1 Hora 20% Hot Time - Crossroads of Ragnarok</td>
+                            <td>14:00</td>
+                            <td>Martes, Sábado</td>
+                        </tr>
+                    </tbody>
+                </table>
+                
+                <div style="margin-top: 20px;">
+                    <div class="detail-item">
+                        <span class="detail-label">Próximo Evento</span>
+                        <span class="detail-value">Jueves 14:00 - 1 Hora 20% Hot Time - Vale of Ragnarok</span>
+                    </div>
+                    <div class="countdown-container">
+                        <div>
+                            <span class="detail-label">Tiempo Restante</span>
+                            <div class="countdown">42h 46m 58s</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Función para formatear números con dos dígitos
+        function formatTime(number) {
+            return number < 10 ? '0' + number : number;
+        }
+        
+        // Función para actualizar el reloj del servidor
+        function updateServerTime() {
+            const now = new Date();
+            
+            // Ajustar a UTC-4 (Atlantic Standard Time)
+            const utcMinus4 = new Date(now.getTime() + (-4 * 60 - now.getTimezoneOffset()) * 60000);
+            
+            const hours = formatTime(utcMinus4.getHours());
+            const minutes = formatTime(utcMinus4.getMinutes());
+            const seconds = formatTime(utcMinus4.getSeconds());
+            
+            document.getElementById('serverTime').textContent = `${hours}:${minutes}:${seconds}`;
+            
+            // Actualizar todos los contadores de tiempo
+            updateAllCountdowns();
+        }
+        
+        // Función para actualizar todos los contadores
+        function updateAllCountdowns() {
+            // En una implementación real, aquí calcularías los tiempos restantes
+            // para cada boss y evento basado en la hora actual
+            // Por ahora solo actualizamos el contador principal cada segundo
+            updateMainCountdown();
+        }
+        
+        // Función para el contador principal
+        function updateMainCountdown() {
+            const countdownElement = document.getElementById('nextEventCountdown');
+            let timeText = countdownElement.textContent;
+            let parts = timeText.split(':');
+            
+            let hours = parseInt(parts[0]);
+            let minutes = parseInt(parts[1]);
+            let seconds = parseInt(parts[2]);
+            
+            // Reducir un segundo
+            seconds--;
+            
+            if (seconds < 0) {
+                seconds = 59;
+                minutes--;
+                
+                if (minutes < 0) {
+                    minutes = 59;
+                    hours--;
+                    
+                    if (hours < 0) {
+                        // Reiniciar contador (en una implementación real, esto se calcularía)
+                        hours = 0;
+                        minutes = 46;
+                        seconds = 58;
+                    }
+                }
+            }
+            
+            // Actualizar el elemento
+            countdownElement.textContent = 
+                `${formatTime(hours)}:${formatTime(minutes)}:${formatTime(seconds)}`;
+        }
+        
+        // Inicializar el reloj
+        updateServerTime();
+        
+        // Actualizar cada segundo
+        setInterval(updateServerTime, 1000);
+        
+        // Efectos de hover para tarjetas
+        document.querySelectorAll('.boss-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+<script>
+    <!-- ... (todo tu contenido HTML existente) ... -->
+
+           // === BOTÓN VOLVER ===
+        // Vuelve a la página ANTERIOR específica
+        document.getElementById('backBtn').addEventListener('click', function() {
+            // Usar history.back() para volver a la página inmediatamente anterior
+            history.back();
+        });
+</script>
+</body>
+</html>
