@@ -1610,7 +1610,7 @@ async function saveRoundState() {
   }
 }
 
-// Función para agregar item - CORREGIDA
+// Función para agregar item
 async function addTrashItem() {
   const nameInput = document.getElementById('newTrashItem');
   const quantityInput = document.getElementById('newTrashQuantity');
@@ -1660,13 +1660,8 @@ async function addTrashItem() {
   // Renderizar items
   renderTrashItems();
   
-  // Actualizar estado del botón de girar ruleta (solo líderes/oficiales)
-  if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-    const spinBtn = document.getElementById('spinRouletteBtn');
-    const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-    const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-    spinBtn.disabled = !canDistribute;
-  }
+  // Actualizar estado del botón de girar ruleta
+  updateSpinButtonStatus();
   
   // Mostrar mensaje de éxito
   showToast(`✅ Item "${name}" agregado (${quantity})`, "success");
@@ -1686,12 +1681,7 @@ async function removeTrashItem(index) {
         renderTrashItems();
         
         // Actualizar estado del botón de girar ruleta
-        if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-          const spinBtn = document.getElementById('spinRouletteBtn');
-          const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-          const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-          spinBtn.disabled = !canDistribute;
-        }
+        updateSpinButtonStatus();
         
         // Mostrar mensaje
         showToast(`🗑️ Item "${itemName}" eliminado`, "error");
@@ -1714,10 +1704,7 @@ async function clearAllTrashItems() {
       renderTrashItems();
       
       // Actualizar estado del botón de girar ruleta
-      if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-        const spinBtn = document.getElementById('spinRouletteBtn');
-        spinBtn.disabled = true;
-      }
+      updateSpinButtonStatus();
       
       // Mostrar mensaje
       showToast('🧹 Todos los items eliminados', "warning");
@@ -1874,22 +1861,7 @@ async function loadEligibleMembers() {
     }
     
     updateDistributionStatus();
-    
-    // Habilitar/deshabilitar botón de girar ruleta
-    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-      const spinBtn = document.getElementById('spinRouletteBtn');
-      
-      // Calcular miembros que pueden recibir
-      const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-      const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-      
-      spinBtn.disabled = !canDistribute;
-      spinBtn.title = canDistribute ? 
-        `Repartir ${Math.min(availableMembers.length, trashItems.length)} items a ${availableMembers.length} miembros` : 
-        (eligibleMembers.length === 0 ? "No hay miembros elegibles" : 
-         trashItems.length === 0 ? "No hay items para repartir" : 
-         "Todos ya recibieron en esta ronda");
-    }
+    updateSpinButtonStatus();
     
     return eligibleMembers;
   } catch (error) {
@@ -1928,6 +1900,31 @@ function updateDistributionStatus() {
   } else {
     distributionInfoElement.textContent = `${membersWithoutItem} miembros aún no han recibido en esta ronda`;
     distributionInfoElement.style.color = membersWithoutItem > 0 ? "#ffc107" : "#aaa";
+  }
+}
+
+// Función para actualizar el estado del botón de girar ruleta
+function updateSpinButtonStatus() {
+  if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+    const spinBtn = document.getElementById('spinRouletteBtn');
+    
+    if (!spinBtn) return;
+    
+    // Calcular miembros que pueden recibir
+    const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
+    const totalItems = trashItems.reduce((sum, item) => sum + item.quantity, 0);
+    const canDistribute = availableMembers.length > 0 && totalItems > 0;
+    
+    spinBtn.disabled = !canDistribute;
+    
+    if (canDistribute) {
+      const itemsToGive = Math.min(availableMembers.length, totalItems);
+      spinBtn.title = `Repartir ${itemsToGive} items a ${availableMembers.length} miembros disponibles`;
+    } else {
+      spinBtn.title = eligibleMembers.length === 0 ? "No hay miembros elegibles" : 
+                     totalItems === 0 ? "No hay items para repartir" : 
+                     "Todos ya recibieron en esta ronda";
+    }
   }
 }
 
@@ -1996,16 +1993,20 @@ function renderTrashItems() {
   }
   
   updateDistributionStatus();
+  updateSpinButtonStatus();
 }
 
-// Función para girar la ruleta y repartir items
+// Función para girar la ruleta y repartir items - CORREGIDA
 async function spinTrashRoulette() {
   if (eligibleMembers.length === 0) {
     alert('❌ No hay miembros elegibles para el reparto');
     return;
   }
   
-  if (trashItems.length === 0) {
+  // Calcular total de items disponibles
+  const totalItems = trashItems.reduce((sum, item) => sum + item.quantity, 0);
+  
+  if (totalItems === 0) {
     alert('❌ No hay items para repartir');
     return;
   }
@@ -2035,70 +2036,96 @@ async function spinTrashRoulette() {
   // Simular proceso de reparto
   setTimeout(async () => {
     try {
-      // Crear copia de los items
-      const itemsToDistribute = [...trashItems];
+      console.log("=== INICIANDO REPARTO ===");
+      console.log(`Items antes: ${JSON.stringify(trashItems)}`);
+      console.log(`Miembros sin item: ${membersWithoutItem.length}`);
+      
+      // Crear copia profunda de los items
+      const itemsToDistribute = JSON.parse(JSON.stringify(trashItems));
+      console.log(`Copia de items: ${JSON.stringify(itemsToDistribute)}`);
       
       // Mezclar aleatoriamente los miembros que no han recibido
-      const shuffledMembers = membersWithoutItem.sort(() => Math.random() - 0.5);
-      
-      // Registrar participación de TODOS los miembros elegibles
-      shuffledMembers.forEach(member => {
-        membersParticipatedInRound.add(member.id);
-      });
+      const shuffledMembers = [...membersWithoutItem].sort(() => Math.random() - 0.5);
+      console.log(`Miembros mezclados: ${shuffledMembers.length}`);
       
       // Repartir items (máximo 1 por miembro en esta ronda)
       const results = [];
+      let itemsGiven = 0;
+      const maxItemsToGive = Math.min(shuffledMembers.length, totalItems);
+      
+      console.log(`Máximo de items a dar: ${maxItemsToGive}`);
+      
+      // ALGORITMO CORREGIDO: Distribuir items equitativamente
       let itemIndex = 0;
       let memberIndex = 0;
       
-      while (itemIndex < itemsToDistribute.length && memberIndex < shuffledMembers.length) {
-        const item = itemsToDistribute[itemIndex];
-        const member = shuffledMembers[memberIndex];
+      while (itemsGiven < maxItemsToGive && itemIndex < itemsToDistribute.length) {
+        const currentItem = itemsToDistribute[itemIndex];
         
-        // Solo dar 1 item por miembro en esta ronda
-        const quantityToGive = Math.min(item.quantity, 1);
-        
-        if (quantityToGive > 0) {
+        if (currentItem.quantity > 0 && memberIndex < shuffledMembers.length) {
+          const currentMember = shuffledMembers[memberIndex];
+          
+          // Solo dar 1 item por miembro
           results.push({
-            memberId: member.id,
-            memberName: member.name,
-            itemName: item.name,
-            quantity: quantityToGive,
+            memberId: currentMember.id,
+            memberName: currentMember.name,
+            itemName: currentItem.name,
+            quantity: 1,
             round: distributionRound
           });
           
           // Registrar el reparto en Firestore
           await addDoc(collection(db, "trashDistributions"), {
-            memberId: member.id,
-            memberName: member.name,
-            itemName: item.name,
-            quantity: quantityToGive,
+            memberId: currentMember.id,
+            memberName: currentMember.name,
+            itemName: currentItem.name,
+            quantity: 1,
             distributedBy: auth.currentUser.uid,
             distributedByRole: currentUserRole,
             distributedAt: new Date(),
             type: "ruleta_items",
             round: distributionRound,
-            memberPoints: member.semanal || 0
+            memberPoints: currentMember.semanal || 0
           });
           
           // Marcar miembro como que ya recibió EN ESTA RONDA
-          membersReceived.add(member.id);
+          membersReceived.add(currentMember.id);
           
-          // Actualizar cantidad del item
-          if (item.quantity > quantityToGive) {
-            item.quantity -= quantityToGive;
-          } else {
+          // Reducir la cantidad del item
+          currentItem.quantity -= 1;
+          itemsGiven++;
+          
+          console.log(`Item dado: ${currentItem.name} a ${currentMember.name}`);
+          console.log(`Quedan: ${currentItem.quantity} de ${currentItem.name}`);
+          
+          // Si el item se acabó, pasar al siguiente
+          if (currentItem.quantity <= 0) {
             itemIndex++;
           }
           
+          // Pasar al siguiente miembro
           memberIndex++;
-        } else {
+        } else if (currentItem.quantity <= 0) {
+          // Si el item se acabó, pasar al siguiente
           itemIndex++;
+        } else if (memberIndex >= shuffledMembers.length) {
+          // Si no hay más miembros, terminar
+          break;
         }
       }
       
-      // Actualizar lista de items en Firestore
-      trashItems = itemsToDistribute.filter(item => item.quantity > 0);
+      console.log(`Items dados: ${itemsGiven}`);
+      console.log(`Items después del reparto: ${JSON.stringify(itemsToDistribute)}`);
+      
+      // Filtrar items que aún tienen cantidad > 0
+      const remainingItems = itemsToDistribute.filter(item => item.quantity > 0);
+      
+      // Actualizar lista de items
+      trashItems = remainingItems;
+      
+      console.log(`Items que quedan: ${JSON.stringify(trashItems)}`);
+      
+      // Guardar en Firestore
       await saveTrashItems();
       
       // Guardar estado de la ronda
@@ -2114,11 +2141,9 @@ async function spinTrashRoulette() {
       loadDistributionHistory();
       
       // Mostrar resumen
-      const itemsGiven = results.length;
-      const membersGiven = new Set(results.map(r => r.memberId)).size;
-      
       if (itemsGiven > 0) {
-        showToast(`✅ Reparto completado: ${itemsGiven} item(s) a ${membersGiven} miembro(s)`, "success");
+        const uniqueMembers = new Set(results.map(r => r.memberId)).size;
+        showToast(`✅ Reparto completado: ${itemsGiven} item(s) a ${uniqueMembers} miembro(s)`, "success");
       }
       
       // Verificar si se completó la ronda
@@ -2132,11 +2157,7 @@ async function spinTrashRoulette() {
     } finally {
       // Restaurar botón
       spinBtn.classList.remove('spinning');
-      if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-        const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-        const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-        spinBtn.disabled = !canDistribute;
-      }
+      updateSpinButtonStatus();
       spinBtn.innerHTML = '<span>🎰</span> Girar Ruleta';
     }
   }, 2000);
@@ -2222,14 +2243,7 @@ async function resetDistribution() {
     await saveRoundState();
     
     updateDistributionStatus();
-    
-    // Actualizar estado del botón de girar ruleta
-    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-      const spinBtn = document.getElementById('spinRouletteBtn');
-      const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-      const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-      spinBtn.disabled = !canDistribute;
-    }
+    updateSpinButtonStatus();
     
     // Limpiar resultados mostrados
     document.getElementById('rouletteResults').style.display = 'none';
@@ -2250,15 +2264,9 @@ async function startNewRound() {
     await saveRoundState();
     
     updateDistributionStatus();
-    showToast(`✅ Nueva ronda ${distributionRound} iniciada`, "success");
+    updateSpinButtonStatus();
     
-    // Actualizar botón de girar ruleta
-    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-      const spinBtn = document.getElementById('spinRouletteBtn');
-      const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-      const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-      spinBtn.disabled = !canDistribute;
-    }
+    showToast(`✅ Nueva ronda ${distributionRound} iniciada`, "success");
   }
 }
 
@@ -2772,12 +2780,7 @@ function showManualAdjustmentModal(detectedItems, fullText) {
       showToast(`✅ Se agregaron ${items.length} tipo(s) de items a la ruleta`, "success");
       
       // Actualizar estado del botón de girar ruleta
-      if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-        const spinBtn = document.getElementById('spinRouletteBtn');
-        const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-        const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-        spinBtn.disabled = !canDistribute;
-      }
+      updateSpinButtonStatus();
     }
   });
   
