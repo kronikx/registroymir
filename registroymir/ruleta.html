@@ -1543,9 +1543,11 @@ async function loadTrashRouletteState() {
   }
 }
 
-// Función para guardar items en Firestore
+// Función para guardar items en Firestore - CORREGIDA
 async function saveTrashItems() {
   try {
+    console.log("Guardando items en Firestore...");
+    
     // Primero, eliminar todos los items existentes
     const itemsRef = collection(db, "trashRouletteItems");
     const itemsSnapshot = await getDocs(itemsRef);
@@ -1555,23 +1557,35 @@ async function saveTrashItems() {
       batch.delete(docSnap.ref);
     });
     
-    // Luego, agregar los nuevos items
-    trashItems.forEach(item => {
-      const newItemRef = doc(itemsRef);
-      batch.set(newItemRef, {
-        name: item.name,
-        quantity: item.quantity,
-        addedAt: new Date(),
-        addedBy: auth.currentUser?.uid || "system",
-        addedByRole: currentUserRole
-      });
-    });
-    
+    // Ejecutar el batch de eliminación primero
     await batch.commit();
-    console.log(`✅ ${trashItems.length} items guardados en Firestore`);
+    console.log("✅ Items anteriores eliminados");
+    
+    // Luego, agregar los nuevos items (si hay)
+    if (trashItems.length > 0) {
+      const newBatch = writeBatch(db);
+      
+      trashItems.forEach(item => {
+        const newItemRef = doc(itemsRef); // Crear nueva referencia con ID automático
+        newBatch.set(newItemRef, {
+          name: item.name,
+          quantity: item.quantity,
+          addedAt: new Date(),
+          addedBy: auth.currentUser?.uid || "system",
+          addedByRole: currentUserRole
+        });
+      });
+      
+      await newBatch.commit();
+      console.log(`✅ ${trashItems.length} items guardados en Firestore`);
+    } else {
+      console.log("✅ No hay items para guardar (lista vacía)");
+    }
+    
     return true;
   } catch (error) {
     console.error("❌ Error guardando items:", error);
+    alert("Error al guardar los items: " + error.message);
     return false;
   }
 }
@@ -1593,6 +1607,121 @@ async function saveRoundState() {
   } catch (error) {
     console.error("❌ Error guardando estado de ronda:", error);
     return false;
+  }
+}
+
+// Función para agregar item - CORREGIDA
+async function addTrashItem() {
+  const nameInput = document.getElementById('newTrashItem');
+  const quantityInput = document.getElementById('newTrashQuantity');
+  
+  const name = nameInput.value.trim();
+  const quantity = parseInt(quantityInput.value) || 1;
+  
+  if (!name) {
+    alert('Por favor, introduce un nombre para el item');
+    nameInput.focus();
+    return;
+  }
+  
+  if (quantity < 1) {
+    alert('La cantidad debe ser al menos 1');
+    quantityInput.focus();
+    quantityInput.select();
+    return;
+  }
+  
+  // Verificar si el item ya existe y sumar cantidades
+  const existingIndex = trashItems.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
+  if (existingIndex !== -1) {
+    trashItems[existingIndex].quantity += quantity;
+    console.log(`Item existente actualizado: ${name} (+${quantity})`);
+  } else {
+    trashItems.push({
+      name: name,
+      quantity: quantity
+    });
+    console.log(`Nuevo item agregado: ${name} (${quantity})`);
+  }
+  
+  // Guardar en Firestore INMEDIATAMENTE
+  const saved = await saveTrashItems();
+  
+  if (!saved) {
+    alert("❌ Error al guardar el item. Intenta nuevamente.");
+    return;
+  }
+  
+  // Limpiar inputs
+  nameInput.value = '';
+  quantityInput.value = '1';
+  nameInput.focus();
+  
+  // Renderizar items
+  renderTrashItems();
+  
+  // Actualizar estado del botón de girar ruleta (solo líderes/oficiales)
+  if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+    const spinBtn = document.getElementById('spinRouletteBtn');
+    const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
+    const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
+    spinBtn.disabled = !canDistribute;
+  }
+  
+  // Mostrar mensaje de éxito
+  showToast(`✅ Item "${name}" agregado (${quantity})`, "success");
+}
+
+// Función para eliminar item
+async function removeTrashItem(index) {
+  if (index >= 0 && index < trashItems.length) {
+    const itemName = trashItems[index].name;
+    if (confirm(`¿Eliminar "${itemName}"?`)) {
+      const removedItem = trashItems.splice(index, 1)[0];
+      
+      // Guardar en Firestore
+      const saved = await saveTrashItems();
+      
+      if (saved) {
+        renderTrashItems();
+        
+        // Actualizar estado del botón de girar ruleta
+        if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+          const spinBtn = document.getElementById('spinRouletteBtn');
+          const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
+          const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
+          spinBtn.disabled = !canDistribute;
+        }
+        
+        // Mostrar mensaje
+        showToast(`🗑️ Item "${itemName}" eliminado`, "error");
+      }
+    }
+  }
+}
+
+// Función para limpiar todos los items
+async function clearAllTrashItems() {
+  if (trashItems.length === 0) return;
+  
+  if (confirm('¿Estás seguro de que quieres eliminar todos los items?')) {
+    trashItems = [];
+    
+    // Guardar en Firestore (lista vacía)
+    const saved = await saveTrashItems();
+    
+    if (saved) {
+      renderTrashItems();
+      
+      // Actualizar estado del botón de girar ruleta
+      if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+        const spinBtn = document.getElementById('spinRouletteBtn');
+        spinBtn.disabled = true;
+      }
+      
+      // Mostrar mensaje
+      showToast('🧹 Todos los items eliminados', "warning");
+    }
   }
 }
 
@@ -1733,20 +1862,13 @@ async function loadEligibleMembers() {
     
     eligibleMembers = currentEligibleMembers;
     
-    // Actualizar contador y estado CON MÁS INFORMACIÓN
+    // Actualizar contador y estado
     document.getElementById('eligibleMembersCount').textContent = eligibleMembers.length;
     
     // Actualizar información detallada
     const statusElement = document.getElementById('distributionStatus');
     if (eligibleMembers.length > 0) {
-      const infoExtra = eligibleMembers.map(m => 
-        `${m.name}: ${m.puntosTotales}pts (${m.puntosActuales}+${m.puntosUsados})`
-      ).join(', ');
-      
-      statusElement.innerHTML = `${eligibleMembers.length} miembros elegibles<br>
-        <small style="color:#aaa; font-size:11px;">
-          Puntos totales: ${infoExtra.substring(0, 80)}${infoExtra.length > 80 ? '...' : ''}
-        </small>`;
+      statusElement.textContent = `${eligibleMembers.length} miembros elegibles`;
     } else {
       statusElement.textContent = "0 miembros cumplen los requisitos";
     }
@@ -1876,163 +1998,6 @@ function renderTrashItems() {
   updateDistributionStatus();
 }
 
-// Función para agregar item
-async function addTrashItem() {
-  const nameInput = document.getElementById('newTrashItem');
-  const quantityInput = document.getElementById('newTrashQuantity');
-  
-  const name = nameInput.value.trim();
-  const quantity = parseInt(quantityInput.value) || 1;
-  
-  if (!name) {
-    alert('Por favor, introduce un nombre para el item');
-    nameInput.focus();
-    return;
-  }
-  
-  if (quantity < 1) {
-    alert('La cantidad debe ser al menos 1');
-    quantityInput.focus();
-    quantityInput.select();
-    return;
-  }
-  
-  // Verificar si el item ya existe y sumar cantidades
-  const existingIndex = trashItems.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
-  if (existingIndex !== -1) {
-    trashItems[existingIndex].quantity += quantity;
-  } else {
-    trashItems.push({
-      name: name,
-      quantity: quantity
-    });
-  }
-  
-  // Guardar en Firestore
-  await saveTrashItems();
-  
-  // Limpiar inputs
-  nameInput.value = '';
-  quantityInput.value = '1';
-  nameInput.focus();
-  
-  // Renderizar items
-  renderTrashItems();
-  
-  // Actualizar estado del botón de girar ruleta (solo líderes/oficiales)
-  if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-    const spinBtn = document.getElementById('spinRouletteBtn');
-    const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-    const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-    spinBtn.disabled = !canDistribute;
-  }
-  
-  // Mostrar mensaje de éxito
-  const toast = document.createElement('div');
-  toast.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #4ecca3;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    z-index: 1000;
-    animation: slideInRight 0.3s;
-  `;
-  toast.textContent = `✅ Item "${name}" agregado (${quantity})`;
-  document.body.appendChild(toast);
-  
-  setTimeout(() => {
-    toast.style.animation = 'slideOutRight 0.3s';
-    setTimeout(() => toast.remove(), 300);
-  }, 2000);
-}
-
-// Función para eliminar item
-async function removeTrashItem(index) {
-  if (index >= 0 && index < trashItems.length) {
-    if (confirm(`¿Eliminar "${trashItems[index].name}"?`)) {
-      const removedItem = trashItems.splice(index, 1)[0];
-      
-      // Guardar en Firestore
-      await saveTrashItems();
-      
-      renderTrashItems();
-      
-      // Actualizar estado del botón de girar ruleta
-      if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-        const spinBtn = document.getElementById('spinRouletteBtn');
-        const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-        const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-        spinBtn.disabled = !canDistribute;
-      }
-      
-      // Mostrar mensaje
-      const toast = document.createElement('div');
-      toast.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #ff6b6b;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        z-index: 1000;
-        animation: slideInRight 0.3s;
-      `;
-      toast.textContent = `🗑️ Item "${removedItem.name}" eliminado`;
-      document.body.appendChild(toast);
-      
-      setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s';
-        setTimeout(() => toast.remove(), 300);
-      }, 2000);
-    }
-  }
-}
-
-// Función para limpiar todos los items
-async function clearAllTrashItems() {
-  if (trashItems.length === 0) return;
-  
-  if (confirm('¿Estás seguro de que quieres eliminar todos los items?')) {
-    trashItems = [];
-    
-    // Guardar en Firestore
-    await saveTrashItems();
-    
-    renderTrashItems();
-    
-    // Actualizar estado del botón de girar ruleta
-    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-      const spinBtn = document.getElementById('spinRouletteBtn');
-      spinBtn.disabled = true;
-    }
-    
-    // Mostrar mensaje
-    const toast = document.createElement('div');
-    toast.style.cssText = `
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: #ff9800;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      z-index: 1000;
-      animation: slideInRight 0.3s;
-    `;
-    toast.textContent = '🧹 Todos los items eliminados';
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-      toast.style.animation = 'slideOutRight 0.3s';
-      setTimeout(() => toast.remove(), 300);
-    }, 2000);
-  }
-}
-
 // Función para girar la ruleta y repartir items
 async function spinTrashRoulette() {
   if (eligibleMembers.length === 0) {
@@ -2153,12 +2118,12 @@ async function spinTrashRoulette() {
       const membersGiven = new Set(results.map(r => r.memberId)).size;
       
       if (itemsGiven > 0) {
-        alert(`✅ Reparto completado:\n• ${itemsGiven} item(s) repartido(s)\n• ${membersGiven} miembro(s) beneficiado(s)\n• Ronda: ${distributionRound}`);
+        showToast(`✅ Reparto completado: ${itemsGiven} item(s) a ${membersGiven} miembro(s)`, "success");
       }
       
       // Verificar si se completó la ronda
       if (membersReceived.size >= eligibleMembers.length) {
-        alert(`🎊 Ronda ${distributionRound} completada. Todos los miembros elegibles recibieron un item.`);
+        showToast(`🎊 Ronda ${distributionRound} completada. Todos los miembros elegibles recibieron un item.`, "success");
       }
       
     } catch (error) {
@@ -2270,7 +2235,7 @@ async function resetDistribution() {
     document.getElementById('rouletteResults').style.display = 'none';
     document.getElementById('resultsList').innerHTML = '';
     
-    alert('✅ Distribución reiniciada. Todos los miembros pueden recibir items nuevamente.');
+    showToast('✅ Distribución reiniciada. Todos los miembros pueden recibir items nuevamente.', "success");
   }
 }
 
@@ -2285,7 +2250,7 @@ async function startNewRound() {
     await saveRoundState();
     
     updateDistributionStatus();
-    alert(`✅ Nueva ronda ${distributionRound} iniciada`);
+    showToast(`✅ Nueva ronda ${distributionRound} iniciada`, "success");
     
     // Actualizar botón de girar ruleta
     if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
@@ -2787,30 +2752,32 @@ function showManualAdjustmentModal(detectedItems, fullText) {
     });
     
     // Guardar en Firestore
-    await saveTrashItems();
+    const saved = await saveTrashItems();
     
-    // Actualizar lista
-    renderTrashItems();
-    
-    // Cerrar modal
-    document.body.removeChild(modal);
-    
-    // Limpiar resultados
-    document.getElementById('ocrResultsContainer').style.display = 'none';
-    document.getElementById('uploadPreview').innerHTML = '';
-    document.getElementById('processOCRBtn').disabled = true;
-    uploadImages = [];
-    document.getElementById('fileInput').value = '';
-    
-    // Mostrar mensaje de éxito
-    alert(`✅ Se agregaron ${items.length} tipo(s) de items a la ruleta`);
-    
-    // Actualizar estado del botón de girar ruleta
-    if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
-      const spinBtn = document.getElementById('spinRouletteBtn');
-      const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
-      const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
-      spinBtn.disabled = !canDistribute;
+    if (saved) {
+      // Actualizar lista
+      renderTrashItems();
+      
+      // Cerrar modal
+      document.body.removeChild(modal);
+      
+      // Limpiar resultados
+      document.getElementById('ocrResultsContainer').style.display = 'none';
+      document.getElementById('uploadPreview').innerHTML = '';
+      document.getElementById('processOCRBtn').disabled = true;
+      uploadImages = [];
+      document.getElementById('fileInput').value = '';
+      
+      // Mostrar mensaje de éxito
+      showToast(`✅ Se agregaron ${items.length} tipo(s) de items a la ruleta`, "success");
+      
+      // Actualizar estado del botón de girar ruleta
+      if (currentUserRole === "Líder" || currentUserRole === "Oficial") {
+        const spinBtn = document.getElementById('spinRouletteBtn');
+        const availableMembers = eligibleMembers.filter(m => !membersReceived.has(m.id));
+        const canDistribute = availableMembers.length > 0 && trashItems.length > 0;
+        spinBtn.disabled = !canDistribute;
+      }
     }
   });
   
@@ -2827,63 +2794,6 @@ function showManualAdjustmentModal(detectedItems, fullText) {
       document.getElementById('fileInput').value = '';
     }
   });
-}
-
-// Agregar items detectados por OCR a la lista
-async function addOCRResults() {
-  const ocrResults = document.getElementById('ocrResults');
-  let items = [];
-  
-  // Extraer items del DOM (por si acaso)
-  const itemElements = ocrResults.querySelectorAll('.ocr-item');
-  
-  if (itemElements.length === 0) {
-    alert('❌ No hay items para agregar');
-    return;
-  }
-  
-  // Extraer de los elementos del DOM
-  itemElements.forEach(element => {
-    const nameElement = element.querySelector('.ocr-item-name');
-    const quantityElement = element.querySelector('.ocr-item-quantity');
-    
-    if (nameElement && quantityElement) {
-      const name = nameElement.textContent.trim();
-      const quantity = parseInt(quantityElement.textContent);
-      
-      if (name && !isNaN(quantity) && quantity > 0) {
-        items.push({ name, quantity });
-      }
-    }
-  });
-  
-  // Agregar items a la lista
-  items.forEach(item => {
-    const existingIndex = trashItems.findIndex(t => 
-      t.name.toLowerCase() === item.name.toLowerCase());
-    
-    if (existingIndex !== -1) {
-      trashItems[existingIndex].quantity += item.quantity;
-    } else {
-      trashItems.push({ name: item.name, quantity: item.quantity });
-    }
-  });
-  
-  // Guardar en Firestore
-  await saveTrashItems();
-  
-  // Actualizar lista
-  renderTrashItems();
-  
-  // Limpiar resultados
-  document.getElementById('ocrResultsContainer').style.display = 'none';
-  document.getElementById('uploadPreview').innerHTML = '';
-  document.getElementById('processOCRBtn').disabled = true;
-  uploadImages = [];
-  document.getElementById('fileInput').value = '';
-  
-  const addedCount = items.length;
-  alert(`✅ Se agregaron ${addedCount} tipo(s) de items a la ruleta`);
 }
 
 // Función para cargar historial de repartos
@@ -2989,7 +2899,7 @@ async function clearAllHistory() {
     // Actualizar la vista
     await loadDistributionHistory();
     
-    alert(`✅ Historial limpiado correctamente. Se eliminaron ${snapshot.size} registros.`);
+    showToast(`✅ Historial limpiado correctamente. Se eliminaron ${snapshot.size} registros.`, "success");
     
   } catch (error) {
     console.error("Error eliminando historial:", error);
@@ -3030,6 +2940,55 @@ function escucharSolicitudesBadge(){
   });
 }
 
+// Función para mostrar toast notifications
+function showToast(message, type = "info") {
+  const colors = {
+    success: "#4ecca3",
+    error: "#ff6b6b",
+    warning: "#ff9800",
+    info: "#9d4edd"
+  };
+  
+  const toast = document.createElement('div');
+  toast.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: ${colors[type] || colors.info};
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    z-index: 10000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    animation: slideInRight 0.3s ease-out;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 300px;
+  `;
+  
+  const icons = {
+    success: "✅",
+    error: "❌",
+    warning: "⚠️",
+    info: "ℹ️"
+  };
+  
+  toast.innerHTML = `
+    <span style="font-size: 18px;">${icons[type] || icons.info}</span>
+    <span>${message}</span>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.animation = 'slideOutRight 0.3s ease-in';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
 /* === Inicializar la ruleta === */
 async function initializeTrashRoulette() {
   // Cargar estado desde Firestore
@@ -3050,7 +3009,6 @@ async function initializeTrashRoulette() {
     // Sistema de subida de archivos
     initializeFileUpload();
     document.getElementById('processOCRBtn').addEventListener('click', processImagesWithOCR);
-    document.getElementById('addOCRResultsBtn').addEventListener('click', addOCRResults);
     
     // Permitir agregar con Enter
     document.getElementById('newTrashItem').addEventListener('keypress', function(e) {
