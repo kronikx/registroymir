@@ -1665,32 +1665,21 @@ async function finalizarSubastaSiAplica(sub, id){
   }
 
   // Caso 2: Hay ganador
-  // El ganador PIERDE TODOS sus puntos (totales + semanales)
+  // El ganador YA PERDIÓ SUS PUNTOS cuando pujó
   // Los perdedores YA fueron reembolsados cuando fueron superados
+  
+  // Solo registrar en logs que el ganador ya perdió sus puntos
   const historial = sub.historial || [];
   const pujaGanadora = historial.find(h => h.uid === sub.ganadorUid);
   
   if (pujaGanadora) {
-    const ganadorRef = doc(db,"members",sub.ganadorUid);
-    const ganadorSnap = await getDoc(ganadorRef);
-    
-    if (ganadorSnap.exists()) {
-      // El ganador ya perdió sus puntos TOTALES cuando pujó
-      // Solo necesita perder sus puntos SEMANALES ahora
-      const puntosSemanales = pujaGanadora.deSemanal || 0;
-      
-      if (puntosSemanales > 0) {
-        await updateDoc(ganadorRef, { 
-          semanal: increment(-puntosSemanales) 
-        });
-        console.log(`📉 Ganador ${sub.ganador} pierde ${puntosSemanales} puntos semanales`);
-      }
-    }
+    const puntosTotales = pujaGanadora.deTotal || 0;
+    const puntosSemanales = pujaGanadora.deSemanal || 0;
+    console.log(`📉 Ganador ${sub.ganador} ya perdió ${puntosTotales + puntosSemanales} puntos (${puntosTotales} totales + ${puntosSemanales} semanales)`);
   }
 
   await updateDoc(subRef,{ finalizada: true });
 }
-
 
 /* === Contador en vivo mejorado === */
 function iniciarContadoresVivos(){
