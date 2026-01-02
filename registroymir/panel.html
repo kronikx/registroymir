@@ -687,7 +687,8 @@ function cargarMiembros(){
   <th onclick="ordenarTabla(5)">Contribución semanal ⬍</th>
   <th onclick="ordenarTabla(6)">Boss 45 ⬍</th>
   <th onclick="ordenarTabla(7)">Boss 55 ⬍</th>
-  <th onclick="ordenarTabla(8)">Contribución total ⬍</th>
+  <th onclick="ordenarTabla(8)">Control semanal ⬍</th>
+  <th onclick="ordenarTabla(9)">Contribución total ⬍</th>
   <th>Acciones</th>
 </tr>
 
@@ -727,6 +728,13 @@ function cargarMiembros(){
       <option>No</option>
     </select>
   </th>
+  <th>
+    <select>
+      <option value="">Todos</option>
+      <option>Sí</option>
+      <option>No</option>
+    </select>
+  </th>
   <th><input type="number"></th>
   <th></th>
 </tr>
@@ -736,6 +744,7 @@ function cargarMiembros(){
       const esPropio = (d.id === MI_UID);
       const boss45 = m.boss45 ? "Sí" : "No";
       const boss55 = m.boss55 ? "Sí" : "No";
+      const controlSemanal = m.controlSemanalCompletado ? "Sí" : "No";
       
       // En Panel: SOLO Líder/Oficial pueden editar. Miembros NO pueden editar NADA
       const puedeEditar = esLiderOficial;
@@ -791,6 +800,12 @@ function cargarMiembros(){
                 <option value="No" ${boss55==="No"?"selected":""}>No</option>
               </select>
             </td>
+            <td id="controlSemanal_${d.id}">
+              <select class="edit-select" id="editControlSemanal_${d.id}">
+  <option value="Sí" ${m.controlSemanalCompletado?"selected":""}>Sí</option>
+  <option value="No" ${!m.controlSemanalCompletado?"selected":""}>No</option>
+</select>
+            </td>
             <td id="total_${d.id}" class="total-contribution">${m.totalContribution ?? 0}</td>
             <td>
               <button class="btn" onclick="guardar('${d.id}','${m.name || ''}')">Guardar</button>
@@ -810,6 +825,7 @@ function cargarMiembros(){
             <td id="sem_${d.id}">${m.semanal ?? 0}</td>
             <td id="boss45_${d.id}">${boss45}</td>
             <td id="boss55_${d.id}">${boss55}</td>
+            <td id="controlSemanal_${d.id}">${controlSemanal}</td>
             <td id="total_${d.id}" class="total-contribution">${m.totalContribution ?? 0}</td>
             <td>
               ${puedeEditar ? `<button class="btn" onclick="editar('${d.id}','${m.name || ''}')">Editar</button>` : 
@@ -947,6 +963,7 @@ window.guardar = async (id, nombreAnterior)=>{
   const semanalEl = document.getElementById("editSem_"+id);
   const boss45Sel = document.getElementById("editBoss45_"+id)?.value;
   const boss55Sel = document.getElementById("editBoss55_"+id)?.value;
+  const controlSemanalSel = document.getElementById("editControlSemanal_"+id)?.value;
 
   let updateData = {};
   let cambioTxt = "";
@@ -985,6 +1002,12 @@ window.guardar = async (id, nombreAnterior)=>{
     updateData.boss55 = b55;
     cambioTxt += (cambioTxt ? ", " : "") + `Boss55: ${b55 ? "Sí" : "No"}`;
   }
+
+  if(controlSemanalSel !== undefined){
+  const ctrlSem = (controlSemanalSel === "Sí");
+  updateData.controlSemanalCompletado = ctrlSem;
+  cambioTxt += (cambioTxt ? ", " : "") + `Control Semanal: ${ctrlSem ? "Sí" : "No"}`;
+}
 
   if(Object.keys(updateData).length === 0){
     alert("No hay cambios para guardar.");
@@ -1043,7 +1066,7 @@ window.reinicioSemanal = async ()=>{
     return;
   }
   
-  if(!confirm("¿Seguro que quieres reiniciar la semana?\n\n• La Contribución Semanal se sumará a la Total\n• La Contribución Semanal se reseteará a 0\n• Boss 45/55 se resetearán a 'No'")) return;
+  if(!confirm("¿Seguro que quieres reiniciar la semana?\n\n• La Contribución Semanal se sumará a la Total\n• La Contribución Semanal se reseteará a 0\n• Boss 45/55 se resetearán a 'No'\n• Control Semanal se reseteará a 'No'")) return;
 
   const snap = await getDocs(collection(db,"members"));
   let count = 0;
@@ -1054,12 +1077,17 @@ window.reinicioSemanal = async ()=>{
     const totalActual = Number(m.totalContribution ?? 0);
     const nuevoTotal = totalActual + semanalActual;
 
-    await updateDoc(doc(db,"members",d.id),{
-      totalContribution: nuevoTotal,
-      semanal: 0,
-      boss45: false,
-      boss55: false
-    });
+   await updateDoc(doc(db,"members",d.id),{
+  totalContribution: nuevoTotal,
+  semanal: 0,
+  boss45: false,
+  boss55: false,
+  controlSemanalCompletado: false,
+  capturasEnviadas: false,
+  controlCompleto: false,
+  fechaControlSemanalCompletado: null,
+  fechaControlCompletado: null
+});
     count++;
   }
 
@@ -1067,7 +1095,7 @@ window.reinicioSemanal = async ()=>{
     usuario: "Sistema",
     rol: MI_ROL,
     accion: "Reinicio semanal",
-    cambio: `Se reinició contribución semanal y bosses de ${count} miembros (Semanal → Total)`,
+    cambio: `Se reinició contribución semanal, bosses y control semanal de ${count} miembros (Semanal → Total)`,
     fecha: Date.now()
   });
 

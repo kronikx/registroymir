@@ -1839,6 +1839,18 @@ let modoEdicionControl = {};
 /* === Variables para capturas === */
 let capturasTemporales = {};
 
+/* === Función para verificar si ya envió capturas === */
+async function yaEnvioCapturas(memberId) {
+  try {
+    const memberDoc = await getDoc(doc(db, "members", memberId));
+    const memberData = memberDoc.data();
+    return memberData && memberData.capturasEnviadas === true;
+  } catch (error) {
+    console.error("Error al verificar capturas:", error);
+    return false;
+  }
+}
+
 /* === CONFIGURACIÓN GLOBAL COMPLETA === */
 let CONFIG = {
   // Días de capturas
@@ -3422,7 +3434,49 @@ window.guardarControl = async (id)=>{
     return;
   }
 
-  try {
+    try {
+    // ===== NUEVO: Verificar si todos los stats están completos =====
+    const statsParaVerificar = [
+      "nivel", "poder", "physAtk", "magAtk", "physDef", "magDef", 
+      "acc", "eva", "physDmg", "magDmg", "physDmgDef", "magDmgDef",
+      "monsterDmg", "monsterDmgDef", "bossDmg", "bossDmgDef"
+    ];
+    
+    let todosStatsCompletos = true;
+    for (const stat of statsParaVerificar) {
+      let valor = updateData[stat];
+      
+      // Si el stat no está en updateData, obtener del input o del miembro actual
+      if (valor === undefined) {
+        const input = document.getElementById(`edit_${stat}_${id}`);
+        if (input) {
+          valor = input.value;
+        }
+      }
+      
+      if (!valor || valor === "0" || valor === "0%" || valor === "" || valor === "-") {
+        todosStatsCompletos = false;
+        break;
+      }
+    }
+    
+    // ===== Si todos los stats están completos, verificar capturas =====
+    if (todosStatsCompletos) {
+      updateData.controlCompleto = true;
+      updateData.fechaControlCompletado = new Date().toISOString();
+      
+      // Verificar si también tiene capturas enviadas
+      const memberDoc = await getDoc(doc(db, "members", id));
+      const memberData = memberDoc.data();
+      
+      if (memberData && memberData.capturasEnviadas === true) {
+        // Si tiene capturas enviadas Y stats completos, marcar como "SÍ" en Panel
+        updateData.controlSemanalCompletado = true;
+        updateData.fechaControlSemanalCompletado = new Date().toISOString();
+      }
+    }
+
+    // Actualizar el documento
     await updateDoc(doc(db,"members",id), updateData);
 
     await addDoc(collection(db,"historial"),{
@@ -3450,16 +3504,21 @@ window.guardarControl = async (id)=>{
   } catch(e) {
     alert("❌ Error al guardar: " + e.message);
   }
-};
-
+} 
 /* === Funciones para capturas === */
-
 // Mostrar/ocultar panel de capturas
-window.mostrarCapturas = function(id) {
+window.mostrarCapturas = async function(id) {
   // Verificar si es día de capturas
   if (!esDiaDeCapturas()) {
     const diasHabilitados = CONFIG.diasCapturas.map(d => obtenerNombreDiaPorNumero(d)).join(', ');
     alert(`❌ Las capturas solo están disponibles en los siguientes días:\n${diasHabilitados}`);
+    return;
+  }
+  
+  // ===== NUEVO: Verificar si ya envió capturas =====
+  const yaEnvio = await yaEnvioCapturas(id);
+  if (yaEnvio) {
+    alert(`❌ Ya has enviado tus capturas esta semana.\n\nSolo puedes enviar capturas una vez por semana.\n\nTu participación en capturas ya está registrada.`);
     return;
   }
   
@@ -3476,7 +3535,7 @@ window.mostrarCapturas = function(id) {
     const capturasContainer = document.createElement('div');
     capturasContainer.className = 'capturas-container';
     capturasContainer.innerHTML = `
-      <div class="capturas-title">📸 Adjuntar Capturas (4 REQUERIDAS)</div>
+      <div class="capturas-title">📸 Adjuntar Capturas (4 REQUERIDAS) - SOLO 1 VEZ POR SEMANA</div>
       
       <div class="upload-area" onclick="document.getElementById('fileInput_${id}').click()">
         <div class="upload-text">📁 Arrastra o haz clic para subir</div>
@@ -3489,6 +3548,9 @@ window.mostrarCapturas = function(id) {
         </div>
         <div class="upload-hint" id="contador_${id}" style="margin-top: 5px; color: ${capturasTemporales[id] && capturasTemporales[id].length === 4 ? '#4CAF50' : '#ff9800'}">
           ${capturasTemporales[id] ? `${capturasTemporales[id].length}/4` : '0/4'} capturas subidas
+        </div>
+        <div class="upload-hint" style="color: #ff4444; font-weight: bold; margin-top: 5px;">
+          ⚠️ SOLO PODRÁS ENVIAR 1 VEZ POR SEMANA
         </div>
       </div>
       
@@ -3525,7 +3587,9 @@ window.mostrarCapturas = function(id) {
       </div>
       
       <div style="font-size: 11px; color: #aaa; margin-top: 8px;">
-        ⚠️ Se deben enviar <strong>EXACTAMENTE 4 capturas</strong> de tus stats. Se enviarán como pack al canal de Discord y luego se eliminarán de la web.
+        ⚠️ Se deben enviar <strong>EXACTAMENTE 4 capturas</strong> de tus stats.<br>
+        ⚠️ <strong>SOLO 1 ENVÍO POR SEMANA</strong> - No podrás enviar más capturas.<br>
+        ⚠️ Se enviarán como pack al canal de Discord y luego se eliminarán de la web.
       </div>
     `;
     
@@ -3668,7 +3732,15 @@ function cargarCapturasExistentes(memberId) {
 }
 
 // Enviar capturas a Discord
+
 window.enviarCapturasADiscord = async function(memberId) {
+  // ===== NUEVO: Verificar si ya envió capturas =====
+  const yaEnvio = await yaEnvioCapturas(memberId);
+  if (yaEnvio) {
+    alert(`❌ Ya has enviado tus capturas esta semana.\n\nSolo puedes enviar capturas una vez por semana.`);
+    return;
+  }
+  
   if (!capturasTemporales[memberId]) {
     alert('No hay capturas para enviar');
     return;
@@ -3725,12 +3797,43 @@ window.enviarCapturasADiscord = async function(memberId) {
     });
     
     if (response.ok) {
+
+      // ===== NUEVO: Marcar que ya envió capturas =====
+      await updateDoc(doc(db, "members", memberId), {
+        capturasEnviadas: true,
+        fechaCapturasEnviadas: new Date().toISOString()
+      });
+      
+      // ===== NUEVO: Verificar si también tiene stats completos =====
+      const statsParaVerificar = [
+        "nivel", "poder", "physAtk", "magAtk", "physDef", "magDef", 
+        "acc", "eva", "physDmg", "magDmg", "physDmgDef", "magDmgDef",
+        "monsterDmg", "monsterDmgDef", "bossDmg", "bossDmgDef"
+      ];
+      
+      let todosStatsCompletos = true;
+      for (const stat of statsParaVerificar) {
+        const valor = memberData[stat];
+        if (!valor || valor === "0" || valor === "0%" || valor === "" || valor === "-") {
+          todosStatsCompletos = false;
+          break;
+        }
+      }
+      
+      // Si tiene stats completos Y capturas enviadas, marcar como completado
+      if (todosStatsCompletos) {
+        await updateDoc(doc(db, "members", memberId), {
+          controlSemanalCompletado: true,
+          fechaControlSemanalCompletado: new Date().toISOString()
+        });
+      }
+      
       // Registrar en el historial
       await addDoc(collection(db, "historial"), {
         usuario: memberId,
         rol: MI_ROL,
         accion: "Envío de pack de 4 capturas a Discord",
-        cambio: `4 capturas enviadas por ${memberName} (${memberClase})`,
+        cambio: `4 capturas enviadas por ${memberName} (${memberClase}) - PRIMER ENVÍO`,
         fecha: Date.now()
       });
       
@@ -3749,7 +3852,7 @@ window.enviarCapturasADiscord = async function(memberId) {
         container.remove();
       }
       
-      alert(`✅ Pack de 4 capturas enviado a Discord correctamente`);
+      alert(`✅ Pack de 4 capturas enviado a Discord correctamente\n\n⚠️ YA NO PODRÁS ENVIAR MÁS CAPTURAS ESTA SEMANA`);
     } else {
       const errorText = await response.text();
       throw new Error(`Discord respondió con ${response.status}: ${errorText}`);

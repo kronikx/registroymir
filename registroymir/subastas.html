@@ -1084,6 +1084,8 @@ function cargarSubastas(){
     const bossesOk = (boss45 && boss55);
     const puedeBorrar = (role==="Líder" || role==="Oficial");
     const completo = await controlCompleto(user.uid);
+    const controlSemanalOk = meData.controlSemanalCompletado === true;
+
 
     tabla.innerHTML = `
       <tr>
@@ -1221,7 +1223,7 @@ if (esItemRojo) {
 
 let celdaPuja;
 if(restante > 0 && !finalizada){
-  if(claseOk && tierOk && bossesOk && completo){
+  if(claseOk && tierOk && bossesOk && completo && controlSemanalOk){
     const pujaMinima = Math.max(pujaActual + 1, precioBase + 1);
     celdaPuja = `
       <div style="display: flex; gap: 5px; align-items: center;">
@@ -1235,6 +1237,7 @@ if(restante > 0 && !finalizada){
     let motivo = "";
     if (!completo) motivo = "Control";
     else if (!bossesOk) motivo = "Bosses";
+    else if (!controlSemanalOk) motivo = "Control Semanal";
     else if (!tierOk) {
       if (esItemRojo) {
         if (yaPujoEnAlgunItemRojo && !yaPujeEnEsta) {
@@ -1382,7 +1385,11 @@ window.pujar = async (id)=>{
     alert("Solo jugadores con boss45 y boss55 en 'Sí' pueden pujar");
     return;
   }
-  
+
+  if(!controlSemanalOk){
+  alert("Solo jugadores con Control Semanal en 'Sí' pueden pujar");
+  return;
+}
   // Verificar si ya pujó en ALGÚN item del mismo tier
   const subastasSnap = await getDocs(collection(db, "subastas"));
   let yaPujoEnAlgunItemRojo = false;

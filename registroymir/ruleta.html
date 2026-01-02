@@ -1334,11 +1334,12 @@
         <div class="trash-requirements">
           <h3 class="requirements-title">✅ Requisitos para participar</h3>
           <ul class="requirements-list">
-            <li><span class="requirement-icon">✓</span> Bosses 45 y 55 completados</li>
-            <li><span class="requirement-icon">✓</span> Contribución semanal ≥ 8000 puntos</li>
-            <li><span class="requirement-icon">✓</span> Control semanal completo</li>
-            <li><span class="requirement-icon">✓</span> Miembro activo (no baneado)</li>
-          </ul>
+  <li><span class="requirement-icon">✓</span> Bosses 45 y 55 completados</li>
+  <li><span class="requirement-icon">✓</span> Contribución semanal ≥ 8000 puntos</li>
+  <li><span class="requirement-icon">✓</span> Control semanal completo</li>
+  <li><span class="requirement-icon">✓</span> Control Semanal en Panel: "Sí"</li>
+  <li><span class="requirement-icon">✓</span> Miembro activo (no baneado)</li>
+</ul>
         </div>
         
         <!-- Miembros elegibles -->
@@ -1717,7 +1718,11 @@ async function isEligibleForTrashRoulette(memberId, memberData) {
   // Verificar si está baneado
   const banSnap = await getDoc(doc(db, "baneados", memberId));
   if (banSnap.exists()) return false;
-  
+
+  // Verificar control semanal
+  const controlSemanalOk = memberData.controlSemanalCompletado === true;
+  if (!controlSemanalOk) return false; 
+
   // Verificar bosses 45 y 55
   const boss45 = !!memberData.boss45;
   const boss55 = !!memberData.boss55;
@@ -1809,15 +1814,16 @@ async function loadEligibleMembers() {
       
       // Guardar información para mostrar
       allMembersInfo.push({
-        name: memberData.name || "Sin nombre",
-        elegible: elegible,
-        semanal: semanalActual,
-        puntosUsadosSubastas: puntosUsadosSubastas,
-        puntosTotales: puntosSemanalesTotales,
-        boss45: !!memberData.boss45,
-        boss55: !!memberData.boss55,
-        controlCompleto: await controlCompleto(memberId)
-      });
+  name: memberData.name || "Sin nombre",
+  elegible: elegible,
+  semanal: semanalActual,
+  puntosUsadosSubastas: puntosUsadosSubastas,
+  puntosTotales: puntosSemanalesTotales,
+  boss45: !!memberData.boss45,
+  boss55: !!memberData.boss55,
+  controlSemanalCompletado: memberData.controlSemanalCompletado || false, 
+  controlCompleto: await controlCompleto(memberId)
+});
       
       if (elegible) {
         currentEligibleMembers.push({
@@ -1835,8 +1841,7 @@ async function loadEligibleMembers() {
     console.log("=== MIEMBROS ELEGIBLES PARA RULETA ===");
     allMembersInfo.forEach(m => {
       const status = m.elegible ? "✅" : "❌";
-      console.log(`${status} ${m.name}: ${m.puntosTotales}pts (${m.semanal} actual + ${m.puntosUsadosSubastas} usados) | Bosses: ${m.boss45 ? "✅" : "❌"}/${m.boss55 ? "✅" : "❌"} | Control: ${m.controlCompleto ? "✅" : "❌"}`);
-    });
+      console.log(`${status} ${m.name}: ${m.puntosTotales}pts (${m.semanal} actual + ${m.puntosUsadosSubastas} usados) | Bosses: ${m.boss45 ? "✅" : "❌"}/${m.boss55 ? "✅" : "❌"} | Control: ${m.controlCompleto ? "✅" : "❌"} | ControlSemanal: ${m.controlSemanalCompletado ? "✅" : "❌"}`);
     
     // Verificar si necesitamos resetear la participación (cada 7 días)
     const now = Date.now();
