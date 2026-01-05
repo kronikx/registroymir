@@ -509,9 +509,11 @@
   <h1>Panel de Miembros <span id="userRoleBadge" class="role-badge" style="font-size: 14px; margin-left: 10px;"></span></h1>
   
   <!-- Permiso de edición solo para Líder/Oficial -->
-  <div id="edicionPermisos" class="permission-warning" style="display: none;">
-    <strong>⚠️ Permisos de Edición:</strong> Como <span id="currentRole"></span>, puedes editar <strong>Nombre, Rol, Clase, Contribución Semanal y Bosses</strong>. La <strong>Contribución Total</strong> se calcula automáticamente.
-  </div>
+ <div id="edicionPermisos" class="permission-warning" style="display: none;">
+  <strong>⚠️ Permisos de Edición:</strong> Como <span id="currentRole"></span>, puedes editar 
+  <strong>Rol, Contribución Semanal, Bosses y Control Semanal</strong>.<br>
+  <span style="color: #666;">Nombre y Clase se editan en Control Semanal</span>
+</div>
   
   <!-- Recordatorio para Miembros -->
   <div id="miembroInfo" class="permission-warning" style="display: none; background: rgba(0, 123, 255, 0.1); border-left-color: #0d6efd; color: #0dcaf0;">
@@ -674,81 +676,124 @@ onAuthStateChanged(auth, async user=>{
 });
 
 /* === Pintar tabla en tiempo real === */
-function cargarMiembros(){
+function cargarMiembros() {
   const tabla = document.getElementById("tablaMiembros");
-  onSnapshot(collection(db,"members"), (snap) => {
-    tabla.innerHTML = `
-<tr>
-  <th onclick="ordenarTabla(0)">Nombre ⬍</th>
-  <th onclick="ordenarTabla(1)">Rol ⬍</th>
-  <th onclick="ordenarTabla(2)">Clase ⬍</th>
-  <th onclick="ordenarTabla(3)">Nivel ⬍</th>
-  <th onclick="ordenarTabla(4)">Poder ⬍</th>
-  <th onclick="ordenarTabla(5)">Contribución semanal ⬍</th>
-  <th onclick="ordenarTabla(6)">Boss 45 ⬍</th>
-  <th onclick="ordenarTabla(7)">Boss 55 ⬍</th>
-  <th onclick="ordenarTabla(8)">Control semanal ⬍</th>
-  <th onclick="ordenarTabla(9)">Contribución total ⬍</th>
-  <th>Acciones</th>
-</tr>
-
-<tr class="filtros">
-  <th><input></th>
-  <th>
-    <select>
-      <option value="">Todos</option>
-      <option>Miembro</option>
-      <option>Oficial</option>
-      <option>Líder</option>
-    </select>
-  </th>
-  <th>
-    <select>
-      <option value="">Todas</option>
-      <option>Arquero</option>
-      <option>Mago</option>
-      <option>Tanque</option>
-      <option>Healer</option>
-    </select>
-  </th>
-  <th><input type="number"></th>
-  <th><input type="number"></th>
-  <th><input type="number"></th>
-  <th>
-    <select>
-      <option value="">Todos</option>
-      <option>Sí</option>
-      <option>No</option>
-    </select>
-  </th>
-  <th>
-    <select>
-      <option value="">Todos</option>
-      <option>Sí</option>
-      <option>No</option>
-    </select>
-  </th>
-  <th>
-    <select>
-      <option value="">Todos</option>
-      <option>Sí</option>
-      <option>No</option>
-    </select>
-  </th>
-  <th><input type="number"></th>
-  <th></th>
-</tr>
-`;
-    snap.forEach(d=>{
-      const m = d.data() || {};
-      const esPropio = (d.id === MI_UID);
+  
+  if (!tabla) {
+    console.error("❌ No se encontró el elemento #tablaMiembros");
+    return;
+  }
+  
+  // Mostrar mensaje de carga
+  tabla.innerHTML = `
+    <tr>
+      <td colspan="11" style="text-align: center; padding: 40px; color: #c77dff;">
+        <div style="font-size: 24px; margin-bottom: 10px;">⏳</div>
+        Cargando miembros...
+      </td>
+    </tr>
+  `;
+  
+  onSnapshot(collection(db, "members"), (snap) => {
+    console.log(`📊 Datos recibidos: ${snap.size} miembros`);
+    
+    if (snap.empty) {
+      tabla.innerHTML = `
+        <tr>
+          <td colspan="11" style="text-align: center; padding: 40px; color: #ff6b6b;">
+            No hay miembros registrados
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    // Crear encabezado de la tabla
+    let html = `
+      <tr>
+        <th onclick="ordenarTabla(0)">Nombre ⬍</th>
+        <th onclick="ordenarTabla(1)">Rol ⬍</th>
+        <th onclick="ordenarTabla(2)">Clase ⬍</th>
+        <th onclick="ordenarTabla(3)">Nivel ⬍</th>
+        <th onclick="ordenarTabla(4)">Poder ⬍</th>
+        <th onclick="ordenarTabla(5)">Contribución semanal ⬍</th>
+        <th onclick="ordenarTabla(6)">Boss 45 ⬍</th>
+        <th onclick="ordenarTabla(7)">Boss 55 ⬍</th>
+        <th onclick="ordenarTabla(8)">Control semanal ⬍</th>
+        <th onclick="ordenarTabla(9)">Contribución total ⬍</th>
+        <th>Acciones</th>
+      </tr>
+      
+      <tr class="filtros">
+        <th><input placeholder="Filtrar nombre"></th>
+        <th>
+          <select>
+            <option value="">Todos</option>
+            <option>Miembro</option>
+            <option>Oficial</option>
+            <option>Líder</option>
+          </select>
+        </th>
+        <th>
+          <select>
+            <option value="">Todas</option>
+            <option>Arquero</option>
+            <option>Mago</option>
+            <option>Tanque</option>
+            <option>Healer</option>
+          </select>
+        </th>
+        <th><input type="number" placeholder="Mín nivel"></th>
+        <th><input type="number" placeholder="Mín poder"></th>
+        <th><input type="number" placeholder="Mín contrib"></th>
+        <th>
+          <select>
+            <option value="">Todos</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </th>
+        <th>
+          <select>
+            <option value="">Todos</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </th>
+        <th>
+          <select>
+            <option value="">Todos</option>
+            <option>Sí</option>
+            <option>No</option>
+          </select>
+        </th>
+        <th><input type="number" placeholder="Mín total"></th>
+        <th></th>
+      </tr>
+    `;
+    
+    // Inicializar datos originales
+    window.datosOriginales = {};
+    
+    // Procesar cada miembro
+    snap.forEach(doc => {
+      const m = doc.data() || {};
+      const id = doc.id;
+      const esPropio = (id === MI_UID);
       const boss45 = m.boss45 ? "Sí" : "No";
       const boss55 = m.boss55 ? "Sí" : "No";
       const controlSemanal = m.controlSemanalCompletado ? "Sí" : "No";
       
-      // En Panel: SOLO Líder/Oficial pueden editar. Miembros NO pueden editar NADA
-      const puedeEditar = esLiderOficial;
-      const estaEditando = modoEdicion[d.id] || false;
+      // Guardar datos originales para comparación
+      window.datosOriginales[id] = {
+        name: m.name || "",
+        role: m.role || m.rol || "Miembro",
+        clase: m.clase || "",
+        semanal: m.semanal || 0,
+        boss45: boss45,
+        boss55: boss55,
+        controlSemanal: controlSemanal
+      };
       
       // Determinar estilo del rol
       let roleClass = "role-miembro";
@@ -760,92 +805,342 @@ function cargarMiembros(){
       } else if (userRoleLower === "oficial") {
         roleClass = "role-oficial";
       }
-
-      // Si está en modo edición, mostrar inputs
-      if (estaEditando) {
-        tabla.innerHTML += `
-          <tr id="fila_${d.id}" class="editing-mode">
-            <td id="nombre_${d.id}">
-              <input type="text" class="edit-input" id="editNombre_${d.id}" value="${m.name || ''}" style="width: 120px;">
-            </td>
-            <td id="rol_${d.id}">
-              <select class="edit-select" id="editRol_${d.id}">
-                <option value="Miembro" ${userRole.includes("Miembro")?"selected":""}>Miembro</option>
-                <option value="Oficial" ${userRole.includes("Oficial")?"selected":""}>Oficial</option>
-                <option value="Líder" ${userRole.includes("Líder")?"selected":""}>Líder</option>
-              </select>
-            </td>
-            <td id="clase_${d.id}">
-              <select class="edit-select" id="editClase_${d.id}">
-                <option value="Arquero" ${m.clase==="Arquero"?"selected":""}>Arquero</option>
-                <option value="Mago" ${m.clase==="Mago"?"selected":""}>Mago</option>
-                <option value="Tanque" ${m.clase==="Tanque"?"selected":""}>Tanque</option>
-                <option value="Healer" ${m.clase==="Healer"?"selected":""}>Healer</option>
-              </select>
-            </td>
-            <td id="nivel_${d.id}">${m.nivel ?? 1}</td>
-            <td id="poder_${d.id}">${m.poder ?? 0}</td>
-            <td id="sem_${d.id}">
-              <input type="number" class="semanal-input" id="editSem_${d.id}" value="${m.semanal ?? 0}">
-            </td>
-            <td id="boss45_${d.id}">
-              <select class="edit-select" id="editBoss45_${d.id}">
-                <option value="Sí" ${boss45==="Sí"?"selected":""}>Sí</option>
-                <option value="No" ${boss45==="No"?"selected":""}>No</option>
-              </select>
-            </td>
-            <td id="boss55_${d.id}">
-              <select class="edit-select" id="editBoss55_${d.id}">
-                <option value="Sí" ${boss55==="Sí"?"selected":""}>Sí</option>
-                <option value="No" ${boss55==="No"?"selected":""}>No</option>
-              </select>
-            </td>
-            <td id="controlSemanal_${d.id}">
-              <select class="edit-select" id="editControlSemanal_${d.id}">
-  <option value="Sí" ${m.controlSemanalCompletado?"selected":""}>Sí</option>
-  <option value="No" ${!m.controlSemanalCompletado?"selected":""}>No</option>
-</select>
-            </td>
-            <td id="total_${d.id}" class="total-contribution">${m.totalContribution ?? 0}</td>
+      
+      // SI LÍDER/OFICIAL: mostrar campos editables (excepto nombre y clase)
+      if (esLiderOficial) {
+        // Nombre: solo lectura
+        html += `
+          <tr id="fila_${id}" ${modoEdicion[id] ? 'class="editing-mode"' : ''}>
             <td>
-              <button class="btn" onclick="guardar('${d.id}','${m.name || ''}')">Guardar</button>
-              <button class="btn cancel" onclick="cancelarEdicion('${d.id}')">Cancelar</button>
+              <div class="non-editable-field" title="Editar en Control Semanal">
+                <span class="name-display">${m.name ?? "-"}</span>
+                ${esPropio ? "<span class='self-indicator'>(TÚ)</span>" : ""}
+              </div>
+            </td>
+            
+            <!-- ROL: editable por Líder/Oficial -->
+            <td>
+              <select class="edit-select" id="editRol_${id}" data-original="${userRole}">
+                <option value="Miembro" ${userRole.includes("Miembro") ? "selected" : ""}>Miembro</option>
+                <option value="Oficial" ${userRole.includes("Oficial") ? "selected" : ""}>Oficial</option>
+                <option value="Líder" ${userRole.includes("Líder") ? "selected" : ""}>Líder</option>
+              </select>
+            </td>
+            
+            <!-- CLASE: SOLO LECTURA -->
+            <td>
+              <div class="non-editable-field class-display" title="Editar en Control Semanal">
+                ${m.clase || '-'}
+              </div>
+            </td>
+            
+            <td>${m.nivel ?? 1}</td>
+            <td>${m.poder ?? 0}</td>
+            
+            <!-- SEMANAL: editable -->
+            <td>
+              <input type="number" class="semanal-input" 
+                     id="editSem_${id}" 
+                     value="${m.semanal ?? 0}"
+                     data-original="${m.semanal ?? 0}">
+            </td>
+            
+            <!-- BOSSES: editables -->
+            <td>
+              <select class="edit-select" id="editBoss45_${id}" data-original="${boss45}">
+                <option value="Sí" ${boss45 === "Sí" ? "selected" : ""}>Sí</option>
+                <option value="No" ${boss45 === "No" ? "selected" : ""}>No</option>
+              </select>
+            </td>
+            <td>
+              <select class="edit-select" id="editBoss55_${id}" data-original="${boss55}">
+                <option value="Sí" ${boss55 === "Sí" ? "selected" : ""}>Sí</option>
+                <option value="No" ${boss55 === "No" ? "selected" : ""}>No</option>
+              </select>
+            </td>
+            
+            <!-- CONTROL SEMANAL: editable -->
+            <td>
+              <select class="edit-select" id="editControlSemanal_${id}" data-original="${controlSemanal}">
+                <option value="Sí" ${controlSemanal === "Sí" ? "selected" : ""}>Sí</option>
+                <option value="No" ${controlSemanal === "No" ? "selected" : ""}>No</option>
+              </select>
+            </td>
+            
+            <td class="total-contribution">${m.totalContribution ?? 0}</td>
+            <td>
+              ${esPropio ? '<span style="color:#9d4edd; font-size:11px; font-weight:bold;">(TÚ)</span><br>' : ''}
+              ${(MI_UID === "IPsOS0geYjbsH0ZQZ5RAoNZ00XL2") ? 
+                `<button class="btn secondary" onclick="eliminarMiembro('${id}')" style="margin-top: 5px; font-size: 11px;">Eliminar</button>` 
+                : ""}
             </td>
           </tr>
         `;
       } else {
-        // Modo normal (solo lectura)
-        tabla.innerHTML += `
-          <tr id="fila_${d.id}">
-            <td id="nombre_${d.id}">${m.name ?? "-"} ${esPropio ? "<span style='color:#9d4edd; font-size:11px;'>(TÚ)</span>" : ""}</td>
-            <td id="rol_${d.id}"><span class="role-badge ${roleClass}">${userRole}</span></td>
-            <td id="clase_${d.id}">${m.clase ?? "-"}</td>
-            <td id="nivel_${d.id}">${m.nivel ?? 1}</td>
-            <td id="poder_${d.id}">${m.poder ?? 0}</td>
-            <td id="sem_${d.id}">${m.semanal ?? 0}</td>
-            <td id="boss45_${d.id}">${boss45}</td>
-            <td id="boss55_${d.id}">${boss55}</td>
-            <td id="controlSemanal_${d.id}">${controlSemanal}</td>
-            <td id="total_${d.id}" class="total-contribution">${m.totalContribution ?? 0}</td>
+        // SI MIEMBRO: mostrar solo lectura
+        html += `
+          <tr id="fila_${id}">
+            <!-- NOMBRE: SOLO LECTURA -->
             <td>
-              ${puedeEditar ? `<button class="btn" onclick="editar('${d.id}','${m.name || ''}')">Editar</button>` : 
-                `<span style="color: #666; font-size: 11px; font-style: italic;">solo lectura</span>`}
-              ${(MI_UID === "IPsOS0geYjbsH0ZQZ5RAoNZ00XL2") ? 
-                `<button class="btn secondary" onclick="eliminarMiembro('${d.id}')">Eliminar</button>` 
-                : ""}
+              <div class="non-editable-field">
+                <span class="name-display">${m.name ?? "-"}</span>
+                ${esPropio ? "<span class='self-indicator'>(TÚ)</span>" : ""}
+              </div>
+            </td>
+            
+            <!-- ROL: SOLO LECTURA -->
+            <td><span class="role-badge ${roleClass}">${userRole}</span></td>
+            
+            <!-- CLASE: SOLO LECTURA -->
+            <td>
+              <div class="non-editable-field class-display">
+                ${m.clase ?? "-"}
+              </div>
+            </td>
+            
+            <td>${m.nivel ?? 1}</td>
+            <td>${m.poder ?? 0}</td>
+            <td>${m.semanal ?? 0}</td>
+            <td>${boss45}</td>
+            <td>${boss55}</td>
+            <td>${controlSemanal}</td>
+            <td class="total-contribution">${m.totalContribution ?? 0}</td>
+            <td>
+              <span class="solo-lectura-nota">solo lectura</span>
             </td>
           </tr>
         `;
       }
     });
-
+    
+    // Si es Líder/Oficial, añadir botón de guardar todo
+    if (esLiderOficial && snap.size > 0) {
+      html += `
+        <tr id="filaGuardarTodo" style="background: rgba(90, 24, 154, 0.1);">
+          <td colspan="11" style="text-align: center; padding: 15px;">
+            <button id="guardarTodoBtn" class="btn" 
+                    onclick="guardarTodosLosCambios()"
+                    style="padding: 10px 20px; font-size: 16px; background: #4CAF50;">
+              💾 GUARDAR TODOS LOS CAMBIOS
+            </button>
+            <p style="margin-top: 10px; font-size: 12px; color: #666;">
+              <strong>⚠️ ATENCIÓN:</strong> Todos los campos son editables. Revisa los cambios antes de guardar.
+            </p>
+          </td>
+        </tr>
+      `;
+    }
+    
+    tabla.innerHTML = html;
+    
+    // Añadir event listeners para filtros
     setTimeout(() => {
       document.querySelectorAll(".filtros input, .filtros select").forEach(el => {
         el.addEventListener("input", filtrarTabla);
+        el.addEventListener("change", filtrarTabla);
       });
-    }, 0);
+      
+      // Añadir detección de cambios en tiempo real
+      if (esLiderOficial) {
+        document.querySelectorAll('.edit-input, .edit-select, .semanal-input').forEach(input => {
+          input.addEventListener('input', detectarCambios);
+          input.addEventListener('change', detectarCambios);
+        });
+      }
+    }, 100);
   });
 }
+
+/* === Detectar cambios en campos editables === */
+function detectarCambios() {
+  document.querySelectorAll('.edit-input, .edit-select, .semanal-input').forEach(input => {
+    const original = input.getAttribute('data-original') || '';
+    const current = input.value;
+    
+    if (current !== original) {
+      input.classList.add('modificado');
+    } else {
+      input.classList.remove('modificado');
+    }
+  });
+}
+
+/* === Guardar todos los cambios en masa === */
+window.guardarTodosLosCambios = async () => {
+  if (!esLiderOficial) {
+    alert("❌ Solo Líderes y Oficiales pueden guardar cambios.");
+    return;
+  }
+
+  // Recolectar todos los cambios
+  const cambios = {};
+  const miembrosConCambios = [];
+  let totalCambios = 0;
+
+  // Recorrer todas las filas editables
+  document.querySelectorAll("tr[id^='fila_'][class*='editing-mode']").forEach(fila => {
+    const id = fila.id.replace("fila_", "");
+    const datosOriginales = window.datosOriginales[id] || {};
+    const updateData = {};
+
+    // Rol
+    const rolSelect = document.getElementById(`editRol_${id}`);
+    if (rolSelect && rolSelect.value !== datosOriginales.role) {
+      updateData.role = rolSelect.value;
+    }
+
+    // Semanal
+    const semanalInput = document.getElementById(`editSem_${id}`);
+    const semanalVal = parseInt(semanalInput?.value) || 0;
+    if (semanalVal !== datosOriginales.semanal) {
+      updateData.semanal = semanalVal;
+    }
+
+    // Boss 45
+    const boss45Select = document.getElementById(`editBoss45_${id}`);
+    const boss45Val = boss45Select?.value === "Sí";
+    if (boss45Val !== (datosOriginales.boss45 === "Sí")) {
+      updateData.boss45 = boss45Val;
+    }
+
+    // Boss 55
+    const boss55Select = document.getElementById(`editBoss55_${id}`);
+    const boss55Val = boss55Select?.value === "Sí";
+    if (boss55Val !== (datosOriginales.boss55 === "Sí")) {
+      updateData.boss55 = boss55Val;
+    }
+
+    // Control semanal
+    const controlSelect = document.getElementById(`editControlSemanal_${id}`);
+    const controlVal = controlSelect?.value === "Sí";
+    if (controlVal !== (datosOriginales.controlSemanal === "Sí")) {
+      updateData.controlSemanalCompletado = controlVal;
+    }
+
+    // Si hay cambios, agregar a la lista
+    if (Object.keys(updateData).length > 0) {
+      cambios[id] = updateData;
+      miembrosConCambios.push({
+        id: id,
+        nombre: nombreInput?.value || datosOriginales.name,
+        cambios: Object.keys(updateData).length
+      });
+      totalCambios += Object.keys(updateData).length;
+    }
+  });
+
+  // Verificar si hay cambios
+  if (Object.keys(cambios).length === 0) {
+    alert("ℹ️ No se detectaron cambios para guardar.");
+    return;
+  }
+
+  // Mostrar resumen de cambios
+  let mensajeResumen = `📋 RESUMEN DE CAMBIOS:\n\n`;
+  mensajeResumen += `Total de miembros afectados: ${miembrosConCambios.length}\n`;
+  mensajeResumen += `Total de campos modificados: ${totalCambios}\n\n`;
+  mensajeResumen += `Miembros con cambios:\n`;
+  
+  miembrosConCambios.forEach(m => {
+    mensajeResumen += `• ${m.nombre} (${m.cambios} cambio${m.cambios > 1 ? 's' : ''})\n`;
+  });
+  
+  mensajeResumen += `\n¿Deseas guardar todos estos cambios?`;
+
+  if (!confirm(mensajeResumen)) {
+    return;
+  }
+
+  // Mostrar mensaje de procesamiento
+  const procesando = document.createElement('div');
+  procesando.id = 'procesandoGuardado';
+  procesando.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    z-index: 999999;
+    text-align: center;
+    border: 2px solid #5a189a;
+  `;
+  procesando.innerHTML = `
+    <h3 style="color: #9d4edd; margin-bottom: 20px;">💾 Guardando cambios...</h3>
+    <div class="spinner" style="
+      border: 5px solid #f3f3f3;
+      border-top: 5px solid #9d4edd;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px auto;
+    "></div>
+    <p>Actualizando ${Object.keys(cambios).length} miembros...</p>
+    <p id="progresoTexto">0/${Object.keys(cambios).length} completados</p>
+  `;
+  
+  // Añadir animación de spinner
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  document.head.appendChild(style);
+  
+  document.body.appendChild(procesando);
+
+  try {
+    let completados = 0;
+    const total = Object.keys(cambios).length;
+    
+    // Guardar cada miembro con cambios
+    for (const [id, updateData] of Object.entries(cambios)) {
+      try {
+        await updateDoc(doc(db, "members", id), updateData);
+        completados++;
+        
+        // Actualizar progreso
+        const progresoTexto = document.getElementById('progresoTexto');
+        if (progresoTexto) {
+          progresoTexto.textContent = `${completados}/${total} completados`;
+        }
+        
+      } catch (error) {
+        console.error(`Error al actualizar ${id}:`, error);
+      }
+    }
+
+    // Registrar en historial
+    await addDoc(collection(db, "historial"), {
+      usuario: "Sistema",
+      rol: MI_ROL,
+      accion: "Actualización masiva en Panel",
+      cambio: `Se actualizaron ${completados} miembros con ${totalCambios} cambios`,
+      fecha: Date.now(),
+      detalles: miembrosConCambios.map(m => `${m.nombre} (${m.cambios} cambios)`).join(', ')
+    });
+
+    // Remover mensaje de procesamiento
+    procesando.remove();
+    style.remove();
+    
+    // Mostrar mensaje de éxito
+    alert(`✅ ¡Guardado exitoso!\n\n• Miembros actualizados: ${completados}\n• Campos modificados: ${totalCambios}\n\nLos cambios se han registrado en el historial.`);
+    
+    // Recargar la tabla para actualizar datos originales
+    cargarMiembros();
+    
+  } catch (error) {
+    procesando.remove();
+    style.remove();
+    alert(`❌ Error al guardar los cambios: ${error.message}`);
+  }
+};
 
 /* === Cargar usuarios baneados en el panel (solo Líder/Oficial) === */
 function cargarBaneadosEnPanel() {
@@ -1066,44 +1361,108 @@ window.reinicioSemanal = async ()=>{
     return;
   }
   
-  if(!confirm("¿Seguro que quieres reiniciar la semana?\n\n• La Contribución Semanal se sumará a la Total\n• La Contribución Semanal se reseteará a 0\n• Boss 45/55 se resetearán a 'No'\n• Control Semanal se reseteará a 'No'")) return;
+  const mensaje = `¿Seguro que quieres reiniciar la semana?\n\n• La Contribución Semanal se sumará a la Total\n• Se restará 1000 por cada Boss 45 NO completado\n• Se restará 2000 por cada Boss 55 NO completado\n• La Contribución Semanal se reseteará a 0\n• Boss 45/55 se resetearán a 'No'\n• Control Semanal se reseteará a 'No'`;
+  
+  if(!confirm(mensaje)) return;
 
   const snap = await getDocs(collection(db,"members"));
   let count = 0;
+  let miembrosConDescuento = [];
 
   for(const d of snap.docs){
     const m = d.data() || {};
     const semanalActual = Number(m.semanal ?? 0);
     const totalActual = Number(m.totalContribution ?? 0);
-    const nuevoTotal = totalActual + semanalActual;
+    
+    // Calcular descuentos por bosses no completados
+    let descuentoTotal = 0;
+    let descuentos = [];
+    
+    // Boss 45: NO = -1000
+    const boss45Completado = m.boss45 === true;
+    if (!boss45Completado) {
+      descuentoTotal += 1000;
+      descuentos.push("Boss 45: -1000");
+    }
+    
+    // Boss 55: NO = -2000
+    const boss55Completado = m.boss55 === true;
+    if (!boss55Completado) {
+      descuentoTotal += 2000;
+      descuentos.push("Boss 55: -2000");
+    }
+    
+    // Calcular nuevo total con descuentos
+    const sumaSemanal = totalActual + semanalActual;
+    const nuevoTotal = Math.max(0, sumaSemanal - descuentoTotal); // No permitir valores negativos
+    
+    // Si hubo descuento, registrar para el reporte
+    if (descuentoTotal > 0) {
+      miembrosConDescuento.push({
+        nombre: m.name || "Sin nombre",
+        descuentoTotal,
+        descuentos,
+        totalAnterior: sumaSemanal,
+        totalNuevo: nuevoTotal
+      });
+    }
 
-   await updateDoc(doc(db,"members",d.id),{
-  totalContribution: nuevoTotal,
-  semanal: 0,
-  boss45: false,
-  boss55: false,
-  controlSemanalCompletado: false,
-  capturasEnviadas: false,
-  controlCompleto: false,
-  fechaControlSemanalCompletado: null,
-  fechaControlCompletado: null
-});
+    await updateDoc(doc(db,"members",d.id),{
+      totalContribution: nuevoTotal,
+      semanal: 0,
+      boss45: false,
+      boss55: false,
+      controlSemanalCompletado: false,
+      capturasEnviadas: false,
+      controlCompleto: false,
+      fechaControlSemanalCompletado: null,
+      fechaControlCompletado: null
+    });
     count++;
+  }
+
+  // Registrar en historial con detalles de descuentos
+  let detallesDescuentos = "";
+  if (miembrosConDescuento.length > 0) {
+    detallesDescuentos = "\n\nMiembros con descuentos:\n";
+    miembrosConDescuento.forEach(miembro => {
+      detallesDescuentos += `• ${miembro.nombre}: -${miembro.descuentoTotal} (${miembro.descuentos.join(", ")})\n`;
+    });
   }
 
   await addDoc(collection(db,"historial"),{
     usuario: "Sistema",
     rol: MI_ROL,
-    accion: "Reinicio semanal",
-    cambio: `Se reinició contribución semanal, bosses y control semanal de ${count} miembros (Semanal → Total)`,
+    accion: "Reinicio semanal con descuentos",
+    cambio: `Se reinició contribución semanal, bosses y control semanal de ${count} miembros\nSe aplicaron descuentos a ${miembrosConDescuento.length} miembros por bosses no completados`,
+    detalles: detallesDescuentos,
     fecha: Date.now()
   });
 
-  alert(`✅ Reinicio semanal completado para ${count} miembros.\n\nLa Contribución Semanal se ha sumado a la Total y se ha reseteado a 0.`);
+  // Mostrar alerta con resumen
+  let mensajeFinal = `✅ Reinicio semanal completado para ${count} miembros.\n\n`;
+  mensajeFinal += `• Contribución Semanal sumada a la Total\n`;
+  mensajeFinal += `• Miembros con descuentos: ${miembrosConDescuento.length}\n`;
+  
+  if (miembrosConDescuento.length > 0) {
+    mensajeFinal += `\n📋 RESUMEN DE DESCUENTOS:\n`;
+    miembrosConDescuento.forEach((miembro, index) => {
+      if (index < 5) { // Mostrar solo los primeros 5 para no sobrecargar
+        mensajeFinal += `• ${miembro.nombre}: -${miembro.descuentoTotal}\n`;
+      }
+    });
+    if (miembrosConDescuento.length > 5) {
+      mensajeFinal += `• ... y ${miembrosConDescuento.length - 5} más\n`;
+    }
+  }
+  
+  mensajeFinal += `\n💡 Recuerda: Boss 45 NO = -1000, Boss 55 NO = -2000`;
+  
+  alert(mensajeFinal);
 };
 
-/* ===== FILTRADO ===== */
-function filtrarTabla(){
+/* ===== FILTRADO MEJORADO (busca por inicio del texto, insensible a acentos) ===== */
+function filtrarTabla() {
   const tabla = document.getElementById("tablaMiembros");
   const filtros = tabla.querySelectorAll(".filtros th");
   const filas = tabla.querySelectorAll("tr[id^='fila_']");
@@ -1116,19 +1475,67 @@ function filtrarTabla(){
       const input = filtro.querySelector("input, select");
       if (!input || !input.value) return;
 
-      let celda = celdas[i].textContent.trim();
-
-      if (!isNaN(input.value) && input.value !== "") {
-        if (Number(celda) < Number(input.value)) visible = false;
+      let valorCelda = "";
+      
+      // Obtener el valor de la celda dependiendo de su contenido
+      const celda = celdas[i];
+      
+      // Si la celda contiene un input, select, o texto
+      if (celda.querySelector('input')) {
+        valorCelda = celda.querySelector('input').value;
+      } else if (celda.querySelector('select')) {
+        valorCelda = celda.querySelector('select').value;
+      } else if (celda.querySelector('.role-badge')) {
+        valorCelda = celda.querySelector('.role-badge').textContent.trim();
+      } else if (celda.querySelector('.total-contribution')) {
+        valorCelda = celda.querySelector('.total-contribution').textContent.trim();
       } else {
-        if (!celda.toLowerCase().startsWith(input.value.toLowerCase())) {
+        valorCelda = celda.textContent.trim();
+      }
+
+      const valorFiltro = input.value.trim();
+      valorCelda = valorCelda.toString();
+
+      // Para filtros numéricos (inputs de tipo number)
+      if (input.type === 'number' && valorFiltro !== "") {
+        const numCelda = parseFloat(valorCelda) || 0;
+        const numFiltro = parseFloat(valorFiltro) || 0;
+        
+        if (numCelda < numFiltro) {
           visible = false;
+        }
+      } 
+      // Para filtros de texto y selects
+      else if (valorFiltro !== "") {
+        // Normalizar texto (quitar acentos, convertir a minúsculas)
+        const textoNormalizado = normalizarTexto(valorCelda);
+        const filtroNormalizado = normalizarTexto(valorFiltro);
+        
+        // Si es un select, comparar exactamente
+        if (input.tagName === 'SELECT') {
+          if (filtroNormalizado !== textoNormalizado) {
+            visible = false;
+          }
+        } 
+        // Si es un input de texto, buscar coincidencias al INICIO
+        else {
+          if (!textoNormalizado.startsWith(filtroNormalizado)) {
+            visible = false;
+          }
         }
       }
     });
 
     fila.style.display = visible ? "" : "none";
   });
+}
+
+/* === Función auxiliar para normalizar texto === */
+function normalizarTexto(texto) {
+  return texto
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 }
 
 /* ===== ORDEN ===== */
