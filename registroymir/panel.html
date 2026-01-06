@@ -78,6 +78,12 @@
     background: rgba(255, 193, 7, 0.05) !important;
   }
   
+  /* Estilos para campos modificados */
+  .modificado {
+    border: 2px solid #4CAF50 !important;
+    background-color: rgba(76, 175, 80, 0.1) !important;
+  }
+  
   /* Estilos para sección de baneados */
   .baneados-table th {
     background-color: #5a189a !important;
@@ -1012,17 +1018,29 @@ function cargarMiembros() {
 }
 
 /* === Detectar cambios en campos editables === */
-function detectarCambios() {
-  document.querySelectorAll('.edit-input, .edit-select, .semanal-input').forEach(input => {
-    const original = input.getAttribute('data-original') || '';
-    const current = input.value;
-    
-    if (current !== original) {
-      input.classList.add('modificado');
-    } else {
-      input.classList.remove('modificado');
+function detectarCambios(event) {
+  const input = event.target;
+  const original = input.getAttribute('data-original') || '';
+  const current = input.value;
+  
+  // Encontrar la fila padre
+  let fila = input.closest('tr[id^="fila_"]');
+  
+  if (current !== original) {
+    input.classList.add('modificado');
+    if (fila && !fila.classList.contains('editing-mode')) {
+      fila.classList.add('editing-mode');
     }
-  });
+  } else {
+    input.classList.remove('modificado');
+    // Verificar si hay otros campos modificados en la misma fila
+    if (fila) {
+      const otrosModificados = fila.querySelectorAll('.modificado');
+      if (otrosModificados.length === 0) {
+        fila.classList.remove('editing-mode');
+      }
+    }
+  }
 }
 
 /* === Guardar todos los cambios en masa === */
@@ -1037,61 +1055,70 @@ window.guardarTodosLosCambios = async () => {
   const miembrosConCambios = [];
   let totalCambios = 0;
 
-  // Recorrer todas las filas editables
-  document.querySelectorAll("tr[id^='fila_'][class*='editing-mode']").forEach(fila => {
+  // Recorrer todas las filas con elementos modificados
+  document.querySelectorAll("tr[id^='fila_'] .modificado").forEach(input => {
+    const fila = input.closest('tr[id^="fila_"]');
+    if (!fila) return;
+    
     const id = fila.id.replace("fila_", "");
     const datosOriginales = window.datosOriginales[id] || {};
-    const updateData = {};
-
-    // Rol
-    const rolSelect = document.getElementById(`editRol_${id}`);
-    if (rolSelect && rolSelect.value !== datosOriginales.role) {
-      updateData.role = rolSelect.value;
+    if (!cambios[id]) cambios[id] = {};
+    
+    // Identificar qué campo es según el ID del input
+    const inputId = input.id;
+    let updateField = '';
+    let updateValue = null;
+    
+    if (inputId.startsWith('editRol_')) {
+      updateField = 'role';
+      updateValue = input.value;
+    } else if (inputId.startsWith('editSem_')) {
+      updateField = 'semanal';
+      updateValue = parseInt(input.value) || 0;
+    } else if (inputId.startsWith('editBoss45_')) {
+      updateField = 'boss45';
+      updateValue = input.value === "Sí";
+    } else if (inputId.startsWith('editBoss55_')) {
+      updateField = 'boss55';
+      updateValue = input.value === "Sí";
+    } else if (inputId.startsWith('editControlSemanal_')) {
+      updateField = 'controlSemanalCompletado';
+      updateValue = input.value === "Sí";
     }
-
-    // Semanal
-    const semanalInput = document.getElementById(`editSem_${id}`);
-    const semanalVal = parseInt(semanalInput?.value) || 0;
-    if (semanalVal !== datosOriginales.semanal) {
-      updateData.semanal = semanalVal;
-    }
-
-    // Boss 45
-    const boss45Select = document.getElementById(`editBoss45_${id}`);
-    const boss45Val = boss45Select?.value === "Sí";
-    if (boss45Val !== (datosOriginales.boss45 === "Sí")) {
-      updateData.boss45 = boss45Val;
-    }
-
-    // Boss 55
-    const boss55Select = document.getElementById(`editBoss55_${id}`);
-    const boss55Val = boss55Select?.value === "Sí";
-    if (boss55Val !== (datosOriginales.boss55 === "Sí")) {
-      updateData.boss55 = boss55Val;
-    }
-
-    // Control semanal
-    const controlSelect = document.getElementById(`editControlSemanal_${id}`);
-    const controlVal = controlSelect?.value === "Sí";
-    if (controlVal !== (datosOriginales.controlSemanal === "Sí")) {
-      updateData.controlSemanalCompletado = controlVal;
-    }
-
-    // Si hay cambios, agregar a la lista
-    if (Object.keys(updateData).length > 0) {
-      cambios[id] = updateData;
-      miembrosConCambios.push({
-        id: id,
-        nombre: datosOriginales.name,
-        cambios: Object.keys(updateData).length
-      });
-      totalCambios += Object.keys(updateData).length;
+    
+    // Verificar si realmente hay un cambio
+    if (updateField && updateValue !== undefined) {
+      let originalValue = datosOriginales[updateField];
+      
+      // Convertir originalValue para comparación
+      if (updateField === 'boss45' || updateField === 'boss55' || updateField === 'controlSemanalCompletado') {
+        originalValue = originalValue === "Sí";
+      }
+      
+      if (updateValue !== originalValue) {
+        cambios[id][updateField] = updateValue;
+      }
     }
   });
 
+  // Filtrar miembros sin cambios reales
+  for (const id in cambios) {
+    if (Object.keys(cambios[id]).length === 0) {
+      delete cambios[id];
+    } else {
+      const nombre = window.datosOriginales[id]?.name || "Sin nombre";
+      miembrosConCambios.push({
+        id: id,
+        nombre: nombre,
+        cambios: Object.keys(cambios[id]).length
+      });
+      totalCambios += Object.keys(cambios[id]).length;
+    }
+  }
+
   // Verificar si hay cambios
   if (Object.keys(cambios).length === 0) {
-    alert("ℹ️ No se detectaron cambios para guardar.");
+    alert("ℹ️ No se detectaron cambios para guardar. Asegúrate de haber modificado algún campo y que el cambio sea diferente al valor original.");
     return;
   }
 
