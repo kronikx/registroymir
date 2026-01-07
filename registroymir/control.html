@@ -1570,7 +1570,7 @@
   </ul>
 </nav>
 
-<!-- MODAL DE CONFIGURACIÓN - AÑADIDO -->
+<!-- MODAL DE CONFIGURACIÓN - CON TODAS LAS MODIFICACIONES -->
 <div id="configModal" class="config-modal">
   <div class="config-content">
     <div class="config-header">
@@ -1578,23 +1578,30 @@
       <button class="close-config" onclick="cerrarConfig()">&times;</button>
     </div>
     
-    <!-- Sección 1: Días de Capturas -->
-    <div class="config-section">
-      <h3><span>📅</span> Días de Capturas</h3>
-      <p style="color: #ccc; margin-bottom: 15px; font-size: 14px;">Selecciona los días en que estarán disponibles las capturas:</p>
-      
-      <div class="dias-container" id="diasConfigContainer">
-        <!-- Los días se cargarán dinámicamente -->
+    <!-- INFORMACIÓN IMPORTANTE SOBRE CAPTURAS - MODIFICADA -->
+    <div style="background: rgba(76, 175, 80, 0.15); padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #4CAF50;">
+      <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+        <span style="font-size: 24px;">📸</span>
+        <strong style="color: #4CAF50; font-size: 16px;">INFORMACIÓN SOBRE CAPTURAS</strong>
       </div>
-      
-      <div class="config-help-text">
-        💡 Los días seleccionados determinarán cuándo los miembros pueden subir capturas.
+      <div style="font-size: 14px; color: #eee; line-height: 1.5;">
+        <strong>Las capturas estarán disponibles AUTOMÁTICAMENTE:</strong><br>
+        • ⏰ <strong>Desde:</strong> Cuando se ABRE el Control Semanal<br>
+        • ⏰ <strong>Hasta:</strong> Cuando se CIERRA el Control Semanal<br>
+        • 📅 <strong>Período completo:</strong> Todo el tiempo que el control esté activo<br>
+        • ✅ <strong>No es necesario configurar días/horas separados</strong>
+      </div>
+      <div style="margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 6px;">
+        <div style="font-size: 12px; color: #aaa; font-style: italic;">
+          Ejemplo: Si el control se abre Jueves 18:00 y cierra Sábado 22:00,<br>
+          las capturas estarán disponibles desde Jueves 18:00 hasta Sábado 22:00.
+        </div>
       </div>
     </div>
     
-    <!-- Sección 2: Horarios de Apertura y Cierre -->
+    <!-- Sección 2: Horarios del Control Semanal (ÚNICA CONFIGURACIÓN NECESARIA) -->
     <div class="config-section">
-      <h3><span>⏰</span> Horarios del Control Semanal</h3>
+      <h3><span>⏰</span> Horarios del Control Semanal (y Capturas)</h3>
       
       <div class="dias-horarios-container">
         <!-- APERTURA -->
@@ -1611,7 +1618,7 @@
               <option value="5">Viernes</option>
               <option value="6">Sábado</option>
             </select>
-            <input type="time" class="hora-input" id="horaApertura" value="00:01">
+            <input type="time" class="hora-input" id="horaApertura" value="18:00">
           </div>
           
           <div class="config-help-text">
@@ -1633,7 +1640,7 @@
               <option value="5">Viernes</option>
               <option value="6" selected>Sábado</option>
             </select>
-            <input type="time" class="hora-input" id="horaCierre" value="00:00">
+            <input type="time" class="hora-input" id="horaCierre" value="22:00">
           </div>
           
           <div class="config-help-text">
@@ -1648,6 +1655,19 @@
         <input type="number" id="horaDiferencia" min="-12" max="14" step="1" value="-4">
         <div class="config-help-text">
           Ej: -4 para Venezuela, -5 para Colombia/Perú, -6 para México, +1 para España
+        </div>
+      </div>
+      
+      <!-- Resumen de capturas -->
+      <div style="background: rgba(157, 78, 221, 0.1); padding: 12px; border-radius: 6px; margin-top: 15px; border: 1px solid #9d4edd;">
+        <div style="font-size: 13px; color: #9d4edd; font-weight: bold; margin-bottom: 8px;">
+          📊 RESUMEN DE DISPONIBILIDAD:
+        </div>
+        <div style="font-size: 12px; color: #eee; line-height: 1.4;">
+          <strong>Control Semanal ABIERTO:</strong><br>
+          • <span id="resumenApertura">Jueves 18:00</span> hasta <span id="resumenCierre">Sábado 22:00</span><br>
+          <strong>Capturas DISPONIBLES:</strong><br>
+          • <span style="color: #4CAF50;">✅ Mismo período que el Control Semanal</span>
         </div>
       </div>
     </div>
@@ -1741,9 +1761,9 @@
     <!-- Información Importante -->
     <div class="config-info">
       <strong>💡 Información importante:</strong><br>
-      • Puedes configurar <strong>cualquier día de la semana</strong> para apertura y cierre.<br>
-      • Las notificaciones se enviarán automáticamente según los horarios configurados.<br>
-      • El sistema verifica cada minuto si debe enviar notificaciones.<br>
+      • Las capturas estarán disponibles <strong>durante TODO el tiempo que el Control Semanal esté ABIERTO</strong>.<br>
+      • No es necesario configurar días/horas separados para capturas.<br>
+      • El sistema verifica automáticamente si el control está abierto.<br>
       • Los cambios se aplicarán inmediatamente después de guardar.<br>
       • En las pruebas, se enviará el <strong>enlace configurado específicamente</strong>.
     </div>
@@ -1763,9 +1783,9 @@
 <div class="container">
   <h1>Control Semanal <span id="userRoleBadge" class="role-badge" style="font-size: 14px; margin-left: 10px;"></span></h1>
   
-  <!-- Indicador de días de capturas -->
+  <!-- Indicador de días de capturas - MODIFICADO -->
   <div id="diasCapturasInfo" style="padding: 8px 12px; background: rgba(90, 24, 154, 0.2); border-radius: 6px; margin: 10px 0; border-left: 4px solid #9d4edd;">
-    <span>📅 Hoy es <strong id="nombreDiaActual"></strong> - 
+    <span>📅 Hora Servidor: <strong id="nombreDiaActual"></strong> - 
     <span id="estadoCapturas"></span></span>
   </div>
 
@@ -1774,11 +1794,11 @@
     <strong>⚠️ Permisos de Edición:</strong> Como <span id="currentRole"></span>, puedes editar <strong>TODOS los campos de todos los miembros</strong>. Los miembros normales solo pueden editar <strong>su propia información de stats</strong> (nivel, poder, stats).
   </div>
 
-  <!-- BOTONES DE ACCIÓN (CON BOTÓN CONFIGURACIÓN AÑADIDO) -->
+  <!-- BOTONES DE ACCIÓN -->
   <div style="text-align: right; margin-bottom: 15px;">
     <button id="reinicioStatsBtn" onclick="iniciarReinicioConBackup()" style="display: none;">🔄 Reiniciar Stats</button>
     <button id="exportarBtn" onclick="exportarAExcel()" style="display: none;">📊 Exportar Backup</button>
-    <!-- BOTÓN DE CONFIGURACIÓN AÑADIDO -->
+    <!-- BOTÓN DE CONFIGURACIÓN -->
     <button id="configBtn" onclick="abrirConfiguracion()" style="display: none;">⚙️ Configuración</button>
   </div>
 
@@ -1792,7 +1812,7 @@
       💡 <strong>Líderes/Oficiales:</strong> Pueden editar todas las filas y TODOS los campos (nombre, clase, stats).<br>
       📊 <strong>Reinicio Stats:</strong> Solo Líderes/Oficiales pueden reiniciar stats y exportar backups.<br>
       🏆 <strong>Ranking:</strong> Solo aparece para miembros con TODOS los stats completos (no vacíos y mayores que 0).<br>
-      📸 <strong>Capturas:</strong> Disponibles según configuración. Se requieren <strong>EXACTAMENTE 4 capturas</strong> para enviar a Discord.
+      📸 <strong>Capturas:</strong> Disponibles cuando el Control Semanal está ABIERTO según configuración.
     </p>
   </div>
 </div>
@@ -1851,17 +1871,16 @@ async function yaEnvioCapturas(memberId) {
   }
 }
 
-/* === CONFIGURACIÓN GLOBAL COMPLETA === */
+/* === CONFIGURACIÓN GLOBAL COMPLETA - MODIFICADA === */
 let CONFIG = {
-  // Días de capturas
-  diasCapturas: [4, 5, 6], // Por defecto: Jueves(4), Viernes(5), Sábado(6)
+  // ELIMINADO: díasCapturas - ya no es necesario
   
-  // Apertura y cierre
+  // Apertura y cierre (esto determina cuándo están disponibles las capturas)
   diaApertura: 4, // Por defecto: Jueves (4)
-  horaApertura: "00:01",
+  horaApertura: "18:00",
   diaCierre: 6, // Por defecto: Sábado (6)
-  horaCierre: "00:00",
-  diferenciaHoraria: -4, // Por defecto: -4 horas (UTC-4)
+  horaCierre: "22:00",
+  diferenciaHoraria: -4,
   
   // Discord
   discordWebhook: 'https://discord.com/api/webhooks/1454543720627179835/MLCNGtb7fOQrb3d9OfeIWdZlGa9_IZ1hlnhE1JmGDnQClb1wDwR3EdwcFsIxY_ZIf-k8',
@@ -1901,14 +1920,11 @@ async function cargarConfiguracion() {
     if (configDoc.exists()) {
       const data = configDoc.data();
       
-      // Días de capturas
-      CONFIG.diasCapturas = data.diasCapturas || [4, 5, 6];
-      
       // Apertura y cierre
       CONFIG.diaApertura = data.diaApertura !== undefined ? data.diaApertura : 4;
-      CONFIG.horaApertura = data.horaApertura || "00:01";
+      CONFIG.horaApertura = data.horaApertura || "18:00";
       CONFIG.diaCierre = data.diaCierre !== undefined ? data.diaCierre : 6;
-      CONFIG.horaCierre = data.horaCierre || "00:00";
+      CONFIG.horaCierre = data.horaCierre || "22:00";
       CONFIG.diferenciaHoraria = data.diferenciaHoraria || -4;
       
       // Discord
@@ -1953,6 +1969,107 @@ async function cargarConfiguracion() {
   }
 }
 
+/* === FUNCIÓN PARA OBTENER DÍA Y HORA DEL SERVIDOR (CORREGIDA) === */
+function obtenerDiaYHoraServidor() {
+  const ahora = new Date();
+  
+  // 1. Obtener valores UTC reales
+  const horaUTC = ahora.getUTCHours();
+  const minutosUTC = ahora.getUTCMinutes();
+  const segundosUTC = ahora.getUTCSeconds();
+  const diaUTC = ahora.getUTCDay(); // 0=Domingo, 1=Lunes, etc.
+  
+  // 2. Aplicar diferencia horaria configurada
+  let horaServidor = horaUTC + CONFIG.diferenciaHoraria;
+  let diaServidor = diaUTC;
+  
+  // 3. Ajustar día si pasa de medianoche
+  if (horaServidor >= 24) {
+    horaServidor -= 24;
+    diaServidor = (diaUTC + 1) % 7;
+  } else if (horaServidor < 0) {
+    horaServidor += 24;
+    diaServidor = (diaUTC - 1 + 7) % 7;
+  }
+  
+  return {
+    diaSemana: diaServidor, // DÍA ajustado por diferencia horaria
+    hora: horaServidor,     // HORA ajustada por diferencia horaria
+    minutos: minutosUTC,
+    segundos: segundosUTC,
+    fechaCompleta: ahora
+  };
+}
+
+/* === FUNCIÓN PARA VERIFICAR SI EL CONTROL ESTÁ ABIERTO (CORREGIDA) === */
+function controlEstaAbierto() {
+  // Obtener día y hora del SERVIDOR (con diferencia horaria aplicada)
+  const { diaSemana, hora, minutos } = obtenerDiaYHoraServidor();
+  
+  // Convertir hora servidor a minutos
+  const minutosServidor = hora * 60 + minutos;
+  
+  // Convertir horas configuradas a minutos
+  const horaApertura = parsearHoraConfigurada(CONFIG.horaApertura);
+  const minutosApertura = horaApertura.horas * 60 + horaApertura.minutos;
+  
+  const horaCierre = parsearHoraConfigurada(CONFIG.horaCierre);
+  const minutosCierre = horaCierre.horas * 60 + horaCierre.minutos;
+  
+  // 1. Si estamos en día de apertura
+  if (diaSemana === CONFIG.diaApertura) {
+    // Solo contar desde la hora de apertura
+    return minutosServidor >= minutosApertura;
+  }
+  
+  // 2. Si estamos en día de cierre
+  if (diaSemana === CONFIG.diaCierre) {
+    // Solo contar hasta la hora de cierre
+    return minutosServidor < minutosCierre;
+  }
+  
+  // 3. Si estamos entre los días de apertura y cierre
+  let diaActual = diaSemana;
+  let diaAperturaTemp = CONFIG.diaApertura;
+  let diaCierreTemp = CONFIG.diaCierre;
+  
+  // Ajustar para casos donde cierre es menor (ej: Sábado 6 → Lunes 1)
+  if (diaCierreTemp < diaAperturaTemp) {
+    diaCierreTemp += 7;
+    if (diaActual < diaAperturaTemp) {
+      diaActual += 7;
+    }
+  }
+  
+  // Verificar si estamos entre los días
+  return diaActual > diaAperturaTemp && diaActual < diaCierreTemp;
+}
+
+/* === FUNCIÓN PARA VERIFICAR DÍAS DE CAPTURAS (SIMPLIFICADA) === */
+function esDiaDeCapturas() {
+  // Las capturas están disponibles cuando el control está ABIERTO
+  return controlEstaAbierto();
+}
+
+/* === FUNCIÓN PARA ACTUALIZAR RESUMEN === */
+function actualizarResumenHorarios() {
+  const diaApertura = document.getElementById('diaApertura');
+  const horaApertura = document.getElementById('horaApertura');
+  const diaCierre = document.getElementById('diaCierre');
+  const horaCierre = document.getElementById('horaCierre');
+  
+  if (diaApertura && horaApertura && diaCierre && horaCierre) {
+    const diaAperturaNombre = obtenerNombreDiaPorNumero(parseInt(diaApertura.value));
+    const diaCierreNombre = obtenerNombreDiaPorNumero(parseInt(diaCierre.value));
+    
+    const resumenApertura = document.getElementById('resumenApertura');
+    const resumenCierre = document.getElementById('resumenCierre');
+    
+    if (resumenApertura) resumenApertura.textContent = `${diaAperturaNombre} ${horaApertura.value}`;
+    if (resumenCierre) resumenCierre.textContent = `${diaCierreNombre} ${horaCierre.value}`;
+  }
+}
+
 /* === FUNCIONES PARA EL MODAL DE CONFIGURACIÓN === */
 window.abrirConfiguracion = function() {
   console.log("Abriendo configuración completa...");
@@ -1963,55 +2080,34 @@ window.abrirConfiguracion = function() {
   }
   
   const modal = document.getElementById('configModal');
-  const container = document.getElementById('diasConfigContainer');
   
-  if (!modal || !container) {
-    console.error("Modal o contenedor no encontrado");
+  if (!modal) {
+    console.error("Modal no encontrado");
     return;
   }
   
   console.log("Cargando configuración en el modal...");
   
-  // Cargar días de la semana para capturas
-  const diasSemana = [
-    { numero: 0, nombre: "Domingo" },
-    { numero: 1, nombre: "Lunes" },
-    { numero: 2, nombre: "Martes" },
-    { numero: 3, nombre: "Miércoles" },
-    { numero: 4, nombre: "Jueves" },
-    { numero: 5, nombre: "Viernes" },
-    { numero: 6, nombre: "Sábado" }
-  ];
-  
-  container.innerHTML = '';
-  
-  diasSemana.forEach(dia => {
-    const isChecked = CONFIG.diasCapturas.includes(dia.numero);
-    const diaOption = document.createElement('div');
-    diaOption.className = 'dia-option';
-    diaOption.innerHTML = `
-      <input type="checkbox" id="dia_${dia.numero}" value="${dia.numero}" ${isChecked ? 'checked' : ''}>
-      <label for="dia_${dia.numero}">${dia.nombre}</label>
-    `;
-    container.appendChild(diaOption);
-  });
-  
   // Cargar TODOS los campos de configuración
   const camposConfig = [
-    // Nuevos campos para días/horarios independientes
+    // Horarios de control (ÚNICA CONFIGURACIÓN NECESARIA)
     { id: 'diaApertura', value: CONFIG.diaApertura },
     { id: 'horaApertura', value: CONFIG.horaApertura },
     { id: 'diaCierre', value: CONFIG.diaCierre },
     { id: 'horaCierre', value: CONFIG.horaCierre },
     { id: 'horaDiferencia', value: CONFIG.diferenciaHoraria },
     
-    // Campos existentes
+    // Discord
     { id: 'discordWebhook', value: CONFIG.discordWebhook },
     { id: 'discordMencion', value: CONFIG.discordMencion },
     { id: 'urlControl', value: CONFIG.urlControl },
+    
+    // Imágenes
     { id: 'urlImagenApertura', value: CONFIG.urlImagenApertura },
     { id: 'urlImagenCierre', value: CONFIG.urlImagenCierre },
     { id: 'urlLogoGuild', value: CONFIG.urlLogoGuild },
+    
+    // Texto
     { id: 'textoAnsi', value: CONFIG.textoAnsi }
   ];
   
@@ -2022,11 +2118,25 @@ window.abrirConfiguracion = function() {
     }
   });
   
+  // Actualizar el resumen
+  setTimeout(() => {
+    actualizarResumenHorarios();
+  }, 100);
+  
   // Mostrar modal
   modal.style.display = 'flex';
-  document.body.style.overflow = 'hidden'; // Prevenir scroll del body
+  document.body.style.overflow = 'hidden';
   
   console.log("Modal de configuración completa mostrado");
+  
+  // Configurar eventos para actualizar resumen en tiempo real
+  const inputsHorarios = ['diaApertura', 'horaApertura', 'diaCierre', 'horaCierre'];
+  inputsHorarios.forEach(id => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.addEventListener('change', actualizarResumenHorarios);
+    }
+  });
   
   // Configurar eventos
   setTimeout(() => {
@@ -2041,7 +2151,7 @@ window.cerrarConfig = function() {
   const modal = document.getElementById('configModal');
   if (modal) {
     modal.style.display = 'none';
-    document.body.style.overflow = 'auto'; // Restaurar scroll del body
+    document.body.style.overflow = 'auto';
   }
 };
 
@@ -2075,30 +2185,14 @@ async function guardarConfiguracionCompleta() {
   try {
     console.log("Recopilando datos de configuración completa...");
     
-    // 1. Obtener días de capturas seleccionados
-    const diasSeleccionados = [];
-    const checkboxes = document.querySelectorAll('.dia-option input[type="checkbox"]:checked');
-    
-    checkboxes.forEach(checkbox => {
-      const valor = parseInt(checkbox.value);
-      if (!isNaN(valor)) {
-        diasSeleccionados.push(valor);
-      }
-    });
-    
-    // 2. Obtener apertura y cierre
+    // 1. Obtener apertura y cierre (ÚNICA CONFIGURACIÓN NECESARIA)
     const diaApertura = parseInt(document.getElementById('diaApertura').value);
     const horaApertura = document.getElementById('horaApertura').value;
     const diaCierre = parseInt(document.getElementById('diaCierre').value);
     const horaCierre = document.getElementById('horaCierre').value;
     const diferenciaHoraria = parseInt(document.getElementById('horaDiferencia').value) || -4;
     
-    // 3. Validar días y horas
-    if (diasSeleccionados.length === 0) {
-      alert("❌ Debes seleccionar al menos un día para capturas.");
-      return;
-    }
-    
+    // 2. Validar
     if (isNaN(diaApertura) || diaApertura < 0 || diaApertura > 6) {
       alert("❌ Día de apertura no válido.");
       return;
@@ -2119,12 +2213,9 @@ async function guardarConfiguracionCompleta() {
       return;
     }
     
-    // 4. Obtener el resto de la configuración
+    // 3. Obtener el resto de la configuración
     const nuevaConfig = {
-      // Días de capturas
-      diasCapturas: diasSeleccionados.sort((a, b) => a - b),
-      
-      // Apertura y cierre
+      // Apertura y cierre (determina cuándo están disponibles las capturas)
       diaApertura: diaApertura,
       horaApertura: horaApertura,
       diaCierre: diaCierre,
@@ -2148,40 +2239,43 @@ async function guardarConfiguracionCompleta() {
       ultimaActualizacion: Date.now(),
       actualizadoPor: MI_UID,
       fechaActualizacion: new Date().toISOString(),
-      actualizadoPorNombre: MI_ROL
+      actualizadoPorNombre: MI_ROL,
+      
+      // NUEVO: Información sobre simplificación
+      configuracionSimplificada: true,
+      nota: "Las capturas están disponibles durante TODO el período del Control Semanal"
     };
     
     console.log("Configuración a guardar:", nuevaConfig);
     
-    // 5. Guardar en Firebase
+    // 4. Guardar en Firebase
     await setDoc(doc(db, "configuracion", "control_completo"), nuevaConfig);
     
-    // 6. Actualizar configuración local
+    // 5. Actualizar configuración local
     Object.keys(nuevaConfig).forEach(key => {
       CONFIG[key] = nuevaConfig[key];
     });
     
-    // 7. Registrar en historial
-    const diasNombres = CONFIG.diasCapturas.map(d => obtenerNombreDiaPorNumero(d)).join(', ');
+    // 6. Registrar en historial
     const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
     const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
     
     await addDoc(collection(db, "historial"), {
       usuario: MI_UID,
       rol: MI_ROL,
-      accion: "Actualización de configuración completa",
-      cambio: `Apertura: ${diaAperturaNombre} ${CONFIG.horaApertura} | Cierre: ${diaCierreNombre} ${CONFIG.horaCierre} | Días capturas: ${diasNombres}`,
+      accion: "Actualización de configuración simplificada",
+      cambio: `Control Semanal: ${diaAperturaNombre} ${CONFIG.horaApertura} → ${diaCierreNombre} ${CONFIG.horaCierre} | Capturas disponibles durante TODO el período`,
       fecha: Date.now(),
-      detalles: `Configuración actualizada por ${MI_ROL}`
+      detalles: `Configuración simplificada. Capturas = Control Semanal. Actualizado por ${MI_ROL}`
     });
     
-    // 8. Actualizar interfaz
+    // 7. Actualizar interfaz
     actualizarIndicadorDias();
     updateTopClocks();
     cerrarConfig();
     
-    // 9. Mostrar confirmación
-    alert(`✅ Configuración guardada exitosamente!\n\n🚪 Apertura: ${diaAperturaNombre} ${CONFIG.horaApertura}\n🔒 Cierre: ${diaCierreNombre} ${CONFIG.horaCierre}\n📅 Días capturas: ${diasNombres}\n⏰ UTC${CONFIG.diferenciaHoraria >= 0 ? '+' : ''}${CONFIG.diferenciaHoraria}`);
+    // 8. Mostrar confirmación
+    alert(`✅ Configuración SIMPLIFICADA guardada!\n\n🚪 Apertura: ${diaAperturaNombre} ${CONFIG.horaApertura}\n🔒 Cierre: ${diaCierreNombre} ${CONFIG.horaCierre}\n📸 Capturas: Disponibles durante TODO el período del Control Semanal\n⏰ UTC${CONFIG.diferenciaHoraria >= 0 ? '+' : ''}${CONFIG.diferenciaHoraria}`);
     
   } catch (error) {
     console.error("❌ Error al guardar configuración:", error);
@@ -2351,7 +2445,7 @@ async function verificarYEnviarNotificaciones() {
     console.log(`🚪 APERTURA config: Día ${CONFIG.diaApertura} (${obtenerNombreDiaPorNumero(CONFIG.diaApertura)}) a las ${CONFIG.horaApertura}`);
     console.log(`🔒 CIERRE config: Día ${CONFIG.diaCierre} (${obtenerNombreDiaPorNumero(CONFIG.diaCierre)}) a las ${CONFIG.horaCierre}`);
     
-    // Verificar APERTURA - COMPARACIÓN EXACTA (NO con margen de 10 minutos)
+    // Verificar APERTURA - COMPARACIÓN EXACTA
     const esDiaApertura = (diaSemana === CONFIG.diaApertura);
     const esHoraAperturaExacta = (hora === horaApertura.horas && minutos === horaApertura.minutos);
     
@@ -2369,7 +2463,7 @@ async function verificarYEnviarNotificaciones() {
       }
     }
     
-    // Verificar CIERRE - COMPARACIÓN EXACTA (NO con margen de 10 minutos)
+    // Verificar CIERRE - COMPARACIÓN EXACTA
     const esDiaCierre = (diaSemana === CONFIG.diaCierre);
     const esHoraCierreExacta = (hora === horaCierre.horas && minutos === horaCierre.minutos);
     
@@ -2397,94 +2491,10 @@ async function verificarYEnviarNotificaciones() {
   }
 }
 
-/* === Función CORREGIDA para obtener día y hora del servidor === */
-function obtenerDiaYHoraServidor() {
-  const ahora = new Date();
-  
-  // Obtener valores UTC reales
-  const horaUTC = ahora.getUTCHours();
-  const minutosUTC = ahora.getUTCMinutes();
-  const segundosUTC = ahora.getUTCSeconds();
-  const diaUTC = ahora.getUTCDay(); // 0=Domingo, 1=Lunes, etc.
-  
-  // Calcular hora servidor: UTC + diferencia configurada
-  let horaServidor = horaUTC + CONFIG.diferenciaHoraria;
-  let diaServidor = diaUTC;
-  
-  // AJUSTAR DÍA si la hora pasa de medianoche
-  if (horaServidor >= 24) {
-    horaServidor -= 24;
-    diaServidor = (diaUTC + 1) % 7; // Avanzar un día
-  } else if (horaServidor < 0) {
-    horaServidor += 24;
-    diaServidor = (diaUTC - 1 + 7) % 7; // Retroceder un día
-  }
-  
-  // DEBUG detallado (puedes quitar esto después)
-  console.log('🕐 CALCULO DÍA/HORA SERVIDOR:');
-  console.log(`   FECHA LOCAL: ${ahora.toLocaleString('es-ES')}`);
-  console.log(`   UTC: ${horaUTC}:${minutosUTC.toString().padStart(2, '0')} - Día ${diaUTC} (${obtenerNombreDiaPorNumero(diaUTC)})`);
-  console.log(`   DIFERENCIA: ${CONFIG.diferenciaHoraria} horas`);
-  console.log(`   RESULTADO: ${horaServidor}:${minutosUTC.toString().padStart(2, '0')} - Día ${diaServidor} (${obtenerNombreDiaPorNumero(diaServidor)})`);
-  console.log(`   DIFERENCIA APLICADA: UTC(${horaUTC}) + ${CONFIG.diferenciaHoraria} = ${horaServidor}`);
-  
-  return {
-    diaSemana: diaServidor, // Día AJUSTADO por diferencia horaria ← ¡ESTO ES LO QUE CAMBIA!
-    hora: horaServidor,
-    minutos: minutosUTC,
-    segundos: segundosUTC,
-    fechaCompleta: ahora
-  };
+function obtenerNombreDiaPorNumero(numeroDia) {
+  const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+  return dias[numeroDia] || "Desconocido";
 }
-
-/* === Función para diagnosticar configuración === */
-window.probarConfiguracionActual = function() {
-  if (!esLiderOficial) {
-    alert("❌ Solo Líderes y Oficiales pueden probar.");
-    return;
-  }
-  
-  const ahora = new Date();
-  const { diaSemana, hora, minutos } = obtenerDiaYHoraServidor();
-  const horaApertura = parsearHoraConfigurada(CONFIG.horaApertura);
-  const horaCierre = parsearHoraConfigurada(CONFIG.horaCierre);
-  
-  const mensaje = `
-📊 DIAGNÓSTICO DE CONFIGURACIÓN
-
-📅 Día servidor: ${obtenerNombreDiaPorNumero(diaSemana)} (${diaSemana})
-⏰ Hora servidor: ${hora}:${minutos < 10 ? '0' : ''}${minutos}
-
-🚪 APERTURA config:
-• Día: ${obtenerNombreDiaPorNumero(CONFIG.diaApertura)} (${CONFIG.diaApertura})
-• Hora: ${CONFIG.horaApertura}
-
-🔒 CIERRE config:
-• Día: ${obtenerNombreDiaPorNumero(CONFIG.diaCierre)} (${CONFIG.diaCierre})
-• Hora: ${CONFIG.horaCierre}
-
-✅ VERIFICACIÓN:
-• ¿Día de apertura? ${diaSemana === CONFIG.diaApertura ? '✅ SÍ' : '❌ NO'}
-• ¿Hora de apertura? ${hora === horaApertura.horas && minutos === horaApertura.minutos ? '✅ SÍ' : '❌ NO'}
-• ¿Día de cierre? ${diaSemana === CONFIG.diaCierre ? '✅ SÍ' : '❌ NO'}
-• ¿Hora de cierre? ${hora === horaCierre.horas && minutos === horaCierre.minutos ? '✅ SÍ' : '❌ NO'}
-
-${diaSemana === CONFIG.diaApertura && hora === horaApertura.horas && minutos === horaApertura.minutos ? 
-  '🔥🔥🔥 ¡AHORA MISMO DEBERÍA ENVIARSE APERTURA!' : 
-  diaSemana === CONFIG.diaCierre && hora === horaCierre.horas && minutos === horaCierre.minutos ?
-  '🔥🔥🔥 ¡AHORA MISMO DEBERÍA ENVIARSE CIERRE!' :
-  '⏳ No es hora exacta para notificaciones'
-}
-  `;
-  
-  console.log("=== DIAGNÓSTICO ===");
-  console.log(mensaje);
-  
-  alert('Revisa la consola (F12 → Console) para ver el diagnóstico');
-  
-  // Ejecutar verificación inmediata
-  verificarYEnviarNotificaciones();
-};
 
 /* === FUNCIONES DE NOTIFICACIÓN === */
 function formatearTextoAnsi(esPrueba = false) {
@@ -2536,8 +2546,8 @@ async function enviarNotificacionApertura(esPrueba = false) {
     title: `🏆 ¡HA COMENZADO EL CONTROL SEMANAL${mensajeSufijo}!`,
     description: `**Período activo para registrar stats y subir capturas**\n\n**Horario:** ${diaAperturaNombre} ${CONFIG.horaApertura} - ${diaCierreNombre} ${CONFIG.horaCierre} (UTC${sufijoUTC}${CONFIG.diferenciaHoraria})`,
     color: 0x00FF7F,
-    image: { url: CONFIG.urlImagenApertura },  // ← CAMBIADO A 'image' PARA BANNER GRANDE
-    thumbnail: { url: CONFIG.urlLogoGuild },   // ← LOGO PEQUEÑO EN ESQUINA
+    image: { url: CONFIG.urlImagenApertura },
+    thumbnail: { url: CONFIG.urlLogoGuild },
     fields: [
       { name: "📸 Capturas", value: "4 REQUERIDAS", inline: true },
       { name: "🔗 Enlace web", value: `[👉 HAZ CLIC AQUÍ 👈](${CONFIG.urlControl})`, inline: false }
@@ -2592,15 +2602,13 @@ async function enviarNotificacionCierre(esPrueba = false) {
       content: `${CONFIG.discordMencion} 📢 **¡CONTROL SEMANAL CERRADO${mensajeSufijo}!** 📢\n\n⚠️ **YA NO se pueden modificar stats ni subir capturas**\n\n🔗 **Enlace:** ${CONFIG.urlControl}`,
       username: `🏆 YMIR Control${mensajeSufijo}`,
       avatar_url: CONFIG.urlLogoGuild,
-
-     // 🔍 BUSCA ESTE CÓDIGO:
-embeds: [
+ embeds: [
   {
     title: `🏆 CONTROL SEMANAL FINALIZADO${mensajeSufijo}`,
     description: `**Período cerrado:** ${diaCierreNombre} ${CONFIG.horaCierre} (UTC${sufijoUTC}${CONFIG.diferenciaHoraria})`,
     color: 0xFF4444,
-    image: { url: CONFIG.urlImagenCierre },  // ← CAMBIADO A 'image' PARA BANNER GRANDE
-    thumbnail: { url: CONFIG.urlLogoGuild }, // ← LOGO PEQUEÑO EN ESQUINA
+    image: { url: CONFIG.urlImagenCierre },
+    thumbnail: { url: CONFIG.urlLogoGuild },
     fields: [
       { name: "⏳ Siguiente apertura", value: `Próximo ${diaAperturaNombre} ${CONFIG.horaApertura}`, inline: true },
       { name: "🔗 Enlace web", value: `[👉 VER RESULTADOS 👈](${CONFIG.urlControl})`, inline: false }
@@ -2723,56 +2731,36 @@ async function enviarNotificacionUrgente() {
   }
 }
 
-/* === FUNCIONES PARA VERIFICAR DÍAS DE CAPTURAS === */
-function esDiaDeCapturas() {
-  const { diaSemana } = obtenerDiaYHoraServidor(); // Usa la MISMA función que las notificaciones
-  
-  console.log('📅 VERIFICANDO DÍA CAPTURAS:');
-  console.log(`   Día calculado: ${diaSemana} (${obtenerNombreDiaPorNumero(diaSemana)})`);
-  console.log(`   Días permitidos: ${CONFIG.diasCapturas.map(d => obtenerNombreDiaPorNumero(d)).join(', ')}`);
-  console.log(`   ¿Incluye? ${CONFIG.diasCapturas.includes(diaSemana) ? '✅ SÍ' : '❌ NO'}`);
-  
-  return CONFIG.diasCapturas.includes(diaSemana);
-}
-
-function obtenerNombreDia() {
-  const { diaSemana } = obtenerDiaYHoraServidor(); // Usa día ajustado
-  const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-  return dias[diaSemana] || "Desconocido";
-}
-
-function obtenerNombreDiaPorNumero(numeroDia) {
-  const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-  return dias[numeroDia] || "Desconocido";
-}
-
-/* === ACTUALIZAR INDICADOR DE DÍAS CON HORA SERVIDOR === */
+/* === ACTUALIZAR INDICADOR DE DÍAS CON HORA SERVIDOR (CORREGIDO) === */
 function actualizarIndicadorDias() {
   const nombreDiaElement = document.getElementById('nombreDiaActual');
   const estadoElement = document.getElementById('estadoCapturas');
   
   if (nombreDiaElement && estadoElement) {
-    // Obtener día y hora ACTUAL del servidor
+    // Obtener día y hora del SERVIDOR
     const { diaSemana, hora, minutos } = obtenerDiaYHoraServidor();
     const nombreDia = obtenerNombreDiaPorNumero(diaSemana);
-    const esValido = esDiaDeCapturas();
-    const diasHabilitados = CONFIG.diasCapturas.map(d => obtenerNombreDiaPorNumero(d)).join(', ');
+    const estaAbierto = controlEstaAbierto();
     
-    // Formatear hora actual
-    const horaActual = `${hora.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
+    // Formatear hora servidor
+    const horaServidor = `${hora.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
     
-    nombreDiaElement.textContent = `${nombreDia} ${horaActual}`;
+    nombreDiaElement.textContent = `${nombreDia} ${horaServidor} (UTC${CONFIG.diferenciaHoraria >= 0 ? '+' : ''}${CONFIG.diferenciaHoraria})`;
     
-    if (esValido) {
+    // Obtener nombres de días configurados
+    const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
+    const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
+    
+    if (estaAbierto) {
       estadoElement.innerHTML = `
-        <span style="color:#4CAF50">✅ Capturas HABILITADAS</span><br>
-        <small style="color:#888; font-size:11px;">Días permitidos: ${diasHabilitados}</small>
+        <span style="color:#4CAF50">✅ Control ABIERTO - Capturas DISPONIBLES</span><br>
+        <small style="color:#888; font-size:11px;">Período: ${diaAperturaNombre} ${CONFIG.horaApertura} → ${diaCierreNombre} ${CONFIG.horaCierre}</small>
       `;
       document.getElementById('diasCapturasInfo').style.borderLeftColor = '#4CAF50';
     } else {
       estadoElement.innerHTML = `
-        <span style="color:#ff9800">❌ Capturas NO disponibles</span><br>
-        <small style="color:#888; font-size:11px;">Días permitidos: ${diasHabilitados}</small>
+        <span style="color:#ff9800">❌ Control CERRADO - Capturas NO disponibles</span><br>
+        <small style="color:#888; font-size:11px;">Próxima apertura: ${diaAperturaNombre} ${CONFIG.horaApertura}</small>
       `;
       document.getElementById('diasCapturasInfo').style.borderLeftColor = '#ff9800';
     }
@@ -2787,40 +2775,18 @@ function updateTopClocks() {
   const localTime = now.toLocaleTimeString('es-ES', { hour12: false });
   document.getElementById('localTime').textContent = localTime;
   
-  // Hora del servidor (usando la MISMA diferencia horaria que Discord)
-  // Esto es CRÍTICO: usar exactamente el mismo cálculo
-  const horaUTC = now.getUTCHours();
-  const minutosUTC = now.getUTCMinutes();
-  const segundosUTC = now.getUTCSeconds();
+  // Hora del servidor (con diferencia horaria aplicada)
+  const { hora, minutos, segundos } = obtenerDiaYHoraServidor();
   
-  let horaServidor = horaUTC + CONFIG.diferenciaHoraria;
-  
-  // Ajustar si pasa de medianoche
-  if (horaServidor >= 24) {
-    horaServidor -= 24;
-  } else if (horaServidor < 0) {
-    horaServidor += 24;
-  }
-  
-  // Formatear como HH:MM:SS
-  const horaStr = horaServidor.toString().padStart(2, '0');
-  const minutosStr = minutosUTC.toString().padStart(2, '0');
-  const segundosStr = segundosUTC.toString().padStart(2, '0');
+  const horaStr = hora.toString().padStart(2, '0');
+  const minutosStr = minutos.toString().padStart(2, '0');
+  const segundosStr = segundos.toString().padStart(2, '0');
   
   const serverTimeStr = `${horaStr}:${minutosStr}:${segundosStr}`;
   document.getElementById('serverTime').textContent = serverTimeStr;
   
-  // También actualizar el indicador de días
+  // Actualizar indicador de días
   actualizarIndicadorDias();
-  
-  // DEBUG: Mostrar en consola para verificar
-  console.log('🕐 RELOJES ACTUALIZADOS:', {
-    local: localTime,
-    server: serverTimeStr,
-    diferencia: CONFIG.diferenciaHoraria,
-    horaUTC: `${horaUTC}:${minutosUTC}`,
-    horaCalculada: horaServidor
-  });
 }
 
 setInterval(updateTopClocks, 1000);
@@ -2900,11 +2866,10 @@ onAuthStateChanged(auth, async user => {
   // Actualizar relojes con la configuración cargada
   updateTopClocks();
   
-  // VERIFICAR NOTIFICACIONES AUTOMÁTICAS - CORREGIDO
-  // Verificar inmediatamente al cargar
+  // VERIFICAR NOTIFICACIONES AUTOMÁTICAS
   setTimeout(() => verificarYEnviarNotificaciones(), 3000);
   
-  // Luego verificar cada 30 segundos (en lugar de 60)
+  // Luego verificar cada 30 segundos
   setInterval(() => verificarYEnviarNotificaciones(), 30 * 1000);
   
   // También verificar cada minuto en punto
@@ -2919,7 +2884,7 @@ onAuthStateChanged(auth, async user => {
   escucharSolicitudesBadge();
   actualizarIndicadorDias();
   
-  // MOSTRAR/OCULTAR BOTONES SEGÚN ROL (INCLUYENDO BOTÓN CONFIGURACIÓN)
+  // MOSTRAR/OCULTAR BOTONES SEGÚN ROL
   const reinicioBtn = document.getElementById("reinicioStatsBtn");
   const exportarBtn = document.getElementById("exportarBtn");
   const configBtn = document.getElementById("configBtn");
@@ -3139,7 +3104,7 @@ function cargarControl(){
               <button class="btn cancel" onclick="cancelarEdicionControl('${d.id}')">Cancelar</button>
               ${esDiaDeCapturas() ? 
                 `<button class="btn" onclick="mostrarCapturas('${d.id}')" style="background:#2196F3; margin-top:4px;">📸 Capturas</button>` : 
-                `<button class="btn" style="background:#666; margin-top:4px; cursor:not-allowed;" title="Capturas no disponibles hoy" disabled>📸 Capturas</button>`}
+                `<button class="btn" style="background:#666; margin-top:4px; cursor:not-allowed;" title="Capturas no disponibles" disabled>📸 Capturas</button>`}
             </td>
           </tr>
         `;
@@ -3182,7 +3147,7 @@ function cargarControl(){
                 <button class="btn" onclick="editarControl('${d.id}')">Editar</button>
                 ${esDiaDeCapturas() ? 
                   `<button class="btn" onclick="mostrarCapturas('${d.id}')" style="background:#2196F3; margin-top:4px;">📸 Capturas</button>` : 
-                  `<button class="btn" style="background:#666; margin-top:4px; cursor:not-allowed;" title="Capturas no disponibles hoy" disabled>📸 Capturas</button>`}
+                  `<button class="btn" style="background:#666; margin-top:4px; cursor:not-allowed;" title="Capturas no disponibles" disabled>📸 Capturas</button>`}
               ` : 
                 `<span style="color: #999; font-size: 11px; font-style: italic;">solo stats propios</span>`}
             </td>
@@ -3561,10 +3526,11 @@ window.guardarControl = async (id)=>{
 /* === Funciones para capturas === */
 // Mostrar/ocultar panel de capturas
 window.mostrarCapturas = async function(id) {
-  // Verificar si es día de capturas
+  // Verificar si es día de capturas (control abierto)
   if (!esDiaDeCapturas()) {
-    const diasHabilitados = CONFIG.diasCapturas.map(d => obtenerNombreDiaPorNumero(d)).join(', ');
-    alert(`❌ Las capturas solo están disponibles en los siguientes días:\n${diasHabilitados}`);
+    const diaAperturaNombre = obtenerNombreDiaPorNumero(CONFIG.diaApertura);
+    const diaCierreNombre = obtenerNombreDiaPorNumero(CONFIG.diaCierre);
+    alert(`❌ Las capturas solo están disponibles cuando el Control Semanal está ABIERTO:\n\n📅 ${diaAperturaNombre} ${CONFIG.horaApertura} → ${diaCierreNombre} ${CONFIG.horaCierre}`);
     return;
   }
   
@@ -3777,15 +3743,12 @@ window.eliminarCaptura = function(memberId, capturaId) {
   actualizarVistaCapturas(memberId);
 };
 
-// Cargar capturas existentes (si hubiera una implementación previa)
+// Cargar capturas existentes
 function cargarCapturasExistentes(memberId) {
-  // Aquí puedes cargar capturas existentes de Firebase si las guardas
-  // Por ahora, solo inicializa el array vacío
   actualizarVistaCapturas(memberId);
 }
 
 // Enviar capturas a Discord
-
 window.enviarCapturasADiscord = async function(memberId) {
   // ===== NUEVO: Verificar si ya envió capturas =====
   const yaEnvio = await yaEnvioCapturas(memberId);
