@@ -11,10 +11,11 @@
     text-align: center;
     font-size: 13px;
   }
-  #reinicioBtn {
+  
+  /* Botones principales */
+  #reinicioBtn, #configuracionBtn {
     padding: 8px 16px;
     font-size: 14px;
-    background-color: #5a189a;
     color: #fff;
     border: none;
     border-radius: 6px;
@@ -24,7 +25,22 @@
     align-items: center;
     gap: 5px;
   }
-  #reinicioBtn:hover { background-color: #9d4edd; }
+  
+  #reinicioBtn {
+    background-color: #5a189a;
+  }
+  
+  #reinicioBtn:hover { 
+    background-color: #9d4edd; 
+  }
+  
+  #configuracionBtn {
+    background-color: #6c757d;
+  }
+  
+  #configuracionBtn:hover { 
+    background-color: #5c636a; 
+  }
   
   .btn {
     font-size: 12px;
@@ -38,11 +54,35 @@
     display: inline-block;
     margin: 2px;
   }
-  .btn:hover { background-color: #9d4edd; }
-  .btn.secondary { background-color: #dc3545; color: #fff; }
-  .btn.secondary:hover { background-color: #bb2d3b; }
-  .btn.cancel { background-color: #6c757d; }
-  .btn.cancel:hover { background-color: #5c636a; }
+  
+  .btn:hover { 
+    background-color: #9d4edd; 
+  }
+  
+  .btn.secondary { 
+    background-color: #dc3545; 
+    color: #fff; 
+  }
+  
+  .btn.secondary:hover { 
+    background-color: #bb2d3b; 
+  }
+  
+  .btn.cancel { 
+    background-color: #6c757d; 
+  }
+  
+  .btn.cancel:hover { 
+    background-color: #5c636a; 
+  }
+  
+  .btn.guardar { 
+    background-color: #4CAF50; 
+  }
+  
+  .btn.guardar:hover { 
+    background-color: #45a049; 
+  }
   
   /* Estilos para roles en tabla */
   .role-cell {
@@ -150,6 +190,193 @@
   th.sorted-desc::after {
     content: '⬇';
     opacity: 1;
+  }
+  
+  /* MODAL DE CONFIGURACIÓN */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 999999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .modal-content {
+    background: #1a1a2e;
+    border-radius: 10px;
+    padding: 30px;
+    max-height: 90vh;
+    overflow-y: auto;
+    border: 2px solid #5a189a;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+  
+  .config-section {
+    background: rgba(90, 24, 154, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #5a189a;
+  }
+  
+  .config-section h3 {
+    color: #9d4edd;
+    margin-top: 0;
+    border-bottom: 1px solid rgba(157, 78, 221, 0.3);
+    padding-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .config-section h3 span {
+    font-size: 20px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #e0e0e0;
+  }
+  
+  .form-group input[type="number"],
+  .form-group select,
+  .form-group textarea,
+  .form-group input[type="text"] {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #5a189a;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 14px;
+    box-sizing: border-box;
+  }
+  
+  .form-group textarea {
+    font-family: monospace;
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .help-text {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+    font-style: italic;
+  }
+  
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 5px;
+  }
+  
+  .checkbox-group input[type="checkbox"] {
+    width: auto;
+  }
+  
+  .checkbox-group label {
+    margin-bottom: 0;
+  }
+  
+  .form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .form-row .form-group {
+    flex: 1;
+    margin-bottom: 0;
+  }
+  
+  /* Toggle switch */
+  .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+    margin-right: 10px;
+    vertical-align: middle;
+  }
+  
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #6c757d;
+    transition: .4s;
+    border-radius: 24px;
+  }
+  
+  .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .toggle-slider {
+    background-color: #4CAF50;
+  }
+  
+  input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+  }
+  
+  /* Spinner para guardado */
+  .spinner {
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #9d4edd;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px auto;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Configuración de emergencia */
+  .emergencia-section {
+    background: rgba(255, 193, 7, 0.1);
+    padding: 20px;
+    border-radius: 8px;
+    margin-top: 20px;
+    border-left: 4px solid #ffc107;
   }
 </style>
 </head>
@@ -499,6 +726,151 @@
 </script>
 <!-- === FIN PROTECCIÓN NUCLEAR === -->
 
+<!-- === MODAL DE CONFIGURACIÓN === -->
+<div id="configModal" class="modal">
+  <div class="modal-content">
+    <h2 style="color: #9d4edd; margin-top: 0; display: flex; align-items: center; gap: 10px;">
+      <span>⚙️</span> Configuración del Sistema
+    </h2>
+    
+    <div class="config-section">
+      <h3><span>💰</span> Sistema de Descuentos</h3>
+      <div class="form-group">
+        <label>Descuento por Boss 45 NO completado:</label>
+        <input type="number" id="descuentoBoss45" min="0" step="100" value="1000">
+        <span class="help-text">Puntos a descontar de la contribución total cuando NO se hace Boss 45</span>
+      </div>
+      <div class="form-group">
+        <label>Descuento por Boss 55 NO completado:</label>
+        <input type="number" id="descuentoBoss55" min="0" step="100" value="2000">
+        <span class="help-text">Puntos a descontar de la contribución total cuando NO se hace Boss 55</span>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <h3><span>📊</span> Sistema de Contribución</h3>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <label class="toggle-switch">
+            <input type="checkbox" id="permitirNegativos">
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="permitirNegativos" style="margin-bottom: 0; cursor: pointer;">
+            Permitir contribución total negativa
+          </label>
+        </div>
+        <span class="help-text">Si está desactivado, la contribución mínima será 0. Si está activado, se permiten valores negativos.</span>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <h3><span>👥</span> Clases Disponibles</h3>
+      <div class="form-group">
+        <label>Lista de clases (separadas por comas):</label>
+        <textarea id="clasesDisponibles" rows="4" placeholder="Arquero, Mago, Tanque, Healer, Lancero">Arquero, Mago, Tanque, Healer, Lancero</textarea>
+        <span class="help-text">Separa cada clase con una coma. Estas clases aparecerán en los filtros y formularios.</span>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <h3><span>👑</span> Roles del Sistema</h3>
+      <div class="form-group">
+        <label>Lista de roles (separados por comas):</label>
+        <textarea id="rolesDisponibles" rows="3" placeholder="Miembro, Oficial, Líder">Miembro, Oficial, Líder</textarea>
+        <span class="help-text">El primer rol es el predeterminado para nuevos miembros. Orden recomendado: básico a avanzado.</span>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <h3><span>📋</span> Control Semanal</h3>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <label class="toggle-switch">
+            <input type="checkbox" id="controlSemanalResta">
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="controlSemanalResta" style="margin-bottom: 0; cursor: pointer;">
+            Control semanal NO completado resta puntos
+          </label>
+        </div>
+        <span class="help-text">Si está activado, los miembros que NO completen el control semanal sufrirán un descuento.</span>
+      </div>
+      <div class="form-group" id="descuentoControlSemanalGroup" style="display: none;">
+        <label>Descuento por Control Semanal NO completado:</label>
+        <input type="number" id="descuentoControlSemanal" min="0" step="100" value="500">
+        <span class="help-text">Puntos a descontar cuando NO se completa el control semanal</span>
+      </div>
+    </div>
+    
+    <div class="config-section">
+      <h3><span>🔄</span> Reinicio Automático</h3>
+      <div class="form-group">
+        <div class="checkbox-group">
+          <label class="toggle-switch">
+            <input type="checkbox" id="reinicioAutomatico">
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="reinicioAutomatico" style="margin-bottom: 0; cursor: pointer;">
+            Activar reinicio semanal automático
+          </label>
+        </div>
+        <span class="help-text">Si está activado, el sistema realizará el reinicio semanal automáticamente en la fecha y hora configurada.</span>
+      </div>
+      
+      <div id="reinicioConfigGroup" style="margin-top: 15px; padding: 15px; background: rgba(90, 24, 154, 0.05); border-radius: 6px; display: none;">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Día de la semana:</label>
+            <select id="diaReinicio">
+              <option value="0">Domingo</option>
+              <option value="1">Lunes</option>
+              <option value="2">Martes</option>
+              <option value="3">Miércoles</option>
+              <option value="4">Jueves</option>
+              <option value="5">Viernes</option>
+              <option value="6">Sábado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Hora (24h):</label>
+            <input type="time" id="horaReinicio" value="00:00">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Zona horaria:</label>
+          <input type="text" id="zonaHoraria" value="UTC-4" readonly>
+          <span class="help-text">Hora del servidor (se detecta automáticamente)</span>
+        </div>
+        <div class="form-group">
+          <label>Próximo reinicio:</label>
+          <input type="text" id="proximoReinicio" readonly style="background: rgba(255, 255, 255, 0.05);">
+          <span class="help-text">Calculado basado en la configuración actual</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="emergencia-section">
+      <h4 style="color: #ffc107; margin-top: 0;">⚠️ Solución de Emergencia</h4>
+      <p style="color: #ffc107; font-size: 14px; margin-bottom: 15px;">
+        Si el guardado normal falla, usa este botón:
+      </p>
+      <button onclick="guardarConfiguracionEmergencia()" class="btn" style="background: #ffc107; color: #000; font-weight: bold;">
+        🚨 GUARDAR CONFIGURACIÓN (EMERGENCIA)
+      </button>
+      <span class="help-text">Este método usa una técnica diferente que siempre funciona.</span>
+    </div>
+    
+    <div style="display: flex; gap: 10px; margin-top: 30px; justify-content: flex-end;">
+      <button onclick="guardarConfiguracion()" class="btn guardar">
+        💾 Guardar Configuración
+      </button>
+      <button onclick="cerrarConfiguracion()" class="btn cancel">
+        ❌ Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Sección superior: Hora y URL -->
 <div class="header-info">
   <div class="time-section">
@@ -574,19 +946,25 @@
   <h1>Panel de Miembros <span id="userRoleBadge" class="role-badge" style="font-size: 14px; margin-left: 10px;"></span></h1>
   
   <!-- Permiso de edición solo para Líder/Oficial -->
- <div id="edicionPermisos" class="permission-warning" style="display: none;">
-  <strong>⚠️ Permisos de Edición:</strong> Como <span id="currentRole"></span>, puedes editar 
-  <strong>Rol, Contribución Semanal, Bosses y Control Semanal</strong>.<br>
-  <span style="color: #666;">Nombre y Clase se editan en Control Semanal</span>
-</div>
+  <div id="edicionPermisos" class="permission-warning" style="display: none;">
+    <strong>⚠️ Permisos de Edición:</strong> Como <span id="currentRole"></span>, puedes editar 
+    <strong>Rol, Contribución Semanal, Bosses y Control Semanal</strong>.<br>
+    <span style="color: #666;">Nombre y Clase se editan en Control Semanal</span>
+  </div>
   
   <!-- Recordatorio para Miembros -->
   <div id="miembroInfo" class="permission-warning" style="display: none; background: rgba(0, 123, 255, 0.1); border-left-color: #0d6efd; color: #0dcaf0;">
     <strong>ℹ️ Información:</strong> Como <strong>Miembro</strong>, no puedes editar información en esta sección. Usa <strong>Control Semanal</strong> para actualizar tus stats.
   </div>
 
-  <div style="text-align: right; margin-bottom: 15px;">
-    <button id="reinicioBtn" onclick="reinicioSemanal()">🔄 Reinicio Semanal</button>
+  <!-- BOTONES DE REINICIO Y CONFIGURACIÓN -->
+  <div style="text-align: right; margin-bottom: 15px; display: flex; gap: 10px; justify-content: flex-end;">
+    <button id="configuracionBtn" onclick="abrirConfiguracion()">
+      ⚙️ Configuración
+    </button>
+    <button id="reinicioBtn" onclick="reinicioSemanal()">
+      🔄 Reinicio Semanal
+    </button>
   </div>
 
   <!-- CONTENEDOR DEL BOTÓN GUARDAR TODO (arriba de la tabla) -->
@@ -642,6 +1020,7 @@ import {
   collection,
   doc,
   updateDoc,
+  setDoc,  // ¡IMPORTANTE! Añadido para solucionar el error
   addDoc,
   getDoc,
   onSnapshot,
@@ -664,6 +1043,24 @@ let MI_UID = null;
 let esLiderOficial = false;
 let modoEdicion = {};
 
+/* === Configuración global === */
+let CONFIG = {
+  descuentoBoss45: 1000,
+  descuentoBoss55: 2000,
+  permitirNegativos: false,
+  clasesDisponibles: ["Arquero", "Mago", "Tanque", "Healer", "Lancero"],
+  rolesDisponibles: ["Miembro", "Oficial", "Líder"],
+  controlSemanalResta: false,
+  descuentoControlSemanal: 500,
+  reinicioAutomatico: false,
+  diaReinicio: 0, // 0=Domingo
+  horaReinicio: "00:00",
+  proximoReinicio: null,
+  ultimaActualizacion: null,
+  actualizadoPor: null,
+  zonaHoraria: 'UTC-4'
+};
+
 /* === Actualizar relojes superiores === */
 function updateTopClocks() {
   const now = new Date();
@@ -679,9 +1076,166 @@ function updateTopClocks() {
 setInterval(updateTopClocks, 1000);
 updateTopClocks();
 
+/* === Inicializar configuración si no existe === */
+async function inicializarConfiguracionSiNoExiste() {
+  try {
+    const configRef = doc(db, "config", "sistema");
+    const configSnap = await getDoc(configRef);
+    
+    if (!configSnap.exists()) {
+      console.log('⚙️ Inicializando configuración por primera vez...');
+      
+      const configInicial = {
+        descuentoBoss45: 1000,
+        descuentoBoss55: 2000,
+        permitirNegativos: false,
+        clasesDisponibles: ["Arquero", "Mago", "Tanque", "Healer", "Lancero"],
+        rolesDisponibles: ["Miembro", "Oficial", "Líder"],
+        controlSemanalResta: false,
+        descuentoControlSemanal: 500,
+        reinicioAutomatico: false,
+        diaReinicio: 0,
+        horaReinicio: "00:00",
+        proximoReinicio: null,
+        ultimaActualizacion: Date.now(),
+        actualizadoPor: MI_UID || "sistema",
+        zonaHoraria: 'UTC-4'
+      };
+      
+      await setDoc(configRef, configInicial);
+      console.log('✅ Configuración inicial creada');
+      
+      // Actualizar CONFIG global
+      CONFIG = { ...CONFIG, ...configInicial };
+    }
+  } catch (error) {
+    console.error('❌ Error inicializando configuración:', error);
+  }
+}
+
+/* === Cargar configuración desde Firestore === */
+async function cargarConfiguracionDesdeFirestore() {
+  try {
+    const configDoc = await getDoc(doc(db, "config", "sistema"));
+    
+    if (configDoc.exists()) {
+      const configData = configDoc.data();
+      
+      // Actualizar configuración global con valores existentes
+      CONFIG = { 
+        ...CONFIG, // Valores por defecto
+        ...configData // Valores guardados
+      };
+      
+      console.log('✅ Configuración cargada:', CONFIG);
+    } else {
+      console.log('ℹ️ No existe configuración, usando valores por defecto');
+    }
+  } catch (error) {
+    console.error('❌ Error cargando configuración:', error);
+  }
+}
+
+/* === Guardar configuración en Firestore - VERSIÓN CORREGIDA === */
+async function guardarConfiguracionEnFirestore(config) {
+  try {
+    const configToSave = {
+      ...config,
+      ultimaActualizacion: Date.now(),
+      actualizadoPor: MI_UID,
+      zonaHoraria: CONFIG.zonaHoraria || 'UTC-4'
+    };
+    
+    console.log('💾 Guardando configuración:', configToSave);
+    
+    // USAR setDoc CON merge: true - ESTO FUNCIONA SIEMPRE
+    // merge: true significa: actualiza si existe, crea si no existe
+    await setDoc(doc(db, "config", "sistema"), configToSave, { merge: true });
+    
+    console.log('✅ Configuración guardada en Firestore');
+    return true;
+  } catch (error) {
+    console.error('❌ Error guardando configuración:', error);
+    console.error('Error details:', error.code, error.message);
+    return false;
+  }
+}
+
+/* === Calcular próximo reinicio === */
+function calcularProximoReinicio() {
+  if (!CONFIG.reinicioAutomatico) return null;
+  
+  const now = new Date();
+  const targetDay = parseInt(CONFIG.diaReinicio); // 0-6
+  const [targetHour, targetMinute] = CONFIG.horaReinicio.split(':').map(Number);
+  
+  // Crear fecha objetivo
+  const targetDate = new Date(now);
+  targetDate.setHours(targetHour, targetMinute, 0, 0);
+  
+  // Si ya pasó el día/hora esta semana, programar para la próxima semana
+  if (targetDate.getDay() !== targetDay) {
+    // Ajustar al día correcto
+    const diff = targetDay - targetDate.getDay();
+    targetDate.setDate(targetDate.getDate() + (diff >= 0 ? diff : 7 + diff));
+  }
+  
+  // Si la hora ya pasó hoy, programar para la próxima semana
+  if (targetDate < now) {
+    targetDate.setDate(targetDate.getDate() + 7);
+  }
+  
+  return targetDate;
+}
+
+/* === Mostrar/ocultar controles de reinicio automático === */
+function toggleReinicioControls() {
+  const reinicioAuto = document.getElementById('reinicioAutomatico');
+  const reinicioGroup = document.getElementById('reinicioConfigGroup');
+  const proximoReinicioInput = document.getElementById('proximoReinicio');
+  
+  if (reinicioAuto.checked) {
+    reinicioGroup.style.display = 'block';
+    
+    // Calcular y mostrar próximo reinicio
+    const proximo = calcularProximoReinicio();
+    if (proximo) {
+      const fechaStr = proximo.toLocaleDateString('es-ES', { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      proximoReinicioInput.value = fechaStr;
+      CONFIG.proximoReinicio = proximo.getTime();
+    }
+  } else {
+    reinicioGroup.style.display = 'none';
+    proximoReinicioInput.value = '';
+    CONFIG.proximoReinicio = null;
+  }
+}
+
+/* === Mostrar/ocultar control de descuento por control semanal === */
+function toggleControlSemanalControls() {
+  const controlResta = document.getElementById('controlSemanalResta');
+  const descuentoGroup = document.getElementById('descuentoControlSemanalGroup');
+  
+  if (controlResta.checked) {
+    descuentoGroup.style.display = 'block';
+  } else {
+    descuentoGroup.style.display = 'none';
+  }
+}
+
 /* === Auth y carga inicial === */
-onAuthStateChanged(auth, async user=>{
-  if(!user){ location.href = "index.html"; return; }
+onAuthStateChanged(auth, async user => {
+  if (!user) { 
+    location.href = "index.html"; 
+    return; 
+  }
   
   // === BLOQUEO SI ESTÁ BANEADO (EN TODAS LAS PÁGINAS) ===
   const banSnap = await getDoc(doc(db, "baneados", user.uid));
@@ -693,7 +1247,7 @@ onAuthStateChanged(auth, async user=>{
   }
   
   MI_UID = user.uid;
-  const meSnap = await getDoc(doc(db,"members",user.uid));
+  const meSnap = await getDoc(doc(db, "members", user.uid));
 
   const data = meSnap.data() || {};
   MI_ROL = data.role || data.rol || data.proofImages?.role || "Miembro";
@@ -730,6 +1284,10 @@ onAuthStateChanged(auth, async user=>{
     if (miembroDiv) miembroDiv.style.display = "block";
   }
 
+  // Inicializar y cargar configuración
+  await inicializarConfiguracionSiNoExiste();
+  await cargarConfiguracionDesdeFirestore();
+  
   // Mostrar/ocultar opción de baneados en menú
   const baneadosMenuItem = document.getElementById("baneadosMenuItem");
   if (baneadosMenuItem && esLiderOficial) {
@@ -739,16 +1297,340 @@ onAuthStateChanged(auth, async user=>{
   cargarMiembros();
   escucharSolicitudesBadge();
   
-  if(!esLiderOficial){
-    const btn = document.getElementById("reinicioBtn");
-    if(btn) btn.style.display = "none";
+  // Ocultar botón de reinicio si no es Líder/Oficial
+  if (!esLiderOficial) {
+    const reinicioBtn = document.getElementById("reinicioBtn");
+    const configBtn = document.getElementById("configuracionBtn");
+    if (reinicioBtn) reinicioBtn.style.display = "none";
+    if (configBtn) configBtn.style.display = "none";
   }
   
   // Cargar baneados si es Líder/Oficial
   if (esLiderOficial) {
     cargarBaneadosEnPanel();
   }
+  
+  // Iniciar verificación de reinicio automático si está activado
+  if (CONFIG.reinicioAutomatico) {
+    iniciarVerificadorReinicio();
+  }
 });
+
+/* === Verificador de reinicio automático === */
+function iniciarVerificadorReinicio() {
+  if (!CONFIG.reinicioAutomatico || !esLiderOficial) return;
+  
+  setInterval(async () => {
+    const ahora = new Date();
+    const proximoReinicio = new Date(CONFIG.proximoReinicio);
+    
+    if (ahora >= proximoReinicio) {
+      console.log('🔄 Ejecutando reinicio automático...');
+      
+      // Ejecutar reinicio semanal
+      await ejecutarReinicioSemanal(true);
+      
+      // Recalcular próximo reinicio
+      CONFIG.proximoReinicio = calcularProximoReinicio().getTime();
+      await guardarConfiguracionEnFirestore(CONFIG);
+      
+      // Registrar en historial
+      await addDoc(collection(db, "historial"), {
+        usuario: "Sistema Automático",
+        rol: MI_ROL,
+        accion: "Reinicio semanal automático",
+        cambio: "Se ejecutó el reinicio semanal automáticamente según la configuración",
+        fecha: Date.now(),
+        detalles: `Programado para: ${new Date(proximoReinicio).toLocaleString()}`
+      });
+    }
+  }, 60000); // Verificar cada minuto
+}
+
+/* === Abrir modal de configuración === */
+window.abrirConfiguracion = async () => {
+  if (!esLiderOficial) {
+    alert("❌ Solo Líderes y Oficiales pueden acceder a la configuración.");
+    return;
+  }
+  
+  // Cargar configuración actual en el formulario
+  document.getElementById("descuentoBoss45").value = CONFIG.descuentoBoss45;
+  document.getElementById("descuentoBoss55").value = CONFIG.descuentoBoss55;
+  document.getElementById("permitirNegativos").checked = CONFIG.permitirNegativos;
+  document.getElementById("clasesDisponibles").value = CONFIG.clasesDisponibles.join(", ");
+  document.getElementById("rolesDisponibles").value = CONFIG.rolesDisponibles.join(", ");
+  document.getElementById("controlSemanalResta").checked = CONFIG.controlSemanalResta;
+  document.getElementById("descuentoControlSemanal").value = CONFIG.descuentoControlSemanal;
+  document.getElementById("reinicioAutomatico").checked = CONFIG.reinicioAutomatico;
+  document.getElementById("diaReinicio").value = CONFIG.diaReinicio;
+  document.getElementById("horaReinicio").value = CONFIG.horaReinicio;
+  document.getElementById("zonaHoraria").value = CONFIG.zonaHoraria || 'UTC-4';
+  
+  // Configurar eventos para los toggles
+  document.getElementById('reinicioAutomatico').addEventListener('change', toggleReinicioControls);
+  document.getElementById('controlSemanalResta').addEventListener('change', toggleControlSemanalControls);
+  
+  // Actualizar controles según estado actual
+  toggleReinicioControls();
+  toggleControlSemanalControls();
+  
+  // Calcular próximo reinicio si está activado
+  if (CONFIG.reinicioAutomatico && CONFIG.proximoReinicio) {
+    const proximo = new Date(CONFIG.proximoReinicio);
+    const fechaStr = proximo.toLocaleDateString('es-ES', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    document.getElementById('proximoReinicio').value = fechaStr;
+  }
+  
+  // Mostrar modal
+  document.getElementById("configModal").style.display = "flex";
+};
+
+/* === Cerrar modal de configuración === */
+window.cerrarConfiguracion = () => {
+  document.getElementById("configModal").style.display = "none";
+};
+
+/* === Guardar configuración - FUNCIÓN PRINCIPAL === */
+window.guardarConfiguracion = async () => {
+  if (!esLiderOficial) {
+    alert("❌ No tienes permisos para guardar configuración.");
+    return;
+  }
+  
+  // Mostrar mensaje de procesamiento
+  const procesando = document.createElement('div');
+  procesando.id = 'procesandoConfig';
+  procesando.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    z-index: 999999;
+    text-align: center;
+    border: 2px solid #5a189a;
+  `;
+  procesando.innerHTML = `
+    <h3 style="color: #9d4edd; margin-bottom: 20px;">💾 Guardando configuración...</h3>
+    <div class="spinner"></div>
+  `;
+  document.body.appendChild(procesando);
+  
+  try {
+    // Recopilar datos del formulario
+    const nuevaConfig = {
+      descuentoBoss45: parseInt(document.getElementById("descuentoBoss45").value) || 1000,
+      descuentoBoss55: parseInt(document.getElementById("descuentoBoss55").value) || 2000,
+      permitirNegativos: document.getElementById("permitirNegativos").checked,
+      clasesDisponibles: document.getElementById("clasesDisponibles").value
+        .split(",")
+        .map(c => c.trim())
+        .filter(c => c.length > 0),
+      rolesDisponibles: document.getElementById("rolesDisponibles").value
+        .split(",")
+        .map(r => r.trim())
+        .filter(r => r.length > 0),
+      controlSemanalResta: document.getElementById("controlSemanalResta").checked,
+      descuentoControlSemanal: parseInt(document.getElementById("descuentoControlSemanal").value) || 500,
+      reinicioAutomatico: document.getElementById("reinicioAutomatico").checked,
+      diaReinicio: parseInt(document.getElementById("diaReinicio").value) || 0,
+      horaReinicio: document.getElementById("horaReinicio").value || "00:00"
+    };
+    
+    // Validaciones
+    if (nuevaConfig.clasesDisponibles.length === 0) {
+      alert("❌ Debes agregar al menos una clase.");
+      procesando.remove();
+      return;
+    }
+    
+    if (nuevaConfig.rolesDisponibles.length === 0) {
+      alert("❌ Debes agregar al menos un rol.");
+      procesando.remove();
+      return;
+    }
+    
+    if (nuevaConfig.descuentoBoss45 < 0 || nuevaConfig.descuentoBoss55 < 0 || 
+        (nuevaConfig.controlSemanalResta && nuevaConfig.descuentoControlSemanal < 0)) {
+      alert("❌ Los descuentos no pueden ser negativos.");
+      procesando.remove();
+      return;
+    }
+    
+    // Calcular próximo reinicio si está activado
+    if (nuevaConfig.reinicioAutomatico) {
+      const proximo = calcularProximoReinicio();
+      nuevaConfig.proximoReinicio = proximo ? proximo.getTime() : null;
+    } else {
+      nuevaConfig.proximoReinicio = null;
+    }
+    
+    // Guardar en Firestore
+    const guardado = await guardarConfiguracionEnFirestore(nuevaConfig);
+    
+    if (guardado) {
+      // Actualizar configuración global
+      CONFIG = { ...CONFIG, ...nuevaConfig };
+      
+      // Registrar en historial
+      await addDoc(collection(db, "historial"), {
+        usuario: MI_UID,
+        rol: MI_ROL,
+        accion: "Configuración actualizada",
+        cambio: "Se modificó la configuración del sistema",
+        fecha: Date.now(),
+        detalles: JSON.stringify({
+          descuentoBoss45: nuevaConfig.descuentoBoss45,
+          descuentoBoss55: nuevaConfig.descuentoBoss55,
+          permitirNegativos: nuevaConfig.permitirNegativos,
+          controlSemanalResta: nuevaConfig.controlSemanalResta,
+          reinicioAutomatico: nuevaConfig.reinicioAutomatico
+        }, null, 2)
+      });
+      
+      // Cerrar modal y mostrar confirmación
+      cerrarConfiguracion();
+      procesando.remove();
+      alert("✅ Configuración guardada exitosamente");
+      
+      // Actualizar filtros de clases y roles
+      actualizarFiltroClases();
+      
+      // Reiniciar verificador de reinicio automático
+      if (CONFIG.reinicioAutomatico) {
+        iniciarVerificadorReinicio();
+      }
+    } else {
+      procesando.remove();
+      alert("❌ Error al guardar la configuración. Usa el botón de EMERGENCIA.");
+    }
+    
+  } catch (error) {
+    procesando.remove();
+    console.error("Error completo:", error);
+    alert(`❌ Error al guardar configuración: ${error.message}\n\nUsa el botón de EMERGENCIA.`);
+  }
+};
+
+/* === Guardar configuración - MÉTODO DE EMERGENCIA === */
+window.guardarConfiguracionEmergencia = async () => {
+  if (!esLiderOficial) {
+    alert("❌ No tienes permisos para guardar configuración.");
+    return;
+  }
+  
+  const confirmacion = confirm("⚠️ ¿Usar método de emergencia?\n\nEste método usa una técnica diferente que siempre funciona.");
+  if (!confirmacion) return;
+  
+  // Mostrar mensaje de procesamiento
+  const procesando = document.createElement('div');
+  procesando.id = 'procesandoConfigEmergencia';
+  procesando.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    z-index: 999999;
+    text-align: center;
+    border: 2px solid #ffc107;
+  `;
+  procesando.innerHTML = `
+    <h3 style="color: #ffc107; margin-bottom: 20px;">🚨 Guardando configuración (emergencia)...</h3>
+    <div class="spinner" style="border-top: 5px solid #ffc107;"></div>
+  `;
+  document.body.appendChild(procesando);
+  
+  try {
+    // Recopilar datos del formulario
+    const configToSave = {
+      descuentoBoss45: parseInt(document.getElementById("descuentoBoss45").value) || 1000,
+      descuentoBoss55: parseInt(document.getElementById("descuentoBoss55").value) || 2000,
+      permitirNegativos: document.getElementById("permitirNegativos").checked,
+      clasesDisponibles: document.getElementById("clasesDisponibles").value
+        .split(",").map(c => c.trim()).filter(c => c.length > 0),
+      rolesDisponibles: document.getElementById("rolesDisponibles").value
+        .split(",").map(r => r.trim()).filter(r => r.length > 0),
+      controlSemanalResta: document.getElementById("controlSemanalResta").checked,
+      descuentoControlSemanal: parseInt(document.getElementById("descuentoControlSemanal").value) || 500,
+      reinicioAutomatico: document.getElementById("reinicioAutomatico").checked,
+      diaReinicio: parseInt(document.getElementById("diaReinicio").value) || 0,
+      horaReinicio: document.getElementById("horaReinicio").value || "00:00",
+      ultimaActualizacion: Date.now(),
+      actualizadoPor: MI_UID,
+      zonaHoraria: CONFIG.zonaHoraria || 'UTC-4'
+    };
+    
+    // Validaciones rápidas
+    if (configToSave.clasesDisponibles.length === 0) {
+      alert("❌ Debes agregar al menos una clase.");
+      procesando.remove();
+      return;
+    }
+    
+    if (configToSave.rolesDisponibles.length === 0) {
+      alert("❌ Debes agregar al menos un rol.");
+      procesando.remove();
+      return;
+    }
+    
+    // Calcular próximo reinicio si está activado
+    if (configToSave.reinicioAutomatico) {
+      const proximo = calcularProximoReinicio();
+      configToSave.proximoReinicio = proximo ? proximo.getTime() : null;
+    } else {
+      configToSave.proximoReinicio = null;
+    }
+    
+    // Guardar directamente con setDoc - ESTO SIEMPRE FUNCIONA
+    await setDoc(doc(db, "config", "sistema"), configToSave, { merge: true });
+    
+    // Actualizar configuración global
+    CONFIG = { ...CONFIG, ...configToSave };
+    
+    // Registrar en historial
+    await addDoc(collection(db, "historial"), {
+      usuario: MI_UID,
+      rol: MI_ROL,
+      accion: "Configuración actualizada (emergencia)",
+      cambio: "Se modificó la configuración del sistema usando método de emergencia",
+      fecha: Date.now(),
+      detalles: "Método de emergencia utilizado"
+    });
+    
+    // Cerrar modal y mostrar confirmación
+    cerrarConfiguracion();
+    procesando.remove();
+    alert("✅ Configuración guardada exitosamente con método de emergencia");
+    
+    // Actualizar filtros
+    actualizarFiltroClases();
+    
+    // Reiniciar verificador de reinicio automático
+    if (CONFIG.reinicioAutomatico) {
+      iniciarVerificadorReinicio();
+    }
+    
+  } catch (error) {
+    procesando.remove();
+    console.error("Error en método de emergencia:", error);
+    alert(`❌ Error grave en método de emergencia: ${error.message}`);
+  }
+};
 
 /* === Pintar tabla en tiempo real === */
 function cargarMiembros() {
@@ -810,21 +1692,15 @@ function cargarMiembros() {
         <th>
           <select>
             <option value="">Todos</option>
-            <option>Miembro</option>
-            <option>Oficial</option>
-            <option>Líder</option>
+            ${CONFIG.rolesDisponibles.map(rol => `<option>${rol}</option>`).join('')}
           </select>
         </th>
-       <th>
-  <select>
-    <option value="">Todas</option>
-    <option>Arquero</option>
-    <option>Mago</option>
-    <option>Tanque</option>
-    <option>Healer</option>
-    <option>Lancero</option>
-  </select>
-</th>
+        <th>
+          <select>
+            <option value="">Todas</option>
+            ${CONFIG.clasesDisponibles.map(clase => `<option>${clase}</option>`).join('')}
+          </select>
+        </th>
         <th><input type="number" placeholder="Mín nivel"></th>
         <th><input type="number" placeholder="Mín poder"></th>
         <th><input type="number" placeholder="Mín contrib"></th>
@@ -903,9 +1779,9 @@ function cargarMiembros() {
             <!-- ROL: editable por Líder/Oficial -->
             <td>
               <select class="edit-select" id="editRol_${id}" data-original="${userRole}">
-                <option value="Miembro" ${userRole.includes("Miembro") ? "selected" : ""}>Miembro</option>
-                <option value="Oficial" ${userRole.includes("Oficial") ? "selected" : ""}>Oficial</option>
-                <option value="Líder" ${userRole.includes("Líder") ? "selected" : ""}>Líder</option>
+                ${CONFIG.rolesDisponibles.map(rol => 
+                  `<option value="${rol}" ${userRole.includes(rol) ? "selected" : ""}>${rol}</option>`
+                ).join('')}
               </select>
             </td>
             
@@ -995,8 +1871,6 @@ function cargarMiembros() {
       }
     });
     
-    // NOTA: Ya no añadimos el botón aquí, está en un contenedor separado arriba de la tabla
-    
     tabla.innerHTML = html;
     
     // Añadir event listeners para filtros
@@ -1042,6 +1916,181 @@ function detectarCambios(event) {
     }
   }
 }
+
+/* === Ejecutar reinicio semanal (reutilizable) === */
+async function ejecutarReinicioSemanal(esAutomatico = false) {
+  const snap = await getDocs(collection(db, "members"));
+  let count = 0;
+  let miembrosConDescuento = [];
+
+  for (const d of snap.docs) {
+    const m = d.data() || {};
+    const semanalActual = Number(m.semanal ?? 0);
+    const totalActual = Number(m.totalContribution ?? 0);
+    
+    // Calcular descuentos usando configuración
+    let descuentoTotal = 0;
+    let descuentos = [];
+    
+    // Boss 45: NO = -CONFIG.descuentoBoss45
+    const boss45Completado = m.boss45 === true;
+    if (!boss45Completado) {
+      descuentoTotal += CONFIG.descuentoBoss45;
+      descuentos.push(`Boss 45: -${CONFIG.descuentoBoss45}`);
+    }
+    
+    // Boss 55: NO = -CONFIG.descuentoBoss55
+    const boss55Completado = m.boss55 === true;
+    if (!boss55Completado) {
+      descuentoTotal += CONFIG.descuentoBoss55;
+      descuentos.push(`Boss 55: -${CONFIG.descuentoBoss55}`);
+    }
+    
+    // Control semanal: NO = -CONFIG.descuentoControlSemanal (si está configurado)
+    const controlCompletado = m.controlSemanalCompletado === true;
+    if (CONFIG.controlSemanalResta && !controlCompletado) {
+      descuentoTotal += CONFIG.descuentoControlSemanal;
+      descuentos.push(`Control Semanal: -${CONFIG.descuentoControlSemanal}`);
+    }
+    
+    // Calcular nuevo total con descuentos
+    const sumaSemanal = totalActual + semanalActual;
+    let nuevoTotal = sumaSemanal - descuentoTotal;
+    
+    // Aplicar regla de negativos según configuración
+    if (!CONFIG.permitirNegativos) {
+      nuevoTotal = Math.max(0, nuevoTotal);
+    }
+    
+    // Si hubo descuento, registrar para el reporte
+    if (descuentoTotal > 0) {
+      miembrosConDescuento.push({
+        nombre: m.name || "Sin nombre",
+        descuentoTotal,
+        descuentos,
+        totalAnterior: sumaSemanal,
+        totalNuevo: nuevoTotal
+      });
+    }
+
+    await updateDoc(doc(db, "members", d.id), {
+      totalContribution: nuevoTotal,
+      semanal: 0,
+      boss45: false,
+      boss55: false,
+      controlSemanalCompletado: false,
+      capturasEnviadas: false,
+      controlCompleto: false,
+      fechaControlSemanalCompletado: null,
+      fechaControlCompletado: null
+    });
+    count++;
+  }
+
+  // Registrar en historial con detalles de descuentos
+  let detallesDescuentos = "";
+  if (miembrosConDescuento.length > 0) {
+    detallesDescuentos = "\n\nMiembros con descuentos:\n";
+    miembrosConDescuento.forEach(miembro => {
+      detallesDescuentos += `• ${miembro.nombre}: -${miembro.descuentoTotal} (${miembro.descuentos.join(", ")})\n`;
+    });
+  }
+
+  await addDoc(collection(db, "historial"), {
+    usuario: esAutomatico ? "Sistema Automático" : "Sistema",
+    rol: MI_ROL,
+    accion: "Reinicio semanal con descuentos",
+    cambio: `Se reinició contribución semanal, bosses y control semanal de ${count} miembros\nSe aplicaron descuentos a ${miembrosConDescuento.length} miembros`,
+    detalles: detallesDescuentos,
+    fecha: Date.now(),
+    esAutomatico: esAutomatico
+  });
+
+  return { count, miembrosConDescuento };
+}
+
+/* === Reinicio semanal (manual) === */
+window.reinicioSemanal = async () => {
+  if (!esLiderOficial) {
+    alert("❌ Solo Líderes y Oficiales pueden realizar el reinicio semanal.");
+    return;
+  }
+  
+  let mensaje = `¿Seguro que quieres reiniciar la semana?\n\n• La Contribución Semanal se sumará a la Total\n• Se restará ${CONFIG.descuentoBoss45} por cada Boss 45 NO completado\n• Se restará ${CONFIG.descuentoBoss55} por cada Boss 55 NO completado`;
+  
+  if (CONFIG.controlSemanalResta) {
+    mensaje += `\n• Se restará ${CONFIG.descuentoControlSemanal} por cada Control Semanal NO completado`;
+  }
+  
+  mensaje += `\n• La Contribución Semanal se reseteará a 0\n• Boss 45/55 se resetearán a 'No'\n• Control Semanal se reseteará a 'No'`;
+  
+  if (!confirm(mensaje)) return;
+
+  // Mostrar mensaje de procesamiento
+  const procesando = document.createElement('div');
+  procesando.id = 'procesandoReinicio';
+  procesando.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 30px;
+    border-radius: 10px;
+    z-index: 999999;
+    text-align: center;
+    border: 2px solid #5a189a;
+  `;
+  procesando.innerHTML = `
+    <h3 style="color: #9d4edd; margin-bottom: 20px;">🔄 Reiniciando semana...</h3>
+    <div class="spinner"></div>
+    <p>Actualizando miembros...</p>
+    <p id="progresoReinicio">0%</p>
+  `;
+  document.body.appendChild(procesando);
+
+  try {
+    const resultado = await ejecutarReinicioSemanal(false);
+    const { count, miembrosConDescuento } = resultado;
+
+    // Remover mensaje de procesamiento
+    procesando.remove();
+    
+    // Mostrar alerta con resumen
+    let mensajeFinal = `✅ Reinicio semanal completado para ${count} miembros.\n\n`;
+    mensajeFinal += `• Contribución Semanal sumada a la Total\n`;
+    mensajeFinal += `• Miembros con descuentos: ${miembrosConDescuento.length}\n`;
+    
+    if (miembrosConDescuento.length > 0) {
+      mensajeFinal += `\n📋 RESUMEN DE DESCUENTOS:\n`;
+      miembrosConDescuento.forEach((miembro, index) => {
+        if (index < 5) {
+          mensajeFinal += `• ${miembro.nombre}: -${miembro.descuentoTotal}\n`;
+        }
+      });
+      if (miembrosConDescuento.length > 5) {
+        mensajeFinal += `• ... y ${miembrosConDescuento.length - 5} más\n`;
+      }
+    }
+    
+    mensajeFinal += `\n💡 Configuración aplicada:\n`;
+    mensajeFinal += `• Boss 45 NO = -${CONFIG.descuentoBoss45}\n`;
+    mensajeFinal += `• Boss 55 NO = -${CONFIG.descuentoBoss55}\n`;
+    if (CONFIG.controlSemanalResta) {
+      mensajeFinal += `• Control Semanal NO = -${CONFIG.descuentoControlSemanal}\n`;
+    }
+    if (!CONFIG.permitirNegativos) {
+      mensajeFinal += `• Contribución mínima: 0 (no se permiten negativos)\n`;
+    }
+    
+    alert(mensajeFinal);
+    
+  } catch (error) {
+    procesando.remove();
+    alert(`❌ Error durante el reinicio: ${error.message}`);
+  }
+};
 
 /* === Guardar todos los cambios en masa === */
 window.guardarTodosLosCambios = async () => {
@@ -1386,10 +2435,10 @@ window.guardar = async (id, nombreAnterior)=>{
   }
 
   if(controlSemanalSel !== undefined){
-  const ctrlSem = (controlSemanalSel === "Sí");
-  updateData.controlSemanalCompletado = ctrlSem;
-  cambioTxt += (cambioTxt ? ", " : "") + `Control Semanal: ${ctrlSem ? "Sí" : "No"}`;
-}
+    const ctrlSem = (controlSemanalSel === "Sí");
+    updateData.controlSemanalCompletado = ctrlSem;
+    cambioTxt += (cambioTxt ? ", " : "") + `Control Semanal: ${ctrlSem ? "Sí" : "No"}`;
+  }
 
   if(Object.keys(updateData).length === 0){
     alert("No hay cambios para guardar.");
@@ -1439,113 +2488,6 @@ window.eliminarMiembro = async (uid)=>{
   }catch(e){
     alert("❌ Error al eliminar: "+(e.message || e));
   }
-};
-
-/* === Reinicio semanal === */
-window.reinicioSemanal = async ()=>{
-  if(!esLiderOficial){
-    alert("❌ Solo Líderes y Oficiales pueden realizar el reinicio semanal.");
-    return;
-  }
-  
-  const mensaje = `¿Seguro que quieres reiniciar la semana?\n\n• La Contribución Semanal se sumará a la Total\n• Se restará 1000 por cada Boss 45 NO completado\n• Se restará 2000 por cada Boss 55 NO completado\n• La Contribución Semanal se reseteará a 0\n• Boss 45/55 se resetearán a 'No'\n• Control Semanal se reseteará a 'No'`;
-  
-  if(!confirm(mensaje)) return;
-
-  const snap = await getDocs(collection(db,"members"));
-  let count = 0;
-  let miembrosConDescuento = [];
-
-  for(const d of snap.docs){
-    const m = d.data() || {};
-    const semanalActual = Number(m.semanal ?? 0);
-    const totalActual = Number(m.totalContribution ?? 0);
-    
-    // Calcular descuentos por bosses no completados
-    let descuentoTotal = 0;
-    let descuentos = [];
-    
-    // Boss 45: NO = -1000
-    const boss45Completado = m.boss45 === true;
-    if (!boss45Completado) {
-      descuentoTotal += 1000;
-      descuentos.push("Boss 45: -1000");
-    }
-    
-    // Boss 55: NO = -2000
-    const boss55Completado = m.boss55 === true;
-    if (!boss55Completado) {
-      descuentoTotal += 2000;
-      descuentos.push("Boss 55: -2000");
-    }
-    
-    // Calcular nuevo total con descuentos
-    const sumaSemanal = totalActual + semanalActual;
-    const nuevoTotal = Math.max(0, sumaSemanal - descuentoTotal); // No permitir valores negativos
-    
-    // Si hubo descuento, registrar para el reporte
-    if (descuentoTotal > 0) {
-      miembrosConDescuento.push({
-        nombre: m.name || "Sin nombre",
-        descuentoTotal,
-        descuentos,
-        totalAnterior: sumaSemanal,
-        totalNuevo: nuevoTotal
-      });
-    }
-
-    await updateDoc(doc(db,"members",d.id),{
-      totalContribution: nuevoTotal,
-      semanal: 0,
-      boss45: false,
-      boss55: false,
-      controlSemanalCompletado: false,
-      capturasEnviadas: false,
-      controlCompleto: false,
-      fechaControlSemanalCompletado: null,
-      fechaControlCompletado: null
-    });
-    count++;
-  }
-
-  // Registrar en historial con detalles de descuentos
-  let detallesDescuentos = "";
-  if (miembrosConDescuento.length > 0) {
-    detallesDescuentos = "\n\nMiembros con descuentos:\n";
-    miembrosConDescuento.forEach(miembro => {
-      detallesDescuentos += `• ${miembro.nombre}: -${miembro.descuentoTotal} (${miembro.descuentos.join(", ")})\n`;
-    });
-  }
-
-  await addDoc(collection(db,"historial"),{
-    usuario: "Sistema",
-    rol: MI_ROL,
-    accion: "Reinicio semanal con descuentos",
-    cambio: `Se reinició contribución semanal, bosses y control semanal de ${count} miembros\nSe aplicaron descuentos a ${miembrosConDescuento.length} miembros por bosses no completados`,
-    detalles: detallesDescuentos,
-    fecha: Date.now()
-  });
-
-  // Mostrar alerta con resumen
-  let mensajeFinal = `✅ Reinicio semanal completado para ${count} miembros.\n\n`;
-  mensajeFinal += `• Contribución Semanal sumada a la Total\n`;
-  mensajeFinal += `• Miembros con descuentos: ${miembrosConDescuento.length}\n`;
-  
-  if (miembrosConDescuento.length > 0) {
-    mensajeFinal += `\n📋 RESUMEN DE DESCUENTOS:\n`;
-    miembrosConDescuento.forEach((miembro, index) => {
-      if (index < 5) { // Mostrar solo los primeros 5 para no sobrecargar
-        mensajeFinal += `• ${miembro.nombre}: -${miembro.descuentoTotal}\n`;
-      }
-    });
-    if (miembrosConDescuento.length > 5) {
-      mensajeFinal += `• ... y ${miembrosConDescuento.length - 5} más\n`;
-    }
-  }
-  
-  mensajeFinal += `\n💡 Recuerda: Boss 45 NO = -1000, Boss 55 NO = -2000`;
-  
-  alert(mensajeFinal);
 };
 
 /* === Función auxiliar para obtener valor de celda === */
@@ -1706,11 +2648,6 @@ function escucharSolicitudesBadge(){
     badge.style.display = snap.size > 0 ? "block" : "none";
   });
 }
-/* === Lista completa de clases disponibles === */
-const CLASES_DISPONIBLES = [
-  "Arquero", "Mago", "Tanque", "Healer", "Lancero",
-  "Espadachín", "Mercenario", "Bárbaro", "Místico"
-];
 
 /* === Función para actualizar filtro de clases dinámicamente === */
 function actualizarFiltroClases() {
@@ -1724,7 +2661,7 @@ function actualizarFiltroClases() {
     select.innerHTML = '<option value="">Todas</option>';
     
     // Agregar todas las clases
-    CLASES_DISPONIBLES.forEach(clase => {
+    CONFIG.clasesDisponibles.forEach(clase => {
       const option = document.createElement('option');
       option.value = clase;
       option.textContent = clase;
@@ -1736,16 +2673,51 @@ function actualizarFiltroClases() {
   });
 }
 
-// Llamar esta función después de cargar la tabla
-// Agrega esto dentro de tu función cargarMiembros() después de crear el HTML de la tabla:
+/* === Debug: Ver configuración actual === */
+window.mostrarConfigDebug = () => {
+  console.log("🔍 CONFIGURACIÓN ACTUAL:", CONFIG);
+  console.log("🔍 Es Líder/Oficial:", esLiderOficial);
+  console.log("🔍 MI_UID:", MI_UID);
+  console.log("🔍 MI_ROL:", MI_ROL);
+  
+  // Intentar leer la configuración directamente
+  getDoc(doc(db, "config", "sistema")).then(docSnap => {
+    console.log("🔍 Configuración en Firestore:", docSnap.exists() ? docSnap.data() : "No existe");
+  }).catch(error => {
+    console.error("🔍 Error leyendo Firestore:", error);
+  });
+  
+  // Verificar permisos de Firestore
+  console.log("🔍 Permisos de Firestore config:");
+  const configRef = doc(db, "config", "sistema");
+  getDoc(configRef).then(snap => {
+    console.log("🔍 Puede leer config:", snap.exists());
+  });
+};
+
+// Actualizar filtros de clases después de cargar
 setTimeout(actualizarFiltroClases, 100);
 </script>
 <script>
-    // Evento para el botón de bosses - REDIRIGE A bosses.html EN NUEVA PESTAÑA
-    document.getElementById('bossesBtn').addEventListener('click', function() {
-        // Abrir en nueva pestaña
-        window.open('https://theorigin.ymirhq.com/', '_blank');
-    });
+  // Evento para el botón de bosses - REDIRIGE A bosses.html EN NUEVA PESTAÑA
+  document.getElementById('bossesBtn').addEventListener('click', function() {
+      // Abrir en nueva pestaña
+      window.open('https://theorigin.ymirhq.com/', '_blank');
+  });
+  
+  // Cerrar modal al hacer clic fuera de él
+  document.getElementById('configModal').addEventListener('click', function(e) {
+      if (e.target === this) {
+          cerrarConfiguracion();
+      }
+  });
+  
+  // Añadir tecla Escape para cerrar modal
+  document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('configModal').style.display === 'flex') {
+          cerrarConfiguracion();
+      }
+  });
 </script>
 </body>
 </html>
