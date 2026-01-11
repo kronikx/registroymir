@@ -2650,10 +2650,20 @@ function parsearHoraConfigurada(horaStr) {
   };
 }
 
-// Variable simplificada para evitar duplicados
+// Variables para evitar duplicados
 let ultimoMinutoVerificado = '';
+let estaVerificando = false;
 
+/* === FUNCIÓN CORREGIDA: PREVENIR DUPLICADOS === */
 async function verificarYEnviarNotificaciones() {
+  // Prevenir múltiples ejecuciones simultáneas
+  if (estaVerificando) {
+    console.log("⚠️ Ya hay una verificación en curso, saltando...");
+    return;
+  }
+  
+  estaVerificando = true;
+  
   try {
     if (!CONFIG.discordWebhook || !CONFIG.discordWebhook.includes('discord.com')) {
       console.log("Webhook no configurado o inválido");
@@ -2670,13 +2680,14 @@ async function verificarYEnviarNotificaciones() {
     
     // Si ya verificamos este minuto exacto, salir
     if (ultimoMinutoVerificado === claveActual) {
+      console.log(`⏭️ Ya se verificó este minuto (${claveActual}), saltando...`);
       return;
     }
     
     // Guardar que estamos verificando este minuto
     ultimoMinutoVerificado = claveActual;
     
-    // LOG DETALLADO PARA DEBUG
+    // DEBUG: Mostrar información
     console.log('=== VERIFICACIÓN AUTOMÁTICA ===');
     console.log(`📅 Fecha: ${ahora.toLocaleString('es-ES')}`);
     console.log(`📊 Día servidor: ${diaSemana} (${obtenerNombreDiaPorNumero(diaSemana)})`);
@@ -2727,6 +2738,9 @@ async function verificarYEnviarNotificaciones() {
     
   } catch (error) {
     console.error('❌ Error en verificación:', error);
+  } finally {
+    // Liberar el bloqueo
+    estaVerificando = false;
   }
 }
 
@@ -3105,19 +3119,13 @@ onAuthStateChanged(auth, async user => {
   // Actualizar relojes con la configuración cargada
   updateTopClocks();
   
-  // VERIFICAR NOTIFICACIONES AUTOMÁTICAS
+  // VERIFICAR NOTIFICACIONES AUTOMÁTICAS - SOLO UN INTERVALO
   setTimeout(() => verificarYEnviarNotificaciones(), 3000);
   
-  // Luego verificar cada 30 segundos
-  setInterval(() => verificarYEnviarNotificaciones(), 30 * 1000);
-  
-  // También verificar cada minuto en punto
-  setInterval(() => {
-    const ahora = new Date();
-    if (ahora.getSeconds() === 0) {
-      verificarYEnviarNotificaciones();
-    }
-  }, 1000);
+  // Verificar cada 30 segundos - SOLO UN INTERVALO
+  const intervaloNotificaciones = setInterval(() => {
+    verificarYEnviarNotificaciones();
+  }, 30 * 1000);
   
   cargarControl();
   escucharSolicitudesBadge();
