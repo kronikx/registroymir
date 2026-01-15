@@ -1105,242 +1105,50 @@
     }
   }
   
-  /* ============================================= */
-  /* ADAPTACIÓN PARA MÓVIL - SIN MODIFICAR ESTILOS */
-  /* ============================================= */
-
-  /* 1. Hacer el contenedor scrollable en móvil */
-  @media screen and (max-width: 768px) {
-    body {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      position: relative;
-    }
-    
-    /* Indicador visual de que hay scroll horizontal */
-    body::before {
-      content: "← Desliza horizontalmente →";
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(90, 24, 154, 0.9);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 25px;
-      font-size: 12px;
-      z-index: 9999;
-      opacity: 0;
-      animation: showScrollHint 3s ease-in-out;
-      pointer-events: none;
-    }
-    
-    @keyframes showScrollHint {
-      0%, 100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
-      10%, 90% { opacity: 1; transform: translateX(-50%) translateY(0); }
-    }
-    
+  /* Mejoras responsive */
+  @media (max-width: 1920px) {
     .container {
-      max-width: 100vw !important;
-      overflow-x: auto !important;
-      padding: 5px !important;
-      margin: 0 !important;
+      max-width: 98vw;
     }
-    
-    /* 2. Ajustar tabla para móvil */
+  }
+  
+  @media (max-width: 768px) {
     #tablaControl {
-      min-width: 1800px !important; /* Más compacta en móvil */
+      min-width: 2400px;
     }
     
-    /* 3. Hacer elementos táctiles más grandes */
-    .btn, button:not(.close-config) {
-      min-height: 44px !important;
-      min-width: 44px !important;
-      padding: 10px 14px !important;
-      font-size: 13px !important;
-      margin: 4px !important;
-    }
-    
-    /* 4. Inputs más grandes para dedos */
-    .edit-input, .edit-input-inline {
-      height: 40px !important;
-      font-size: 16px !important; /* Evita zoom en iOS */
-      padding: 10px !important;
-    }
-    
-    /* 5. Ajustar ranking visual */
     .ranking-position {
-      font-size: 16px !important;
+      font-size: 16px;
     }
     
     .ranking-icon {
-      font-size: 18px !important;
+      font-size: 18px;
     }
     
     .ranking-value {
-      font-size: 9px !important;
+      font-size: 9px;
     }
     
-    /* 6. Menu ajustado */
-    .menu-nav {
-      flex-wrap: nowrap !important;
-      overflow-x: auto !important;
-      padding: 0 10px !important;
-      justify-content: flex-start !important;
+    .nombre-container {
+      flex-direction: column;
+      gap: 2px;
     }
     
-    .menu-item {
-      flex-shrink: 0 !important;
+    .tu-indicator {
+      margin-left: 0;
     }
     
-    /* 7. Header superior en columna */
-    .time-section {
-      flex-direction: column !important;
-      gap: 10px !important;
+    .nombre-input-container {
+      flex-direction: column;
+      gap: 3px;
     }
     
-    /* 8. Botones de acción en bloque */
-    #reinicioStatsBtn,
-    #exportarBtn,
-    #configBtn {
-      width: 100% !important;
-      margin: 5px 0 !important;
-      justify-content: center !important;
+    .nombre-input-container input {
+      max-width: 100%;
     }
     
-    /* 9. Textos más legibles */
-    .muted {
-      font-size: 11px !important;
-      line-height: 1.4 !important;
-    }
-    
-    /* 10. Capturas responsivas */
     .capturas-grid {
-      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)) !important;
-      gap: 6px !important;
-    }
-    
-    /* 11. Modal más compacto */
-    .config-content {
-      padding: 15px !important;
-      max-height: 85vh !important;
-    }
-    
-    /* 12. Botón exportar flotante más visible */
-    .export-excel-container {
-      bottom: 15px !important;
-      right: 15px !important;
-    }
-    
-    .export-excel-btn {
-      padding: 12px 20px !important;
-      font-size: 13px !important;
-    }
-  }
-
-  /* ============================================= */
-  /* MÓVILES MUY PEQUEÑOS (hasta 480px) */
-  /* ============================================= */
-  @media screen and (max-width: 480px) {
-    /* Tabla aún más compacta */
-    #tablaControl {
-      min-width: 1600px !important;
-      font-size: 11px !important;
-    }
-    
-    /* Ocultar algunos detalles no esenciales */
-    .menu-link span:first-child {
-      display: none !important; /* Ocultar emojis */
-    }
-    
-    .menu-link {
-      padding: 8px 12px !important;
-      font-size: 13px !important;
-    }
-    
-    /* Ranking ultra compacto */
-    .ranking-container {
-      padding: 2px !important;
-    }
-    
-    .nombre-text {
-      font-size: 10px !important;
-    }
-    
-    /* Inputs aún más grandes */
-    .edit-input-inline {
-      width: 50px !important;
-    }
-    
-    /* Botón de bosses compacto */
-    .bosses-btn {
-      padding: 8px 12px !important;
-      font-size: 13px !important;
-    }
-  }
-
-  /* ============================================= */
-  /* TABLETS (768px - 1024px) - Solo ajustes menores */
-  /* ============================================= */
-  @media screen and (min-width: 769px) and (max-width: 1024px) {
-    .container {
-      max-width: 98vw !important;
-    }
-    
-    #tablaControl {
-      min-width: 1900px !important;
-    }
-  }
-
-  /* ============================================= */
-  /* MEJORAS DE USABILIDAD GENERAL */
-  /* ============================================= */
-
-  /* Evitar zoom automático en iOS */
-  input[type="text"],
-  input[type="number"],
-  input[type="email"],
-  select,
-  textarea {
-    font-size: 16px !important; /* Tamaño mínimo para iOS */
-  }
-
-  /* Mejorar toque en móvil */
-  @media (hover: none) and (pointer: coarse) {
-    .btn:hover,
-    button:hover,
-    .menu-link:hover {
-      transform: none !important; /* Desactivar efectos hover en móvil */
-    }
-    
-    .btn:active,
-    button:active,
-    .menu-link:active {
-      opacity: 0.8 !important;
-      transform: scale(0.98) !important;
-    }
-  }
-
-  /* Scroll suave en iOS */
-  .container {
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Asegurar que los th sticky funcionen en móvil */
-  #tablaControl th {
-    position: -webkit-sticky !important;
-    position: sticky !important;
-  }
-
-  /* ============================================= */
-  /* FIX para Firefox Mobile */
-  /* ============================================= */
-  @-moz-document url-prefix() {
-    @media screen and (max-width: 768px) {
-      #tablaControl {
-        display: block !important;
-        overflow-x: auto !important;
-      }
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
     }
   }
 </style>
@@ -2650,20 +2458,10 @@ function parsearHoraConfigurada(horaStr) {
   };
 }
 
-// Variables para evitar duplicados
+// Variable simplificada para evitar duplicados
 let ultimoMinutoVerificado = '';
-let estaVerificando = false;
 
-/* === FUNCIÓN CORREGIDA: PREVENIR DUPLICADOS === */
 async function verificarYEnviarNotificaciones() {
-  // Prevenir múltiples ejecuciones simultáneas
-  if (estaVerificando) {
-    console.log("⚠️ Ya hay una verificación en curso, saltando...");
-    return;
-  }
-  
-  estaVerificando = true;
-  
   try {
     if (!CONFIG.discordWebhook || !CONFIG.discordWebhook.includes('discord.com')) {
       console.log("Webhook no configurado o inválido");
@@ -2680,14 +2478,13 @@ async function verificarYEnviarNotificaciones() {
     
     // Si ya verificamos este minuto exacto, salir
     if (ultimoMinutoVerificado === claveActual) {
-      console.log(`⏭️ Ya se verificó este minuto (${claveActual}), saltando...`);
       return;
     }
     
     // Guardar que estamos verificando este minuto
     ultimoMinutoVerificado = claveActual;
     
-    // DEBUG: Mostrar información
+    // LOG DETALLADO PARA DEBUG
     console.log('=== VERIFICACIÓN AUTOMÁTICA ===');
     console.log(`📅 Fecha: ${ahora.toLocaleString('es-ES')}`);
     console.log(`📊 Día servidor: ${diaSemana} (${obtenerNombreDiaPorNumero(diaSemana)})`);
@@ -2738,9 +2535,6 @@ async function verificarYEnviarNotificaciones() {
     
   } catch (error) {
     console.error('❌ Error en verificación:', error);
-  } finally {
-    // Liberar el bloqueo
-    estaVerificando = false;
   }
 }
 
@@ -3119,13 +2913,19 @@ onAuthStateChanged(auth, async user => {
   // Actualizar relojes con la configuración cargada
   updateTopClocks();
   
-  // VERIFICAR NOTIFICACIONES AUTOMÁTICAS - SOLO UN INTERVALO
+  // VERIFICAR NOTIFICACIONES AUTOMÁTICAS
   setTimeout(() => verificarYEnviarNotificaciones(), 3000);
   
-  // Verificar cada 30 segundos - SOLO UN INTERVALO
-  const intervaloNotificaciones = setInterval(() => {
-    verificarYEnviarNotificaciones();
-  }, 30 * 1000);
+  // Luego verificar cada 30 segundos
+  setInterval(() => verificarYEnviarNotificaciones(), 30 * 1000);
+  
+  // También verificar cada minuto en punto
+  setInterval(() => {
+    const ahora = new Date();
+    if (ahora.getSeconds() === 0) {
+      verificarYEnviarNotificaciones();
+    }
+  }, 1000);
   
   cargarControl();
   escucharSolicitudesBadge();
@@ -4539,76 +4339,6 @@ cargarControl();
         // Abrir en nueva pestaña
         window.open('https://theorigin.ymirhq.com/', '_blank');
     });
-
-    // =============================================
-    // DETECTOR MÓVIL PARA MEJORAR EXPERIENCIA
-    // =============================================
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        // Añadir clase a body para CSS específico
-        document.body.classList.add('is-mobile');
-        
-        // Mejorar scroll en móvil
-        document.addEventListener('touchstart', function() {}, {passive: true});
-        
-        // Indicar que hay scroll horizontal (solo una vez, después de 1 segundo)
-        setTimeout(() => {
-            if (window.innerWidth < 768) {
-                const hint = document.createElement('div');
-                hint.innerHTML = '← Desliza horizontalmente →';
-                hint.style.cssText = `
-                    position: fixed;
-                    bottom: 20px;
-                    left: 50%;
-                    transform: translateX(-50%);
-                    background: rgba(90, 24, 154, 0.9);
-                    color: white;
-                    padding: 10px 20px;
-                    border-radius: 25px;
-                    font-size: 12px;
-                    z-index: 9999;
-                    animation: fadeHint 4s ease-in-out;
-                    pointer-events: none;
-                    font-weight: bold;
-                `;
-                document.body.appendChild(hint);
-                setTimeout(() => hint.remove(), 4000);
-            }
-        }, 1000);
-    }
-
-    // Añadir estilo para la animación
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes fadeHint {
-            0%, 100% { opacity: 0; transform: translateX(-50%) translateY(10px); }
-            20%, 80% { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        
-        /* Mejorar experiencia táctil en móvil */
-        @media (max-width: 768px) {
-            /* Suavizar transiciones en móvil */
-            .btn, button {
-                transition: opacity 0.2s, transform 0.2s !important;
-            }
-            
-            /* Mejorar visibilidad al tocar */
-            .btn:active, button:active {
-                opacity: 0.7 !important;
-                transform: scale(0.95) !important;
-            }
-            
-            /* Prevenir selección de texto accidental */
-            table {
-                user-select: none;
-                -webkit-user-select: none;
-            }
-            
-            td, th {
-                -webkit-touch-callout: none;
-            }
-        }
-    `;
-    document.head.appendChild(style);
 </script>
 
 </body>
